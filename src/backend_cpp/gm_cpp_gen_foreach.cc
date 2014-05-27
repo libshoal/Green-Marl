@@ -12,7 +12,7 @@
 #include "gm_cpplib_words.h"
 
 //--------------------------
-// Foreach(...) 
+// Foreach(...)
 //    S;
 // ==>
 // up_initializer;
@@ -24,9 +24,9 @@
 
 bool gm_cpplib::need_up_initializer(ast_foreach* f) {
     int iter_type = f->get_iter_type();
-    if (gm_is_simple_collection_iteration(iter_type) || gm_is_collection_of_collection_iteration(iter_type)) 
+    if (gm_is_simple_collection_iteration(iter_type) || gm_is_collection_of_collection_iteration(iter_type))
         return true;
-    else if (gm_is_common_nbr_iteration(iter_type)) 
+    else if (gm_is_common_nbr_iteration(iter_type))
         return true;
     return false;
 }
@@ -186,10 +186,39 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
             graph_name = source->get_genname();
         }
         char* it_name = iter->get_genname();
-        sprintf(str_buf, "for (%s %s = 0; %s < %s.%s(); %s ++) ", get_type_string(iter->getTypeSummary()), it_name, it_name, graph_name,
+
+        sprintf(str_buf, "for (%s %s = 0; %s < %s.%s(); %s ++) ",
+                get_type_string(iter->getTypeSummary()),
+                it_name, it_name, graph_name,
                 gm_is_node_iteration(type) ? NUM_NODES : NUM_EDGES, it_name);
 
         Body.pushln(str_buf);
+
+        const char *sk_g_name = NULL;
+        const char *sk_array_name = NULL;
+
+        // Extract type information
+        // This will always be the graph G
+        if (gm_is_node_property_type(source->getTypeSummary())) {
+            sk_g_name = "NODE";
+        }
+        else if (gm_is_edge_property_type(source->getTypeSummary())) {
+            sk_g_name = "EDGE";
+        } else {
+            sk_g_name = source->get_genname();
+        }
+
+        if (gm_is_node_iteration(type)) {
+            sk_array_name = "node";
+        } else {
+            sk_array_name = "edge";
+        }
+
+        // Just insert some code to see where it leads us!
+        sprintf(str_buf, "// SK: found forall graph [%s] array [%s] :-)",
+                sk_g_name, sk_array_name);
+        Body.pushln(str_buf);
+
     } else if (gm_is_common_nbr_iteration(type)) {
         assert(!fe->is_source_field());
         ast_id* source = fe->get_source();
@@ -244,4 +273,3 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
 
     return;
 }
-

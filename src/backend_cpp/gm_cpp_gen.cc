@@ -143,7 +143,7 @@ void gm_cpp_gen::do_generate_end() {
 
 void gm_cpp_gen::generate_proc(ast_procdef* proc) {
     //-------------------------------
-    // declare function name 
+    // declare function name
     //-------------------------------
     generate_proc_decl(proc, false);  // declare in header file
 
@@ -202,6 +202,14 @@ void gm_cpp_gen::generate_proc_decl(ast_procdef* proc, bool is_body_file) {
             else
                 Out.push("& ");
 
+            if (T->is_property()) {
+                char sk_tmp[1000];
+                sprintf(sk_tmp, "/* SK found property [%s] of type [%s] in */",
+                        (*i)->get_idlist()->get_item(0)->get_genname(),
+                        get_type_string(T));
+                Out.push(sk_tmp);
+            }
+
             assert((*i)->get_idlist()->get_length() == 1);
             Out.push((*i)->get_idlist()->get_item(0)->get_genname());
             if (remain_args > 0) {
@@ -224,6 +232,14 @@ void gm_cpp_gen::generate_proc_decl(ast_procdef* proc, bool is_body_file) {
             Out.push(get_type_string((*i)->get_type()));
             ast_typedecl* T = (*i)->get_type();
             if (!T->is_property()) Out.push_spc("& ");
+
+            if (T->is_property()) {
+                char sk_tmp[1000];
+                sprintf(sk_tmp, "/* SK found property [%s] of type [%s] out */",
+                    (*i)->get_idlist()->get_item(0)->get_genname(),
+                        get_type_string(T));
+                Out.push(sk_tmp);
+            }
 
             Out.push((*i)->get_idlist()->get_item(0)->get_genname());
 
@@ -297,7 +313,7 @@ void gm_cpp_gen::generate_rhs_id(ast_id* id) {
                 // original edge index if semi-sorted
                 //sprintf(temp, "%s.%s(%s)",
                     //id->getTypeInfo()->get_target_graph_id()->get_genname(),
-                    //GET_ORG_IDX, 
+                    //GET_ORG_IDX,
                     //id->get_genname()
                 //);
                 //Body.push(temp);
@@ -330,7 +346,7 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
             // original edge index if semi-sorted
             //sprintf(temp, "%s.%s(%s)",
                //f->get_first()->getTypeInfo()->get_target_graph_id()->get_genname(),
-               //GET_ORG_IDX, 
+               //GET_ORG_IDX,
                //f->get_first()->get_genname()
               //);
               //Body.push(temp);
@@ -577,10 +593,17 @@ void gm_cpp_gen::generate_sent_vardecl(ast_vardecl* v) {
     }
 
     if (t->is_property()) {
+        char tmp[1000];
+
         ast_idlist* idl = v->get_idlist();
         assert(idl->get_length() == 1);
         generate_lhs_id(idl->get_item(0));
         declare_prop_def(t, idl->get_item(0));
+
+        // This can be used to track the generation of additional arrays for properties
+        sprintf(tmp, "// SK: generating property [%s] of type [%s] \n",
+                idl->get_item(0)->get_genname(), get_type_string(t));
+        Body.push(tmp);
     } else if (t->is_collection()) {
         ast_idlist* idl = v->get_idlist();
         assert(idl->get_length() == 1);
@@ -854,11 +877,11 @@ void gm_cpp_gen::generate_sent_reduce_argmin_assign(ast_assign *a) {
     //    if (LHS > RHS_temp) {
     //        <type> L1_temp = R1;
     //        ...
-    //        LOCK(LHS) // if LHS is scalar, 
-    //                  // if LHS is field, lock the node 
+    //        LOCK(LHS) // if LHS is scalar,
+    //                  // if LHS is field, lock the node
     //            if (LHS > RHS_temp) {
     //               LHS = RHS_temp;
-    //               L1 = L1_temp;  // no need to lock for L1. 
+    //               L1 = L1_temp;  // no need to lock for L1.
     //               ...
     //            }
     //        UNLOCK(LHS)
@@ -1143,7 +1166,7 @@ void gm_cpp_gen::generate_expr_builtin(ast_expr* ee) {
 }
 
 void gm_cpp_gen::prepare_parallel_for(bool need_dynamic) {
-    if (is_under_parallel_sentblock()) 
+    if (is_under_parallel_sentblock())
         Body.push("#pragma omp for nowait"); // already under parallel region.
     else
         Body.push("#pragma omp parallel for");
@@ -1155,4 +1178,3 @@ void gm_cpp_gen::prepare_parallel_for(bool need_dynamic) {
 
     Body.NL();
 }
-
