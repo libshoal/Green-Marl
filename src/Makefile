@@ -12,11 +12,11 @@ UNAME := $(shell uname -s)
 ifneq ($(UNAME),Darwin)
     LDFLAGS += -lrt
 endif
- 
+
 include ../setup.mk
 CFLAGS += -DDEFAULT_GM_TOP="\"${GM_TOP}\""
 
-# enable code coverage flags 
+# enable code coverage flags
 ifeq ($(CODE_COVERAGE),1)
 	CFLAGS  += --coverage
 	LDFLAGS += --coverage
@@ -37,7 +37,7 @@ HEADERS =  \
     gm_transform_helper.h\
     gm_code_writer.h\
 
-SRCS1 = gm_grammer.tab.c gm_lex.c  
+SRCS1 = gm_grammer.tab.c gm_lex.c
 
 SRCS2 =\
        gm_parse_foreign_syntax.cc \
@@ -162,7 +162,7 @@ ifeq ($(COMPILE_JAVA_BACKEND),1)
 	ifeq (${EDGE_SIZE},64)
 		ifeq (${NODE_SIZE},32)
 	   		CFLAGS += -DGM_RUNTIME_MODE48
-		else 
+		else
 		    ifeq (${NODE_SIZE},64)
 		   		CFLAGS += -DGM_RUNTIME_MODE64
 		    endif
@@ -172,7 +172,7 @@ ifeq ($(COMPILE_JAVA_BACKEND),1)
 	SRCS2 += $(JAVA_BACKEND_SRCS)
 	SRC_DIRS += $(JAVA_BACKEND_SRC_DIR)
 	CTEMPLATE = $(shell pwd)/$(EXTLIBS)/ctemplate-2.2
-	CFLAGS += -I"$(CTEMPLATE)/src" 
+	CFLAGS += -I"$(CTEMPLATE)/src"
 	LDFLAGS += -L"$(CTEMPLATE)/.libs" -Wl,-rpath,"$(CTEMPLATE)/.libs" -lctemplate_nothreads
 endif
 
@@ -198,13 +198,13 @@ $(BIN)/gm_comp: $(SRCS1) $(OBJS) $(HEADS)
 libs:
 	@cd $(EXTLIBS); make
 
-$(OBJ)/%.o : %.c 
+$(OBJ)/%.o : %.c
 	$(CC) $(CFLAGS) -c $< -o $@
-$(OBJ)/%.o : %.cc 
+$(OBJ)/%.o : %.cc
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm $(OBJ)/*.o
+	rm -f $(OBJ)/*.o
 
 clean_all: veryclean
 
@@ -220,6 +220,5 @@ veryclean:
 $(PARSE)/gm_grammer.tab.c: gm_grammer.y
 	$(YACC) -v -d -o$(PARSE)/gm_grammer.tab.c $<
 
-$(PARSE)/gm_lex.c: gm_lex.l gm_grammer.y gm_frontend_api.h 
+$(PARSE)/gm_lex.c: gm_lex.l gm_grammer.y gm_frontend_api.h
 	$(LEX) -o$(PARSE)/gm_lex.c $<
-

@@ -33,13 +33,13 @@
 %token T_PROC T_GRAPH T_NODE T_NODEPROP T_EDGE T_EDGEPROP T_LOCAL
 %token T_NSET T_NORDER T_NSEQ T_ITEMS T_COLLECTION
 %token T_MAP
-%token T_DFS T_POST 
+%token T_DFS T_POST
 %token T_INT T_FLOAT T_BOOL T_DOUBLE  T_LONG
 %token T_RETURN
 %token T_BFS  T_RBFS T_FROM T_TO T_BACK
-%token T_FOREACH T_FOR 
+%token T_FOREACH T_FOR
 %token T_NODES T_EDGES T_NBRS T_IN_NBRS T_UP_NBRS T_DOWN_NBRS
-%token T_COMMON_NBRS;
+%token T_COMMON_NBRS
 %token T_SUM T_PRODUCT T_MIN T_MAX T_COUNT T_ALL T_EXIST T_AVG
 %token T_EMPTYLINE
 %token T_AND T_OR T_EQ T_NEQ T_LE T_GE
@@ -58,7 +58,7 @@
 
 %type <bval> opt_tp foreach_dir
 %type <ptr> id lhs rhs expr bool_expr numeric_expr
-%type <ptr> sent sent_block  sent_assignment sent_variable_decl sent_foreach sent_if 
+%type <ptr> sent sent_block  sent_assignment sent_variable_decl sent_foreach sent_if
 %type <pair> foreach_header foreach_src
 %type <pair> rhs_list2 lhs_list2
 %type <ptr> foreach_filter
@@ -78,7 +78,7 @@
 %type <bval> inf
 %type <ptr>  built_in
 %type <pair> bfs_header_format
-%type <e_list>  arg_list expr_list 
+%type <e_list>  arg_list expr_list
 %type <l_list>  lhs_list
 %type <ptr>  expr_user sent_user
 
@@ -88,18 +88,18 @@
 %left '?'
 %left ':'
 %left T_OR
-%left T_AND 
+%left T_AND
 %left T_EQ T_NEQ
 %left '<' '>'  T_LE T_GE
 %left '+' '-'
 %left '*' '/' '%'
 %right NEG
 
-%glr-parser 
+%glr-parser
 
 %%
   prog :
-       | prog proc_def 
+       | prog proc_def
 
   proc_def : proc_head proc_body {GM_procdef_finish();}
 
@@ -113,11 +113,11 @@
                | arg_declist
 
   arg_declist: arg_decl                 { GM_procdef_add_argdecl($1); }
-             | arg_declist ',' arg_decl { GM_procdef_add_argdecl($3); } 
+             | arg_declist ',' arg_decl { GM_procdef_add_argdecl($3); }
 
 
   arg_declist2 : arg_decl                  { GM_procdef_add_out_argdecl($1); }
-               | arg_declist2 ',' arg_decl { GM_procdef_add_out_argdecl($3); } 
+               | arg_declist2 ',' arg_decl { GM_procdef_add_out_argdecl($3); }
 
   proc_return_opt :
               | proc_return
@@ -139,7 +139,7 @@
             | map_type				   { $$ = $1;}
 
 
-  graph_type : T_GRAPH               { $$ = GM_graphtype_ref(GMTYPE_GRAPH); 
+  graph_type : T_GRAPH               { $$ = GM_graphtype_ref(GMTYPE_GRAPH);
                    GM_set_lineinfo($$,@1.first_line, @1.first_column);}
 
   prim_type : T_INT                  { $$ = GM_primtype_ref(GMTYPE_INT);
@@ -157,7 +157,7 @@
                 | edge_type          { $$ = $1;}
 
   node_type : T_NODE '(' id  ')'      { $$ = GM_nodetype_ref($3);   GM_set_lineinfo($$,@1.first_line, @1.first_column);}
-            | T_NODE                  { $$ = GM_nodetype_ref(NULL); GM_set_lineinfo($$,@1.first_line, @1.first_column);} 
+            | T_NODE                  { $$ = GM_nodetype_ref(NULL); GM_set_lineinfo($$,@1.first_line, @1.first_column);}
   edge_type : T_EDGE '(' id  ')'      { $$ = GM_edgetype_ref($3);   GM_set_lineinfo($$,@1.first_line, @1.first_column);}
             | T_EDGE                  { $$ = GM_edgetype_ref(NULL); GM_set_lineinfo($$,@1.first_line, @1.first_column);}
 
@@ -169,18 +169,18 @@
 
            |  T_NORDER '(' id ')'     { $$ = GM_settype_ref(GMTYPE_NORDER, $3);   GM_set_lineinfo($$,@1.first_line, @1.first_column);}
            |  T_NORDER                { $$ = GM_settype_ref(GMTYPE_NORDER, NULL); GM_set_lineinfo($$,@1.first_line, @1.first_column);}
-           
+
            |  T_COLLECTION '<' set_type '>' '(' id ')'	  { $$ = GM_queuetype_ref($3, $6); 	  GM_set_lineinfo($$,@1.first_line, @1.first_column);}
            |  T_COLLECTION '<' set_type '>'				  { $$ = GM_queuetype_ref($3, NULL);  GM_set_lineinfo($$,@1.first_line, @1.first_column);}
-           
+
   key_type : nodeedge_type	{ $$ = $1; }
   		   | prim_type		{ $$ = $1; }
-  		   
+
   value_type : nodeedge_type { $$ = $1; }
   			 | prim_type	 { $$ = $1; }
-           
+
   map_type :  T_MAP '<' key_type ',' value_type '>' { $$ = GM_maptype_ref($3, $5); GM_set_lineinfo($$,@1.first_line, @1.first_column); }
-           
+
 
   property : T_NODEPROP '<' prim_type '>'     '(' id ')'  { $$ = GM_nodeprop_ref($3, $6 ); GM_set_lineinfo($$,@1.first_line, @1.first_column);}
            | T_NODEPROP '<' nodeedge_type '>' '(' id ')'  { $$ = GM_nodeprop_ref($3, $6 ); GM_set_lineinfo($$,@1.first_line, @1.first_column);}
@@ -201,7 +201,7 @@
 
 
   proc_body : sent_block                    { GM_procdef_setbody($1); }
-  
+
   sent_block : sb_begin sent_list sb_end    { $$ = GM_finish_sentblock(); }
   sb_begin: '{'                             { GM_start_sentblock(); }
   sb_end: '}'
@@ -232,7 +232,7 @@
 
   sent_do_while : T_DO sent_block T_WHILE '(' bool_expr ')' { $$ = GM_dowhile($5, $2); }
 
-                
+
   sent_foreach :  T_FOREACH foreach_header foreach_filter sent    { $$ = GM_foreach($2.p1, $2.p2, $2.i1, $4, $3, false, $2.b1, $2.p3, $2.b2); GM_set_lineinfo($$, @1.first_line, @1.first_column);}
                |  T_FOR     foreach_header foreach_filter sent    { $$ = GM_foreach($2.p1, $2.p2, $2.i1, $4, $3, true, $2.b1, $2.p3, $2.b2); GM_set_lineinfo($$,@1.first_line, @1.first_column);}
 
@@ -245,7 +245,7 @@
   foreach_header : '(' id ':' foreach_src '.' iterator1 ')'  {$$.p1 = $2; $$.p2 = $4.p1; $$.b1 = $4.b1; $$.i1 = $6.i1; $$.p3 = $6.p1; $$.b2 = $4.b2; }
 
   foreach_src    : id     foreach_dir        { $$.p1 = $1; $$.b1 = $2; $$.b2 = false;}  /* b1 -> direction, b2 -> is_field*/
-                 | field  foreach_dir        { $$.p1 = $1; $$.b1 = $2; $$.b2 = true;} 
+                 | field  foreach_dir        { $$.p1 = $1; $$.b1 = $2; $$.b2 = true;}
 
   foreach_dir    :                           { $$ = false;}
                  | '-'                       { $$ = true;}
@@ -264,19 +264,19 @@
             | T_COMMON_NBRS '(' id ')'      { $$.i1 = GMITER_NODE_COMMON_NBRS;$$.p1 = $3; }
 
   sent_dfs    : T_DFS bfs_header_format bfs_filters sent_block dfs_post
-                { $$ = GM_bfs( $2.p1,$2.p2,$2.p3,  $3.p1,$3.p2, $5.p2,   $4,$5.p1,   $2.b1, false); 
-                  GM_set_lineinfo($$,@1.first_line, @1.first_column);} 
+                { $$ = GM_bfs( $2.p1,$2.p2,$2.p3,  $3.p1,$3.p2, $5.p2,   $4,$5.p1,   $2.b1, false);
+                  GM_set_lineinfo($$,@1.first_line, @1.first_column);}
               // GM_bfs(it, src,root,             (navigator, f_filter,b_filter), fw,bw,  tp)
-  sent_bfs    : T_BFS bfs_header_format bfs_filters sent_block bfs_reverse 
-                { $$ = GM_bfs( $2.p1,$2.p2,$2.p3,  $3.p1,$3.p2, $5.p2,   $4,$5.p1,   $2.b1, true); 
-                  GM_set_lineinfo($$,@1.first_line, @1.first_column);} 
+  sent_bfs    : T_BFS bfs_header_format bfs_filters sent_block bfs_reverse
+                { $$ = GM_bfs( $2.p1,$2.p2,$2.p3,  $3.p1,$3.p2, $5.p2,   $4,$5.p1,   $2.b1, true);
+                  GM_set_lineinfo($$,@1.first_line, @1.first_column);}
 
   dfs_post     :                               {$$.p1 = NULL; $$.p2 = NULL;}
-               | T_POST bfs_filter sent_block  {$$.p1 = $3;   $$.p2 = $2;  } 
+               | T_POST bfs_filter sent_block  {$$.p1 = $3;   $$.p2 = $2;  }
                | T_POST sent_block             {$$.p1 = $2;   $$.p2 = NULL;  }
 
   bfs_reverse  :                               {$$.p1 = NULL; $$.p2 = NULL;}
-               | T_BACK bfs_filter sent_block  {$$.p1 = $3;   $$.p2 = $2;  } 
+               | T_BACK bfs_filter sent_block  {$$.p1 = $3;   $$.p2 = $2;  }
                | T_BACK sent_block             {$$.p1 = $2;   $$.p2 = NULL;  }
 
   bfs_header_format :  '(' id ':' id opt_tp '.' T_NODES from_or_semi id ')' {
@@ -299,17 +299,17 @@ bfs_filters   :                             {$$.p1 = NULL; $$.p2 = NULL;}
               |  bfs_navigator bfs_filter   {$$.p1 = $1;   $$.p2 = $2;}
               |  bfs_filter bfs_navigator   {$$.p2 = $1;   $$.p1 = $2;}
 
-bfs_navigator :  '[' expr ']'              {$$ = $2;}                           
+bfs_navigator :  '[' expr ']'              {$$ = $2;}
 
   bfs_filter  : '(' expr ')'               {$$ = $2;}
-              
+
 
   sent_variable_decl :  typedecl var_target   { $$ =  GM_vardecl_prim($1, $2); }
                      |  typedecl id '=' rhs   { $$ =  GM_vardecl_and_assign($1,$2,$4);}
 
   var_target: id_comma_list                   { $$ = GM_finish_id_comma_list();}
 
-  sent_assignment : lhs '=' rhs             { $$ = GM_normal_assign($1, $3); GM_set_lineinfo($$, @2.first_line, @2.first_column)}
+sent_assignment : lhs '=' rhs             { $$ = GM_normal_assign($1, $3); GM_set_lineinfo($$, @2.first_line, @2.first_column); }
   sent_reduce_assignment : lhs reduce_eq rhs optional_bind  { $$ = GM_reduce_assign($1, $3, $4, $2); GM_set_lineinfo($$, @2.first_line, @2.first_column);}
                          | lhs T_PLUSPLUS optional_bind{ $$ = GM_reduce_assign($1, GM_expr_ival(1, @2.first_line, @2.first_column), $3, GMREDUCE_PLUS); }
                          | lhs T_MINUSMINUS optional_bind{ $$ = GM_reduce_assign($1, GM_expr_ival(-1, @2.first_line, @2.first_column), $3, GMREDUCE_PLUS); }
@@ -346,14 +346,14 @@ bfs_navigator :  '[' expr ']'              {$$ = $2;}
   sent_if : T_IF '(' bool_expr ')' sent             { $$ = GM_if($3, $5, NULL);}
           | T_IF '(' bool_expr ')' sent T_ELSE sent { $$ = GM_if($3, $5, $7);}
 
-  
+
   sent_user : expr_user                                     { $$ =  GM_foreign_sent($1);}
             | expr_user T_DOUBLE_COLON '[' lhs_list ']'     { $$ =  GM_foreign_sent_mut($1, $4);}
 
 
   expr :     '(' expr ')'           {$$ = $2;}
              | '|' expr '|'         {$$ = GM_expr_uop($2, GMOP_ABS, @1.first_line, @1.first_column); }
-             | '-' expr   %prec NEG /* high precedence*/ 
+             | '-' expr   %prec NEG /* high precedence*/
                                     {$$ = GM_expr_uop($2, GMOP_NEG, @1.first_line, @1.first_column); }
              | '!' expr    %prec NEG    {$$ = GM_expr_luop($2, GMOP_NOT, @1.first_line, @1.first_column); }
              | '(' prim_type ')' expr %prec NEG    {$$ = GM_expr_conversion($4, $2 , @1.first_line, @1.first_column); }
@@ -379,7 +379,7 @@ bfs_navigator :  '[' expr ']'              {$$ = $2;}
              | expr T_OR expr     {$$ = GM_expr_lbiop($1, $3, GMOP_OR, @2.first_line, @2.first_column);}
 
              | expr '?' expr  ':' expr { $$= GM_expr_ternary($1, $3, $5, @2.first_line, @2.first_column);}
-            
+
             | BOOL_VAL                     {$$ = GM_expr_bval($1, @1.first_line, @1.first_column);}
             | INT_NUM                      {$$ = GM_expr_ival($1, @1.first_line, @1.first_column);}
             | FLOAT_NUM                    {$$ = GM_expr_fval($1, @1.first_line, @1.first_column);}
@@ -395,7 +395,7 @@ bfs_navigator :  '[' expr ']'              {$$ = $2;}
    bool_expr : expr                    {$$ = $1; }
    numeric_expr: expr                  {$$ = $1; }
 
-   reduce_op : T_SUM                   {$$ = GMREDUCE_PLUS; } 
+   reduce_op : T_SUM                   {$$ = GMREDUCE_PLUS; }
              | T_PRODUCT               {$$ = GMREDUCE_MULT; }
              | T_MIN                   {$$ = GMREDUCE_MIN;  }
              | T_MAX                   {$$ = GMREDUCE_MAX;  }
@@ -403,7 +403,7 @@ bfs_navigator :  '[' expr ']'              {$$ = $2;}
              | T_ALL                   {$$ = GMREDUCE_AND;  }
              | T_AVG                   {$$ = GMREDUCE_AVG;  /* syntactic sugar*/}
 
-  reduce_op2 : T_COUNT                {$$ = GMREDUCE_PLUS; } 
+  reduce_op2 : T_COUNT                {$$ = GMREDUCE_PLUS; }
 
 
   inf : T_P_INF                       {$$ = true;}
@@ -416,11 +416,11 @@ bfs_navigator :  '[' expr ']'              {$$ = $2;}
   lhs_list : lhs                         { $$ = GM_single_lhs_list($1);}
            | lhs ',' lhs_list            { $$ = GM_add_lhs_list_front($1, $3);}
 
-  scala: id                               { $$ = $1; } 
+  scala: id                               { $$ = $1; }
  field : id '.' id                       { $$ = GM_field($1, $3, false); }
        /*| id T_RARROW id                  { $$ = GM_field($1, $3, true);  }*/
        | T_EDGE '('id ')' '.' id            { $$ = GM_field($3, $6, true);  }
-       
+
   map_access: id '[' expr ']'			{ $$ = GM_map_access($1, $3); }
 
   built_in : id '.' id arg_list            { $$ = GM_expr_builtin_expr($1, $3, $4);}
@@ -437,8 +437,8 @@ bfs_navigator :  '[' expr ']'              {$$ = $2;}
   rhs_list2 : '<' expr ';' expr_list '>'   { $$.p1 = $2; $$.e_list = $4;}
 
 
-  expr_user : '['                         {GM_lex_begin_user_text();} 
-              USER_TEXT ']'               { 
+  expr_user : '['                         {GM_lex_begin_user_text();}
+              USER_TEXT ']'               {
                                             $$ = GM_expr_foreign($3, @3.first_line, @3.first_column);
                                           }
                                             //[XXX] temporary
@@ -446,4 +446,3 @@ bfs_navigator :  '[' expr ']'              {$$ = $2;}
   id : ID                                  {$$ = GM_id($1, @1.first_line, @1.first_column); }
 
 %%
-
