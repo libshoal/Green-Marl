@@ -92,12 +92,12 @@ const char* gm_cpplib::edge_index(ast_id* iter) {
     return iter->get_genname();
 }
 
-const char* gm_cpplib::fw_edge_index(ast_id* iter) 
+const char* gm_cpplib::fw_edge_index(ast_id* iter)
 {
 // iter is a reverse edge index. get matching fw edge index
-    sprintf(str_buf, "%s.%s[%s]",
+    sprintf(str_buf, "%s.%s/*SK fw_edge_index*/[%s]",
             iter->getTypeInfo()->get_target_graph_id()->get_genname(),
-            FW_EDGE_IDX,iter->get_genname()); 
+            FW_EDGE_IDX,iter->get_genname());
     return str_buf;
 }
 
@@ -455,13 +455,17 @@ void gm_cpplib::generate_expr_builtin(ast_expr_builtin* e, gm_code_writer& Body)
             switch (method_id) {
                 case GM_BLTIN_NODE_DEGREE:
                     assert(i->getTypeInfo()->get_target_graph_id() != NULL);
-                    sprintf(str_buf, "(%s.%s[%s+1] - %s.%s[%s])", i->getTypeInfo()->get_target_graph_id()->get_genname(), BEGIN, i->get_genname(),
+                    sprintf(str_buf, "(%s.%s[%s+1] - %s.%s[%s])",
+                            i->getTypeInfo()->get_target_graph_id()->get_genname(), BEGIN, i->get_genname(),
                             i->getTypeInfo()->get_target_graph_id()->get_genname(), BEGIN, i->get_genname());
                     Body.push(str_buf);
+                    sprintf(str_buf, "%s+1", i->get_genname());
+                    sk_m_array_access(&Body, BEGIN, i->get_genname());
+                    sk_m_array_access(&Body, BEGIN, str_buf);
                     break;
                 case GM_BLTIN_NODE_IN_DEGREE:
                     assert(i->getTypeInfo()->get_target_graph_id() != NULL);
-                    sprintf(str_buf, "(%s.%s[%s+1] - %s.%s[%s])", i->getTypeInfo()->get_target_graph_id()->get_genname(), R_BEGIN, i->get_genname(),
+                    sprintf(str_buf, "/*SK node in degree */(%s.%s[%s+1] - %s.%s[%s])", i->getTypeInfo()->get_target_graph_id()->get_genname(), R_BEGIN, i->get_genname(),
                             i->getTypeInfo()->get_target_graph_id()->get_genname(), R_BEGIN, i->get_genname());
                     Body.push(str_buf);
                     break;
@@ -511,11 +515,15 @@ void gm_cpplib::generate_expr_builtin(ast_expr_builtin* e, gm_code_writer& Body)
         case GMTYPE_EDGE:
             switch (method_id) {
                 case GM_BLTIN_EDGE_FROM: {
-                    sprintf(str_buf, "%s.%s[%s]", i->getTypeInfo()->get_target_graph_id()->get_genname(), FROM_IDX, i->get_genname());
+                    sk_m_array_access(&Body, FROM_IDX, i->get_genname());
+                    sprintf(str_buf, "/*SK edge_from*/%s.%s[%s]", i->getTypeInfo()->get_target_graph_id()->get_genname(), FROM_IDX, i->get_genname());
                 }
                     break;
                 case GM_BLTIN_EDGE_TO: {
-                    sprintf(str_buf, "%s.%s[%s]", i->getTypeInfo()->get_target_graph_id()->get_genname(), NODE_IDX, i->get_genname());
+                    sk_m_array_access(&Body, NODE_IDX, i->get_genname());
+                    sprintf(str_buf, "/*SK edge to*/%s.%s[%s]",
+                            i->getTypeInfo()->get_target_graph_id()->get_genname(),
+                            NODE_IDX, i->get_genname());
                 }
                     break;
                 default:

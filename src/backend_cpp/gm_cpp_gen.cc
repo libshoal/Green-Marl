@@ -8,6 +8,9 @@
 #include "gm_cpplib_words.h"
 #include "gm_argopts.h"
 
+bool sk_lhs = false;
+std::vector<std::string> sk_iterators;
+
 void gm_cpp_gen::setTargetDir(const char* d) {
     assert(d != NULL);
     if (dname != NULL) delete[] dname;
@@ -330,6 +333,8 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
     Body.push('[');
     if (f->getTypeInfo()->is_node_property()) {
         Body.push(get_lib()->node_index(f->get_first()));
+        sk_m_array_access(&Body, f->get_second()->get_genname(),
+                          get_lib()->node_index(f->get_first()));
     } else if (f->getTypeInfo()->is_edge_property()) {
 
         if (f->is_rarrow()) { // [XXX] this feature is still not finished, should be re-visited
@@ -337,10 +342,13 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
             assert(alias_name != NULL);
             assert(strlen(alias_name) > 0);
             Body.push(alias_name);
+            sk_m_array_access(&Body, f->get_second()->get_genname(), alias_name);
         }
         // check if the edge is a back-edge
         else if (f->get_first()->find_info_bool(CPPBE_INFO_IS_REVERSE_EDGE)) {
             Body.push(get_lib()->fw_edge_index(f->get_first()));
+            sk_m_array_access(&Body, f->get_second()->get_genname(),
+                              get_lib()->fw_edge_index(f->get_first()));
         }
         else {
             // original edge index if semi-sorted
@@ -351,6 +359,8 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
               //);
               //Body.push(temp);
               Body.push(get_lib()->edge_index(f->get_first()));
+              sk_m_array_access(&Body, f->get_second()->get_genname(),
+                                get_lib()->edge_index(f->get_first()));
         }
     }
     else {
@@ -659,6 +669,8 @@ void gm_cpp_gen::generate_sent_map_assign(ast_assign_mapentry* a) {
 
 void gm_cpp_gen::generate_sent_assign(ast_assign* a) {
 
+    //    _Body.push("/* LHS start (sent_assign) */");
+    sk_lhs = true;
     if (a->is_target_scalar()) {
         ast_id* leftHandSide = a->get_lhs_scala();
         if (leftHandSide->is_instantly_assigned()) { //we have to add the variable declaration here
@@ -677,6 +689,8 @@ void gm_cpp_gen::generate_sent_assign(ast_assign* a) {
         generate_lhs_field(a->get_lhs_field());
     }
 
+    sk_lhs = false;
+    //    _Body.push("/* LHS end */");
     _Body.push(" = ");
 
     generate_expr(a->get_rhs());

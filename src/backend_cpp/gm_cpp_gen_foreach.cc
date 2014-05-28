@@ -165,7 +165,8 @@ void gm_cpplib::generate_down_initializer(ast_foreach* f, gm_code_writer& Body) 
                     gm_is_up_nbr_node_iteration(iter_type) ? '-' : '+');
             Body.pushln(str_buf);
         } else {
-            sprintf(str_buf, "%s %s = %s.%s [%s];", type_name, var_name, graph_name, array_name, alias_name);
+            sk_m_array_access(&Body, array_name, alias_name);
+            sprintf(str_buf, "%s %s = %s.%s[%s];", type_name, var_name, graph_name, array_name, alias_name);
             Body.pushln(str_buf);
         }
     }
@@ -186,6 +187,8 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
             graph_name = source->get_genname();
         }
         char* it_name = iter->get_genname();
+
+        sk_iterator(&Body, iter->get_genname(), get_type_string(iter->getTypeSummary()));
 
         sprintf(str_buf, "for (%s %s = 0; %s < %s.%s(); %s ++) ",
                 get_type_string(iter->getTypeSummary()),
@@ -225,7 +228,8 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         const char* iter_name = fe->find_info_string(CPPBE_INFO_COMMON_NBR_ITERATOR);
         char* graph_name = source->get_genname();
         char* it_name = iter->get_genname();
-        sprintf(str_buf, "for (%s %s = %s.get_next(); %s != gm_graph::NIL_NODE ; %s = %s.get_next()) ", NODE_T, it_name, iter_name, it_name, it_name,
+        sprintf(str_buf, "for (%s %s = %s.get_next(); %s != gm_graph::NIL_NODE ; %s = %s.get_next()) ",
+                NODE_T, it_name, iter_name, it_name, it_name,
                 iter_name);
 
         Body.pushln(str_buf);
@@ -252,10 +256,17 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         const char* array_name = gm_is_iteration_use_reverse(type) ? R_BEGIN : BEGIN;
         const char* src_name = source->get_genname();
 
+        //        sk_iterator(&Body, alias_name, EDGE_T);
+        Body.push("/*SK found loop, but not over array*/");
+
         sprintf(str_buf, "for (%s %s = %s.%s[%s];", EDGE_T, alias_name, graph_name, array_name, src_name);
         Body.push(str_buf);
         sprintf(str_buf, "%s < %s.%s[%s+1] ; %s ++) ", alias_name, graph_name, array_name, src_name, alias_name);
         Body.pushln(str_buf);
+
+        sk_m_array_access(&Body, array_name, src_name);
+        sprintf(str_buf, "%s+1", src_name);
+        sk_m_array_access(&Body, array_name, str_buf);
 
         // SET_TYPE
     } else if (gm_is_simple_collection_iteration(type) || gm_is_collection_of_collection_iteration(type)) {

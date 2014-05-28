@@ -10,6 +10,7 @@
 #include "../backend_cpp/gm_cpplib_words.h"
 
 #include <list>
+#include <algorithm>
 
 //-----------------------------------------------------------------
 // interface for graph library Layer
@@ -367,5 +368,37 @@ static const char* MAKE_REVERSE = "make_reverse_edges";
 static const char* SEMI_SORT = "do_semi_sort";
 static const char* IS_SEMI_SORTED = "is_semi_sorted";
 static const char* PREPARE_FROM_INFO = "prepare_edge_source";
+
+extern bool sk_lhs;
+extern std::vector<std::string> sk_iterators;
+
+static void sk_m_array_access(gm_code_writer* Body,
+                              const char* array_name,
+                              const char* index)
+{
+    char str_buf[1024*8];
+    sprintf(str_buf, "/* RTS array %s, index %s [wr=%d] [idx=%d]*/",
+            array_name, index, sk_lhs, std::find(sk_iterators.begin(),
+                                                 sk_iterators.end(), index)!=sk_iterators.end());
+    Body->push(str_buf);
+}
+
+static void sk_log(gm_code_writer* Body, const char* log)
+{
+    char str_buf[1024*8];
+    sprintf(str_buf, "/* SK %s */", log);
+    Body->push(str_buf);
+}
+
+static void sk_iterator(gm_code_writer* Body,
+                        const char* it,
+                        const char* it_type)
+{
+    char str_buf[1024*8];
+    sprintf(str_buf, "new iterator %s of type %s", it, it_type);
+    sk_log(Body, str_buf);
+
+    sk_iterators.push_back(it);
+}
 
 #endif
