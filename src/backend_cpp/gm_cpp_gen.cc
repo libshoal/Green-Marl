@@ -206,11 +206,9 @@ void gm_cpp_gen::generate_proc_decl(ast_procdef* proc, bool is_body_file) {
                 Out.push("& ");
 
             if (T->is_property()) {
-                char sk_tmp[1000];
-                sprintf(sk_tmp, "/* SK found property [%s] of type [%s] in */",
-                        (*i)->get_idlist()->get_item(0)->get_genname(),
-                        get_type_string(T));
-                Out.push(sk_tmp);
+
+                const char *sk_name = (*i)->get_idlist()->get_item(0)->get_genname();
+                sk_property(&Out, sk_name, get_type_string(T), false);
             }
 
             assert((*i)->get_idlist()->get_length() == 1);
@@ -237,11 +235,8 @@ void gm_cpp_gen::generate_proc_decl(ast_procdef* proc, bool is_body_file) {
             if (!T->is_property()) Out.push_spc("& ");
 
             if (T->is_property()) {
-                char sk_tmp[1000];
-                sprintf(sk_tmp, "/* SK found property [%s] of type [%s] out */",
-                    (*i)->get_idlist()->get_item(0)->get_genname(),
-                        get_type_string(T));
-                Out.push(sk_tmp);
+                const char *sk_name = (*i)->get_idlist()->get_item(0)->get_genname();
+                sk_property(&Out, sk_name, get_type_string(T), false);
             }
 
             Out.push((*i)->get_idlist()->get_item(0)->get_genname());
@@ -610,10 +605,9 @@ void gm_cpp_gen::generate_sent_vardecl(ast_vardecl* v) {
         generate_lhs_id(idl->get_item(0));
         declare_prop_def(t, idl->get_item(0));
 
-        // This can be used to track the generation of additional arrays for properties
-        sprintf(tmp, "// SK: generating property [%s] of type [%s] \n",
-                idl->get_item(0)->get_genname(), get_type_string(t));
-        Body.push(tmp);
+        sk_property(&Body, idl->get_item(0)->get_genname(),
+                    get_type_string(t), true);
+
     } else if (t->is_collection()) {
         ast_idlist* idl = v->get_idlist();
         assert(idl->get_length() == 1);

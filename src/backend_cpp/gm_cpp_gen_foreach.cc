@@ -217,10 +217,7 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
             sk_array_name = "edge";
         }
 
-        // Just insert some code to see where it leads us!
-        sprintf(str_buf, "// SK: found forall graph [%s] array [%s] :-)",
-                sk_g_name, sk_array_name);
-        Body.pushln(str_buf);
+        sk_forall(&Body, sk_g_name, sk_array_name);
 
     } else if (gm_is_common_nbr_iteration(type)) {
         assert(!fe->is_source_field());
@@ -256,8 +253,7 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         const char* array_name = gm_is_iteration_use_reverse(type) ? R_BEGIN : BEGIN;
         const char* src_name = source->get_genname();
 
-        //        sk_iterator(&Body, alias_name, EDGE_T);
-        Body.push("/*SK found loop, but not over array*/");
+        sk_log(&Body, "found loop, but not over array");
 
         sprintf(str_buf, "for (%s %s = %s.%s[%s];", EDGE_T, alias_name, graph_name, array_name, src_name);
         Body.push(str_buf);

@@ -372,33 +372,69 @@ static const char* PREPARE_FROM_INFO = "prepare_edge_source";
 extern bool sk_lhs;
 extern std::vector<std::string> sk_iterators;
 
+#define SHOAL_PREFIX "shl_"
+//#define SK_DEBUG 1
+
 static void sk_m_array_access(gm_code_writer* Body,
                               const char* array_name,
                               const char* index)
 {
     char str_buf[1024*8];
+
+#ifdef SK_DEBUG
     sprintf(str_buf, "/* RTS array %s, index %s [wr=%d] [idx=%d]*/",
             array_name, index, sk_lhs, std::find(sk_iterators.begin(),
                                                  sk_iterators.end(), index)!=sk_iterators.end());
     Body->push(str_buf);
+#endif
 }
 
 static void sk_log(gm_code_writer* Body, const char* log)
 {
+#ifdef SK_DEBUG
     char str_buf[1024*8];
     sprintf(str_buf, "/* SK %s */", log);
     Body->push(str_buf);
+#endif
 }
 
 static void sk_iterator(gm_code_writer* Body,
                         const char* it,
                         const char* it_type)
 {
+#ifdef SK_DEBUG
     char str_buf[1024*8];
     sprintf(str_buf, "new iterator %s of type %s", it, it_type);
     sk_log(Body, str_buf);
+#endif
 
     sk_iterators.push_back(it);
+}
+
+static void sk_property(gm_code_writer *Body,
+                        const char* prop,
+                        const char* prop_type,
+                        bool dynamic) // whether property is GM internal
+{
+    char str_buf[1000];
+    sprintf(str_buf, "found property [%s] of type [%s], dynamic=[%d]",
+            prop, prop_type, dynamic);
+
+    sk_log(Body, str_buf);
+
+    // XXX do something
+}
+
+static void sk_forall(gm_code_writer *Body,
+                      const char *graph,
+                      const char *array)
+{
+    char str_buf[1000];
+    sprintf(str_buf, "found forall graph [%s] array [%s]",
+            graph, array);
+    sk_log(Body, str_buf);
+
+    // XXX do something
 }
 
 #endif
