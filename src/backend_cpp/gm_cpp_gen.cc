@@ -9,6 +9,7 @@
 #include "gm_argopts.h"
 
 bool sk_lhs = false;
+bool sk_lhs_open = false; // generating write accessor, close after rhs
 std::vector<std::string> sk_iterators;
 
 void gm_cpp_gen::setTargetDir(const char* d) {
@@ -366,7 +367,10 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
 }
 
 void gm_cpp_gen::generate_rhs_field(ast_field* f) {
+    Body.push("/*RHS start*/");
     generate_lhs_field(f);
+    sk_rhs_end(&Body);
+    Body.push("/*RHS end*/");
 }
 
 const char* gm_cpp_gen::get_type_string(int type_id) {

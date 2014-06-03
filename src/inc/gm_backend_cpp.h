@@ -370,6 +370,7 @@ static const char* IS_SEMI_SORTED = "is_semi_sorted";
 static const char* PREPARE_FROM_INFO = "prepare_edge_source";
 
 extern bool sk_lhs;
+extern bool sk_lhs_open;
 extern std::vector<std::string> sk_iterators;
 
 #define SHOAL_PREFIX "shl_"
@@ -381,12 +382,17 @@ static void sk_m_array_access(gm_code_writer* Body,
 {
     char str_buf[1024*8];
 
-#ifdef SK_DEBUG
+    //#ifdef SK_DEBUG
     sprintf(str_buf, "/* RTS array %s, index %s [wr=%d] [idx=%d]*/",
             array_name, index, sk_lhs, std::find(sk_iterators.begin(),
                                                  sk_iterators.end(), index)!=sk_iterators.end());
     Body->push(str_buf);
-#endif
+    //#endif
+
+    if (sk_lhs) {
+
+        sk_lhs_open = true;
+    }
 }
 
 static void sk_log(gm_code_writer* Body, const char* log)
@@ -435,6 +441,14 @@ static void sk_forall(gm_code_writer *Body,
     sk_log(Body, str_buf);
 
     // XXX do something
+}
+
+static void sk_rhs_end(gm_code_writer *Body)
+{
+    if (sk_lhs_open) {
+        Body->push("/* END of accessor */");
+        sk_lhs_open = false;
+    }
 }
 
 #endif
