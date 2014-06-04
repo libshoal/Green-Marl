@@ -371,16 +371,16 @@ static const char* PREPARE_FROM_INFO = "prepare_edge_source";
 
 extern bool sk_lhs;
 extern bool sk_lhs_open;
+extern char sk_buf[];
 extern std::vector<std::string> sk_iterators;
 
 #define SHOAL_PREFIX "shl_"
 #define SHOAL_ACTIVATE 1
+#define SHOAL_IDX_NAME "__idx__"
 
 //#define SK_DEBUG 1
 
-static void sk_m_array_access(gm_code_writer* Body,
-                              const char* array_name,
-                              const char* index)
+static char* sk_m_array_access_gen(const char* array_name, const char* index)
 {
     char str_buf[1024*8];
     bool is_write = sk_lhs;
@@ -394,21 +394,28 @@ static void sk_m_array_access(gm_code_writer* Body,
 #endif
 
     if (is_indexed)
-        index = "__idx__";
-
-#ifdef SHOAL_ACTIVATE
-    if (is_write)
-        sprintf(str_buf, "%s_%s_write(%s, ", SHOAL_PREFIX, array_name, index);
-    else
-        sprintf(str_buf, "%s_%s_rd(%s)", SHOAL_PREFIX, array_name, index);
-
-    Body->push(str_buf);
-#endif
+        index = SHOAL_IDX_NAME;
 
     if (is_write) {
 
         sk_lhs_open = true;
     }
+
+    if (is_write)
+        sprintf(str_buf, "%s_%s_write(%s, ", SHOAL_PREFIX, array_name, index);
+    else
+        sprintf(str_buf, "%s_%s_rd(%s)", SHOAL_PREFIX, array_name, index);
+
+    return str_buf;
+}
+
+static void sk_m_array_access(gm_code_writer* Body,
+                              const char* array_name,
+                              const char* index)
+{
+#ifdef SHOAL_ACTIVATE
+    Body->push(sk_m_array_access_gen(array_name, index));
+#endif
 }
 
 static void sk_log(gm_code_writer* Body, const char* log)

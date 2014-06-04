@@ -10,6 +10,7 @@
 
 bool sk_lhs = false;
 bool sk_lhs_open = false; // generating write accessor, close after rhs
+char sk_buf[1024];
 std::vector<std::string> sk_iterators;
 
 void gm_cpp_gen::setTargetDir(const char* d) {

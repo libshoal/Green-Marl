@@ -455,13 +455,18 @@ void gm_cpplib::generate_expr_builtin(ast_expr_builtin* e, gm_code_writer& Body)
             switch (method_id) {
                 case GM_BLTIN_NODE_DEGREE:
                     assert(i->getTypeInfo()->get_target_graph_id() != NULL);
+#ifdef SHOAL_ACTIVATE
+                    sprintf(str_buf, "%s+1", i->get_genname());
+                    char tmp1[1024], tmp2[1024];
+                    strncpy(tmp1, sk_m_array_access_gen(BEGIN, str_buf), 1024);
+                    strncpy(tmp2, sk_m_array_access_gen(BEGIN, i->get_genname()), 1024);
+                    sprintf(str_buf, "(%s - %s)", tmp1, tmp2);
+#else
                     sprintf(str_buf, "(%s.%s[%s+1] - %s.%s[%s])",
                             i->getTypeInfo()->get_target_graph_id()->get_genname(), BEGIN, i->get_genname(),
                             i->getTypeInfo()->get_target_graph_id()->get_genname(), BEGIN, i->get_genname());
+#endif
                     Body.push(str_buf);
-                    sprintf(str_buf, "%s+1", i->get_genname());
-                    sk_m_array_access(&Body, BEGIN, i->get_genname());
-                    sk_m_array_access(&Body, BEGIN, str_buf);
                     break;
                 case GM_BLTIN_NODE_IN_DEGREE:
                     assert(i->getTypeInfo()->get_target_graph_id() != NULL);
