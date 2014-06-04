@@ -373,10 +373,7 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
 }
 
 void gm_cpp_gen::generate_rhs_field(ast_field* f) {
-    Body.push("/*RHS start*/");
     generate_lhs_field(f);
-    sk_rhs_end(&Body);
-    Body.push("/*RHS end*/");
 }
 
 const char* gm_cpp_gen::get_type_string(int type_id) {
@@ -695,9 +692,17 @@ void gm_cpp_gen::generate_sent_assign(ast_assign* a) {
 
     sk_lhs = false;
     //    _Body.push("/* LHS end */");
-    _Body.push(" = ");
+
+#if defined(SHOAL_ACTIVATE)
+    if (!sk_lhs_open)
+        _Body.push(" /*111*/ = ");
+#else
+    _Body.push(" /*222*/ = ");
+#endif /* SHOAL_ACTIVATE */
 
     generate_expr(a->get_rhs());
+
+    sk_rhs_end(&_Body);
 
     _Body.pushln(" ;");
 }

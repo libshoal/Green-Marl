@@ -387,22 +387,25 @@ static void sk_m_array_access(gm_code_writer* Body,
     bool is_indexed = std::find(sk_iterators.begin(),
                                 sk_iterators.end(), index)!=sk_iterators.end();
 
-    //#ifdef SK_DEBUG
+#ifdef SK_DEBUG
     sprintf(str_buf, "/* RTS array %s, index %s [wr=%d] [idx=%d]*/",
             array_name, index, sk_lhs, is_indexed);
     Body->push(str_buf);
 #endif
 
-#if SHOAL_ACTIVATE
+    if (is_indexed)
+        index = "__idx__";
+
+#ifdef SHOAL_ACTIVATE
     if (is_write)
         sprintf(str_buf, "%s_%s_write(%s, ", SHOAL_PREFIX, array_name, index);
     else
         sprintf(str_buf, "%s_%s_rd(%s)", SHOAL_PREFIX, array_name, index);
 
     Body->push(str_buf);
-    //#endif
+#endif
 
-    if (sk_lhs) {
+    if (is_write) {
 
         sk_lhs_open = true;
     }
@@ -469,8 +472,14 @@ static void sk_forall(gm_code_writer *Body,
 static void sk_rhs_end(gm_code_writer *Body)
 {
     if (sk_lhs_open) {
+#ifdef SK_DEBUG
         Body->push("/* END of accessor */");
+#endif
         sk_lhs_open = false;
+
+#ifdef SHOAL_ACTIVATE
+        Body->push(')');
+#endif
     }
 }
 
