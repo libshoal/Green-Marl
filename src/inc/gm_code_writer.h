@@ -122,7 +122,7 @@ public:
         if (s == '\n') {
 
             // current indentation  modification
-            // e.g.  
+            // e.g.
             //     if () .. {
             //     } <-- should remove indentation at this line
             if (_buf[0] == '}') {indent--; }
@@ -141,14 +141,14 @@ public:
             file_ptr += sprintf(&file_buf[file_ptr], "%s", _buf);
 
             // compute next indent
-            // e.g. 1  
+            // e.g. 1
             //     if () .. {
             //     } else { <-- should add indentation next
             //       ...
-            // e.g. 2  
+            // e.g. 2
             //     for (  ) {
             //       ... } <-- should remove indentation next
-            // e.g. 3  
+            // e.g. 3
             //     for (   {  <-- should add indentation only once
             //     }) <-- should remove indentation only once
             int i;
@@ -163,7 +163,7 @@ public:
                     open_cnt++;
                 else if (_buf[i] == '(')
                     open_cnt++;
-                else if (_buf[i] == '}') 
+                else if (_buf[i] == '}')
                     open_cnt--;
                 else if (_buf[i] == ')')
                     open_cnt--;
@@ -171,7 +171,7 @@ public:
 
             if (open_cnt > 0)
                 indent ++;
-            else if (open_cnt < 0) 
+            else if (open_cnt < 0)
                 indent --;
 
             col = 0;
@@ -193,6 +193,12 @@ public:
     char* file_buf;
 
 public:
+    char* copy_buffer_content(gm_code_writer *w) {
+
+        for (int i=0; i<col; i++)
+            w->push(_buf[i]);
+    }
+
     int get_write_ptr(int& curr_indent) {
         if (col != 0) push('\n');
         curr_indent = indent;
@@ -293,4 +299,3 @@ protected:
 };
 
 #endif
-

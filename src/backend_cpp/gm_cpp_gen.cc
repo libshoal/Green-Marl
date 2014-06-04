@@ -325,10 +325,13 @@ void gm_cpp_gen::generate_rhs_id(ast_id* id) {
     }
 }
 void gm_cpp_gen::generate_lhs_field(ast_field* f) {
-    Body.push(f->get_second()->get_genname());
-    Body.push('[');
+
+    gm_code_writer skBody;
+
+    skBody.push(f->get_second()->get_genname());
+    skBody.push('[');
     if (f->getTypeInfo()->is_node_property()) {
-        Body.push(get_lib()->node_index(f->get_first()));
+        skBody.push(get_lib()->node_index(f->get_first()));
         sk_m_array_access(&Body, f->get_second()->get_genname(),
                           get_lib()->node_index(f->get_first()));
     } else if (f->getTypeInfo()->is_edge_property()) {
@@ -337,12 +340,12 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
             const char* alias_name = f->get_first()->getSymInfo()->find_info_string(CPPBE_INFO_NEIGHBOR_ITERATOR);
             assert(alias_name != NULL);
             assert(strlen(alias_name) > 0);
-            Body.push(alias_name);
+            skBody.push(alias_name);
             sk_m_array_access(&Body, f->get_second()->get_genname(), alias_name);
         }
         // check if the edge is a back-edge
         else if (f->get_first()->find_info_bool(CPPBE_INFO_IS_REVERSE_EDGE)) {
-            Body.push(get_lib()->fw_edge_index(f->get_first()));
+            skBody.push(get_lib()->fw_edge_index(f->get_first()));
             sk_m_array_access(&Body, f->get_second()->get_genname(),
                               get_lib()->fw_edge_index(f->get_first()));
         }
@@ -353,8 +356,8 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
                //GET_ORG_IDX,
                //f->get_first()->get_genname()
               //);
-              //Body.push(temp);
-              Body.push(get_lib()->edge_index(f->get_first()));
+              //skBody.push(temp);
+              skBody.push(get_lib()->edge_index(f->get_first()));
               sk_m_array_access(&Body, f->get_second()->get_genname(),
                                 get_lib()->edge_index(f->get_first()));
         }
@@ -362,7 +365,10 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
     else {
         assert(false);
     }
-    Body.push(']');
+    skBody.push(']');
+#ifndef SHOAL_ACTIVATE
+    skBody.copy_buffer_content(&Body);
+#endif
     return;
 }
 

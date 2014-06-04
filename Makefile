@@ -18,8 +18,8 @@ BUILD_DIRS=\
 	$(GIRAPH)/generated \
 	$(GIRAPH)/bin \
 	$(GIRAPH)/java_bin \
-	$(GIRAPH)/target 
-	
+	$(GIRAPH)/target
+
 TEST_DIRS=\
 	test/cpp_be/output \
 	test/errors/output \
@@ -45,13 +45,13 @@ $(CONFIG_FILE): setup.mk.in etc/update_setup
 	fi; \
 	etc/update_setup setup.mk.bak setup.mk.in $(CONFIG_FILE) ${PWD}
 
-compiler: dirs $(CONFIG_FILE)
+compiler: dirs $(CONFIG_FILE) $(wildcard src/inc/*.h)
 	@cd src; make
 
 apps: dirs compiler $(CONFIG_FILE)
 	@cd apps; make
 
-coverage: 
+coverage:
 	rm -rf coverage coverage.info
 	lcov --no-external --capture -b src --directory . --output-file coverage.info
 	genhtml coverage.info --output-directory coverage
@@ -65,7 +65,7 @@ clean: $(CONFIG_FILE)
 clean_all: veryclean
 
 veryclean: $(CONFIG_FILE)
-	@cd apps; make clean_all 
+	@cd apps; make clean_all
 	@cd src; make veryclean
 	rm -rf $(BUILD_DIRS) $(TEST_DIRS)
 

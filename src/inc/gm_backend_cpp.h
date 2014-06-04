@@ -374,6 +374,8 @@ extern bool sk_lhs_open;
 extern std::vector<std::string> sk_iterators;
 
 #define SHOAL_PREFIX "shl_"
+#define SHOAL_ACTIVATE 1
+
 //#define SK_DEBUG 1
 
 static void sk_m_array_access(gm_code_writer* Body,
@@ -381,11 +383,22 @@ static void sk_m_array_access(gm_code_writer* Body,
                               const char* index)
 {
     char str_buf[1024*8];
+    bool is_write = sk_lhs;
+    bool is_indexed = std::find(sk_iterators.begin(),
+                                sk_iterators.end(), index)!=sk_iterators.end();
 
     //#ifdef SK_DEBUG
     sprintf(str_buf, "/* RTS array %s, index %s [wr=%d] [idx=%d]*/",
-            array_name, index, sk_lhs, std::find(sk_iterators.begin(),
-                                                 sk_iterators.end(), index)!=sk_iterators.end());
+            array_name, index, sk_lhs, is_indexed);
+    Body->push(str_buf);
+#endif
+
+#if SHOAL_ACTIVATE
+    if (is_write)
+        sprintf(str_buf, "%s_%s_write(%s, ", SHOAL_PREFIX, array_name, index);
+    else
+        sprintf(str_buf, "%s_%s_rd(%s)", SHOAL_PREFIX, array_name, index);
+
     Body->push(str_buf);
     //#endif
 
@@ -429,6 +442,16 @@ static void sk_property(gm_code_writer *Body,
     sk_log(Body, str_buf);
 
     // XXX do something
+}
+
+static gm_code_writer sk_temp_buffer(void)
+{
+    return gm_code_writer();
+}
+
+static void sk_temp_buf_flush(gm_code_writer* w, gm_code_writer *org)
+{
+    w->copy_buffer_content(org);
 }
 
 static void sk_forall(gm_code_writer *Body,
