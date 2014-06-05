@@ -199,6 +199,13 @@ public:
             w->push(_buf[i]);
     }
 
+    std::string get_buffer_content(void) {
+        std::string s;
+        for (int i=0; i<col; i++)
+            s.push_back(_buf[i]);
+        return s;
+    }
+
     int get_write_ptr(int& curr_indent) {
         if (col != 0) push('\n');
         curr_indent = indent;

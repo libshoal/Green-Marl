@@ -173,7 +173,8 @@ void gm_cpplib::generate_down_initializer(ast_foreach* f, gm_code_writer& Body) 
             sprintf(str_buf, "%s %s = ", type_name, var_name);
             Body.push(str_buf);
 
-            sk_m_array_access(&Body, array_name, alias_name);
+            sk_m_array_access(&Body, array_name, alias_name,
+                              (std::string(graph_name) + "." + array_name));
 #endif
             Body.pushln(";");
         }
@@ -274,13 +275,13 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         sprintf(str_buf, "for (%s %s = ", EDGE_T, alias_name);
         Body.push(str_buf);
 
-        sk_m_array_access(&Body, array_name, SHOAL_IDX_NAME);
+        sk_m_array_access(&Body, array_name, src_name, (std::string(graph_name) + "." + array_name));
 
         sprintf(str_buf, ";%s < ", alias_name);
         Body.push(str_buf);
 
-        sprintf(str_buf, "%s+1", SHOAL_IDX_NAME);
-        sk_m_array_access(&Body, array_name, str_buf);
+        sprintf(str_buf, "%s+1", src_name);
+        sk_m_array_access(&Body, array_name, str_buf, (std::string(graph_name) + "." + array_name));
 
         sprintf(str_buf, "; %s ++) ", alias_name);
         Body.push(str_buf);

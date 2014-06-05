@@ -12,6 +12,7 @@ bool sk_lhs = false;
 bool sk_lhs_open = false; // generating write accessor, close after rhs
 char sk_buf[1024];
 std::vector<std::string> sk_iterators;
+std::map<std::string,std::string> sk_array_mapping;
 
 void gm_cpp_gen::setTargetDir(const char* d) {
     assert(d != NULL);
@@ -143,6 +144,21 @@ void gm_cpp_gen::do_generate_begin() {
 
 void gm_cpp_gen::do_generate_end() {
     Header.NL();
+
+    char tmp[1024];
+    for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
+         i!=sk_array_mapping.end(); i++) {
+
+        sprintf(tmp, "#define %s_%s(i, v) %s[i] = v", (*i).first.c_str(),
+                SHOAL_SUFFIX_WR, (*i).second.c_str());
+        Header.pushln(tmp);
+
+        sprintf(tmp, "#define %s_%s(i) %s[i]", (*i).first.c_str(),
+                SHOAL_SUFFIX_RD, (*i).second.c_str());
+
+        Header.pushln(tmp);
+    }
+
     Header.pushln("/* w/ SHOAL extensions */");
     Header.pushln("#endif");
 }
@@ -373,7 +389,9 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
     }
     skBody.push(']');
 #ifdef SHOAL_ACTIVATE
-    sk_m_array_access(&Body, sk_name, sk_index);
+    std::string s = skBody.get_buffer_content();
+    printf("buffer content is %s\n", s.c_str());
+    sk_m_array_access(&Body, sk_name, sk_index, s.substr(0, s.find('[')));
 #else
     skBody.copy_buffer_content(&Body);
 #endif

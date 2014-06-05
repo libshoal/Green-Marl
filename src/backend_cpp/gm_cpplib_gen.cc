@@ -462,8 +462,10 @@ void gm_cpplib::generate_expr_builtin(ast_expr_builtin* e, gm_code_writer& Body)
 #else
                     sprintf(str_buf, "%s+1", i->get_genname());
                     char tmp1[1024], tmp2[1024];
-                    strncpy(tmp1, sk_m_array_access_gen(BEGIN, str_buf), 1024);
-                    strncpy(tmp2, sk_m_array_access_gen(BEGIN, i->get_genname()), 1024);
+                    strncpy(tmp1, sk_m_array_access_gen(BEGIN, str_buf,
+                                                        std::string(i->getTypeInfo()->get_target_graph_id()->get_genname()) + "." + BEGIN), 1024);
+                    strncpy(tmp2, sk_m_array_access_gen(BEGIN, i->get_genname(),
+                                                        std::string(i->getTypeInfo()->get_target_graph_id()->get_genname()) + "." + BEGIN), 1024);
                     sprintf(str_buf, "(%s - %s)", tmp1, tmp2);
 #endif
                     Body.push(str_buf);
@@ -523,7 +525,9 @@ void gm_cpplib::generate_expr_builtin(ast_expr_builtin* e, gm_code_writer& Body)
 #ifndef SHOAL_ACTIVATE
                     sprintf(str_buf, "%s.%s[%s]", i->getTypeInfo()->get_target_graph_id()->get_genname(), FROM_IDX, i->get_genname());
 #else
-                    sk_m_array_access(&Body, FROM_IDX, i->get_genname());
+                    sk_m_array_access(&Body, FROM_IDX, i->get_genname(),
+                                      (std::string(i->getTypeInfo()->get_target_graph_id()->get_genname()) +
+                                       "." + FROM_IDX));
                     sprintf(str_buf, "/*SK edge_from*/%s.%s[%s]", i->getTypeInfo()->get_target_graph_id()->get_genname(), FROM_IDX, i->get_genname());
 #endif
                 }
@@ -532,7 +536,7 @@ void gm_cpplib::generate_expr_builtin(ast_expr_builtin* e, gm_code_writer& Body)
 #ifndef SHOAL_ACTIVATE
                     sprintf(str_buf, "%s.%s[%s]", i->getTypeInfo()->get_target_graph_id()->get_genname(), NODE_IDX, i->get_genname());
 #else
-                    sk_m_array_access(&Body, NODE_IDX, i->get_genname());
+                    sk_m_array_access(&Body, NODE_IDX, i->get_genname(), std::string(i->getTypeInfo()->get_target_graph_id()->get_genname()) + "." + NODE_IDX);
                     sprintf(str_buf, "/*SK edge to*/%s.%s[%s]",
                             i->getTypeInfo()->get_target_graph_id()->get_genname(),
                             NODE_IDX, i->get_genname());

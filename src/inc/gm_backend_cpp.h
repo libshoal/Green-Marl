@@ -373,14 +373,18 @@ extern bool sk_lhs;
 extern bool sk_lhs_open;
 extern char sk_buf[];
 extern std::vector<std::string> sk_iterators;
+extern std::map<std::string,std::string> sk_array_mapping;
 
 #define SHOAL_PREFIX "shl_"
 #define SHOAL_ACTIVATE 1
 #define SHOAL_IDX_NAME "__idx__"
+#define SHOAL_SUFFIX_RD "_rd"
+#define SHOAL_SUFFIX_WR "_wr"
 
 //#define SK_DEBUG 1
 
-static char* sk_m_array_access_gen(const char* array_name, const char* index)
+static char* sk_m_array_access_gen(const char* array_name, const char* index,
+                   std::string original_array)
 {
     char str_buf[1024*8];
     bool is_write = sk_lhs;
@@ -393,28 +397,35 @@ static char* sk_m_array_access_gen(const char* array_name, const char* index)
     Body->push(str_buf);
 #endif
 
+    /* this obviously does not work right now
     if (is_indexed)
         index = SHOAL_IDX_NAME;
+    */
 
     if (is_write) {
 
         sk_lhs_open = true;
     }
 
+    sk_array_mapping.insert(make_pair(std::string(SHOAL_PREFIX) + "_" + array_name, original_array));
+
     if (is_write)
-        sprintf(str_buf, "%s_%s_write(%s, ", SHOAL_PREFIX, array_name, index);
+        sprintf(str_buf, "%s_%s_%s(%s, ", SHOAL_PREFIX, array_name,
+                SHOAL_SUFFIX_WR, index);
     else
-        sprintf(str_buf, "%s_%s_rd(%s)", SHOAL_PREFIX, array_name, index);
+        sprintf(str_buf, "%s_%s_%s(%s)", SHOAL_PREFIX, array_name,
+                SHOAL_SUFFIX_RD, index);
 
     return str_buf;
 }
 
 static void sk_m_array_access(gm_code_writer* Body,
                               const char* array_name,
-                              const char* index)
+                              const char* index,
+                              std::string original_array)
 {
 #ifdef SHOAL_ACTIVATE
-    Body->push(sk_m_array_access_gen(array_name, index));
+    Body->push(sk_m_array_access_gen(array_name, index, original_array));
 #endif
 }
 
