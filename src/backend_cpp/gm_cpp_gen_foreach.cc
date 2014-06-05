@@ -165,11 +165,16 @@ void gm_cpplib::generate_down_initializer(ast_foreach* f, gm_code_writer& Body) 
                     gm_is_up_nbr_node_iteration(iter_type) ? '-' : '+');
             Body.pushln(str_buf);
         } else {
+
+#ifndef SHOAL_ACTIVATE
+            sprintf(str_buf, "%s %s = %s.%s [%s];", type_name, var_name, graph_name, array_name, alias_name);
+            Body.pushln(str_buf);
+#else
             sprintf(str_buf, "%s %s = ", type_name, var_name);
             Body.push(str_buf);
 
             sk_m_array_access(&Body, array_name, alias_name);
-
+#endif
             Body.pushln(";");
         }
     }
@@ -191,12 +196,13 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         }
         char* it_name = iter->get_genname();
 
-        sk_iterator(&Body, iter->get_genname(), get_type_string(iter->getTypeSummary()));
-
         sprintf(str_buf, "for (%s %s = 0; /*7*/%s < %s.%s(); %s ++) ",
                 get_type_string(iter->getTypeSummary()),
                 it_name, it_name, graph_name,
                 gm_is_node_iteration(type) ? NUM_NODES : NUM_EDGES, it_name);
+
+#ifdef SHOAL_ACTIVATE
+        sk_iterator(&Body, iter->get_genname(), get_type_string(iter->getTypeSummary()));
 
         Body.pushln(str_buf);
 
@@ -221,6 +227,7 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         }
 
         sk_forall(&Body, sk_g_name, sk_array_name);
+#endif
 
     } else if (gm_is_common_nbr_iteration(type)) {
         assert(!fe->is_source_field());
@@ -258,7 +265,12 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
 
         sk_log(&Body, "found loop, but not over array");
 
-#ifdef SHOAL_ACTIVATE
+#ifndef SHOAL_ACTIVATE
+        sprintf(str_buf, "for (%s %s = %s.%s[%s];", EDGE_T, alias_name, graph_name, array_name, src_name);
+        Body.push(str_buf);
+        sprintf(str_buf, "%s < %s.%s[%s+1] ; %s ++) ", alias_name, graph_name, array_name, src_name, alias_name);
+        Body.pushln(str_buf);
+#else
         sprintf(str_buf, "for (%s %s = ", EDGE_T, alias_name);
         Body.push(str_buf);
 
@@ -272,11 +284,6 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
 
         sprintf(str_buf, "; %s ++) ", alias_name);
         Body.push(str_buf);
-#else
-        sprintf(str_buf, "for (%s %s = %s.%s[%s];", EDGE_T, alias_name, graph_name, array_name, src_name);
-        Body.push(str_buf);
-        sprintf(str_buf, "%s < %s.%s[%s+1] ; %s ++) ", alias_name, graph_name, array_name, src_name, alias_name);
-        Body.pushln(str_buf);
 #endif
         // SET_TYPE
     } else if (gm_is_simple_collection_iteration(type) || gm_is_collection_of_collection_iteration(type)) {

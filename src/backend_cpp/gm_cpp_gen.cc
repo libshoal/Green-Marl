@@ -143,6 +143,7 @@ void gm_cpp_gen::do_generate_begin() {
 
 void gm_cpp_gen::do_generate_end() {
     Header.NL();
+    Header.pushln("/* w/ SHOAL extensions */");
     Header.pushln("#endif");
 }
 
@@ -329,12 +330,15 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
 
     gm_code_writer skBody;
 
+    const char *sk_name;
+    const char *sk_index;
+
     skBody.push(f->get_second()->get_genname());
     skBody.push('[');
     if (f->getTypeInfo()->is_node_property()) {
         skBody.push(get_lib()->node_index(f->get_first()));
-        sk_m_array_access(&Body, f->get_second()->get_genname(),
-                          get_lib()->node_index(f->get_first()));
+        sk_name = f->get_second()->get_genname();
+        sk_index = get_lib()->node_index(f->get_first());
     } else if (f->getTypeInfo()->is_edge_property()) {
 
         if (f->is_rarrow()) { // [XXX] this feature is still not finished, should be re-visited
@@ -342,13 +346,14 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
             assert(alias_name != NULL);
             assert(strlen(alias_name) > 0);
             skBody.push(alias_name);
-            sk_m_array_access(&Body, f->get_second()->get_genname(), alias_name);
+            sk_name = f->get_second()->get_genname();
+            sk_index = alias_name;
         }
         // check if the edge is a back-edge
         else if (f->get_first()->find_info_bool(CPPBE_INFO_IS_REVERSE_EDGE)) {
             skBody.push(get_lib()->fw_edge_index(f->get_first()));
-            sk_m_array_access(&Body, f->get_second()->get_genname(),
-                              get_lib()->fw_edge_index(f->get_first()));
+            sk_name = f->get_second()->get_genname();
+            sk_index = get_lib()->fw_edge_index(f->get_first());
         }
         else {
             // original edge index if semi-sorted
@@ -359,15 +364,17 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
               //);
               //skBody.push(temp);
               skBody.push(get_lib()->edge_index(f->get_first()));
-              sk_m_array_access(&Body, f->get_second()->get_genname(),
-                                get_lib()->edge_index(f->get_first()));
+              sk_name = f->get_second()->get_genname();
+              sk_index = get_lib()->edge_index(f->get_first());
         }
     }
     else {
         assert(false);
     }
     skBody.push(']');
-#ifndef SHOAL_ACTIVATE
+#ifdef SHOAL_ACTIVATE
+    sk_m_array_access(&Body, sk_name, sk_index);
+#else
     skBody.copy_buffer_content(&Body);
 #endif
     return;

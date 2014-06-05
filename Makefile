@@ -81,3 +81,9 @@ $(TEST_DIRS):
 
 etc/update_setup :
 	g++ etc/update_setup.cc -o etc/update_setup
+
+sk_pagerank:
+	rm -rf apps/output_cpp/generated/pagerank.cc
+	make -C apps/src/ ../output_cpp/generated/pagerank.cc
+	cat apps/output_cpp/generated/pagerank.cc
+	cat apps/output_cpp/generated/pagerank.h
