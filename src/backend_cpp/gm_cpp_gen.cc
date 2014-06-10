@@ -675,8 +675,9 @@ void gm_cpp_gen::generate_sent_vardecl(ast_vardecl* v) {
     if (sk_on_frame) {
 
         char sktmp[1024];
-        sprintf(sktmp, "// Omitting declaration of [%s] type [%s] - "
-                "should be on frame\n", sk_name.c_str(), sk_type.c_str());
+        sprintf(sktmp, "// Omitting declaration of [%s] type [%s] parallel [%d]"
+                " --> should be on frame\n", sk_name.c_str(), sk_type.c_str(),
+                is_under_parallel_sentblock());
         Body.pushln(sktmp);
     }
 }
