@@ -18,6 +18,8 @@ public:
         _out = stdout;
         tabsz = 4;
         col = 0;
+        sk_col = 0;
+        sk_print = true;
         max_col = MAX_COL;
         file_ptr = 0;
         _buf = new char[MAX_COL * 2]; // one line buffer
@@ -76,6 +78,29 @@ public:
 
     }
 
+    void sk_disable(void) {
+        sk_print = false;
+        sk_disable_old_col = col;
+    }
+
+    void sk_revert(void) {
+        col = sk_disable_old_col;
+        sk_print = true;
+    }
+
+    void sk_start(void) {
+        sk_col = col;
+    }
+
+    std::string sk_end(void) {
+        std::string s;
+        assert (sk_col<=col); // otherwise: buffer overlfow
+        for (int i=sk_col; i<col; i++)
+            s.push_back(_buf[i]);
+        sk_col = 0;
+        return s;
+    }
+
     void push(const char* s) {
         int l = strlen(s);
         for (int i = 0; i < l; i++) {
@@ -119,7 +144,7 @@ public:
         _buf[col++] = s;
 
         assert(col < MAX_COL *2);
-        if (s == '\n') {
+        if (s == '\n' && sk_print) {
 
             // current indentation  modification
             // e.g.
@@ -183,6 +208,9 @@ public:
     int tabsz;
     int col;
     int max_col;
+    int sk_col;
+    bool sk_print;
+    int sk_disable_old_col;
     char* _buf;
     int base_indent;
 

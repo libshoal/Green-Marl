@@ -11,6 +11,7 @@
 bool sk_lhs = false;
 bool sk_lhs_open = false; // generating write accessor, close after rhs
 char sk_buf[1024];
+std::string last_lhs_id;
 std::vector<std::string> sk_iterators;
 std::map<std::string,std::string> sk_array_mapping;
 
@@ -319,7 +320,9 @@ void gm_cpp_gen::generate_lhs_default(int type) {
 
 void gm_cpp_gen::generate_lhs_id(ast_id* id) {
     Body.push(id->get_genname());
+    last_lhs_id = id->get_genname();
 }
+
 void gm_cpp_gen::generate_rhs_id(ast_id* id) {
     if (id->getTypeInfo()->is_edge_compatible()) {
         // reverse edge
@@ -616,6 +619,9 @@ void gm_cpp_gen::generate_sent_vardecl(ast_vardecl* v) {
         return;
     }
 
+    gm_code_writer skBody;
+    skBody.sk_start();
+
     if (t->is_sequence_collection()) {
         //for sequence-list-vector optimization
         ast_id* id = v->get_idlist()->get_item(0);
@@ -625,13 +631,22 @@ void gm_cpp_gen::generate_sent_vardecl(ast_vardecl* v) {
         } else {
             type_string = get_type_string(t);
         }
-        Body.push_spc(type_string);
+        skBody.push_spc(type_string);
     } else {
-        Body.push_spc(get_type_string(t));
+        skBody.push_spc(get_type_string(t));
     }
 
+    // This is the type! We need this to generate the struct.
+    // BUT: we do NOT need to generate anything in case this is global state
+    std::string sk_type = skBody.sk_end();
+
+    bool sk_on_frame = true;
+    std::string sk_name = "NONE";
+
     if (t->is_property()) {
-        char tmp[1000];
+
+        sk_on_frame = false;
+        skBody.copy_buffer_content(&Body);
 
         ast_idlist* idl = v->get_idlist();
         assert(idl->get_length() == 1);
@@ -647,11 +662,22 @@ void gm_cpp_gen::generate_sent_vardecl(ast_vardecl* v) {
         generate_lhs_id(idl->get_item(0));
         get_lib()->add_collection_def(idl->get_item(0));
     } else if (t->is_primitive()) {
+        Body.sk_disable(); Body.sk_start();
         generate_idlist_primitive(v->get_idlist());
-        Body.pushln(";");
+        sk_name = last_lhs_id;
+        skBody.pushln(";");
+        Body.sk_revert();
     } else {
         generate_idlist(v->get_idlist());
-        Body.pushln(";");
+        skBody.pushln(";");
+    }
+
+    if (sk_on_frame) {
+
+        char sktmp[1024];
+        sprintf(sktmp, "// Omitting declaration of [%s] type [%s] - "
+                "should be on frame\n", sk_name.c_str(), sk_type.c_str());
+        Body.pushln(sktmp);
     }
 }
 
@@ -696,17 +722,19 @@ void gm_cpp_gen::generate_sent_map_assign(ast_assign_mapentry* a) {
 
 void gm_cpp_gen::generate_sent_assign(ast_assign* a) {
 
-    //    _Body.push("/* LHS start (sent_assign) */");
+//    _Body.push("/* LHS start (sent_assign) */");
     sk_lhs = true;
     if (a->is_target_scalar()) {
         ast_id* leftHandSide = a->get_lhs_scala();
         if (leftHandSide->is_instantly_assigned()) { //we have to add the variable declaration here
+            Body.push("/*1*/");
             Body.push(get_lib()->get_type_string(leftHandSide->getTypeSummary()));
             if (a->is_reference()) {
                 Body.push("& ");
             } else {
                 Body.push(" ");
             }
+            Body.push("/*2*/");
         }
         generate_lhs_id(a->get_lhs_scala());
     } else if (a->is_target_map_entry()) {
