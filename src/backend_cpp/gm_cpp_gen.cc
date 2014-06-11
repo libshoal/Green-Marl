@@ -8,6 +8,9 @@
 #include "gm_cpplib_words.h"
 #include "gm_argopts.h"
 
+std::map<std::string,std::string> f_global;
+std::map<std::string,std::string> f_thread;
+
 bool sk_lhs = false;
 bool sk_lhs_open = false; // generating write accessor, close after rhs
 char sk_buf[1024];
@@ -146,6 +149,8 @@ void gm_cpp_gen::do_generate_begin() {
 void gm_cpp_gen::do_generate_end() {
     Header.NL();
 
+    Header.pushln("/* w/ SHOAL extensions */");
+
     char tmp[1024];
     for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
          i!=sk_array_mapping.end(); i++) {
@@ -160,7 +165,33 @@ void gm_cpp_gen::do_generate_end() {
         Header.pushln(tmp);
     }
 
-    Header.pushln("/* w/ SHOAL extensions */");
+    Header.NL();
+    sprintf(tmp, "struct %sframe {", SHOAL_PREFIX);
+    Header.pushln(tmp);
+
+    for (std::map<std::string,std::string>::iterator i=f_global.begin();
+         i!=f_global.end(); i++) {
+
+        sprintf(tmp, "%s %s;", (*i).second.c_str(), (*i).first.c_str());
+        Header.pushln(tmp);
+    }
+
+    Header.pushln("};");
+    Header.NL();
+
+    sprintf(tmp, "struct %sper_thread_frame {", SHOAL_PREFIX);
+    Header.pushln(tmp);
+
+    for (std::map<std::string,std::string>::iterator i=f_thread.begin();
+         i!=f_thread.end(); i++) {
+
+        sprintf(tmp, "%s %s;", (*i).second.c_str(), (*i).first.c_str());
+        Header.pushln(tmp);
+    }
+
+    Header.pushln("};");
+    Header.NL();
+
     Header.pushln("#endif");
 }
 
@@ -319,6 +350,14 @@ void gm_cpp_gen::generate_lhs_default(int type) {
 }
 
 void gm_cpp_gen::generate_lhs_id(ast_id* id) {
+
+    if (f_global.find(id->get_genname()) != f_global.end()) {
+        Body.push("f.");
+    }
+    else if (f_thread.find(id->get_genname()) != f_thread.end()) {
+        Body.push("ft.");
+    }
+
     Body.push(id->get_genname());
     last_lhs_id = id->get_genname();
 }
@@ -674,11 +713,8 @@ void gm_cpp_gen::generate_sent_vardecl(ast_vardecl* v) {
 
     if (sk_on_frame) {
 
-        char sktmp[1024];
-        sprintf(sktmp, "// Omitting declaration of [%s] type [%s] parallel [%d]"
-                " --> should be on frame\n", sk_name.c_str(), sk_type.c_str(),
-                is_under_parallel_sentblock());
-        Body.pushln(sktmp);
+        sk_add_to_frame(sk_type.c_str(), sk_name.c_str(),
+                        !is_under_parallel_sentblock());
     }
 }
 
@@ -723,7 +759,6 @@ void gm_cpp_gen::generate_sent_map_assign(ast_assign_mapentry* a) {
 
 void gm_cpp_gen::generate_sent_assign(ast_assign* a) {
 
-//    _Body.push("/* LHS start (sent_assign) */");
     sk_lhs = true;
     if (a->is_target_scalar()) {
         ast_id* leftHandSide = a->get_lhs_scala();
@@ -746,14 +781,8 @@ void gm_cpp_gen::generate_sent_assign(ast_assign* a) {
     }
 
     sk_lhs = false;
-    //    _Body.push("/* LHS end */");
 
-#if defined(SHOAL_ACTIVATE)
-    if (!sk_lhs_open)
-        _Body.push(" /*111*/ = ");
-#else
-    _Body.push(" /*222*/ = ");
-#endif /* SHOAL_ACTIVATE */
+    _Body.push(" = ");
 
     generate_expr(a->get_rhs());
 

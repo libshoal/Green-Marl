@@ -381,6 +381,9 @@ extern std::map<std::string,std::string> sk_array_mapping;
 #define SHOAL_SUFFIX_RD "_rd"
 #define SHOAL_SUFFIX_WR "_wr"
 
+extern std::map<std::string,std::string> f_global;
+extern std::map<std::string,std::string> f_thread;
+
 //#define SK_DEBUG 1
 
 static char* sk_m_array_access_gen(const char* array_name, const char* index,
@@ -498,6 +501,16 @@ static void sk_rhs_end(gm_code_writer *Body)
 #ifdef SHOAL_ACTIVATE
         Body->push(')');
 #endif
+    }
+}
+
+static void sk_add_to_frame(const char *type, const char *name, bool global)
+{
+    if (global) {
+        f_global.insert(std::make_pair(name, type));
+    }
+    else {
+        f_thread.insert(std::make_pair(name, type));
     }
 }
 
