@@ -233,6 +233,7 @@ public:
 
     virtual const char* get_type_string(ast_typedecl* t);
     virtual const char* get_type_string(int prim_type);
+    virtual int get_type_id(const char *type_string);
     virtual void generate_lhs_id(ast_id* i);
     virtual void generate_lhs_field(ast_field* i);
     virtual void generate_sent_nop(ast_nop* n);
@@ -283,6 +284,7 @@ private:
     const char* get_function_name(int methodId, bool& addThreadId);
     void generate_idlist_primitive(ast_idlist* idList);
     void generate_lhs_default(int type);
+    const char* get_lhs_default(int type);
     void generate_sent_map_assign(ast_assign_mapentry* a);
 };
 
@@ -506,11 +508,17 @@ static void sk_rhs_end(gm_code_writer *Body)
 
 static void sk_add_to_frame(const char *type, const char *name, bool global)
 {
+    std::string s = std::string(type);
+
+    // this is ridiculous ..
+    // from: http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+
     if (global) {
-        f_global.insert(std::make_pair(name, type));
+        f_global.insert(std::make_pair(name, s.c_str()));
     }
     else {
-        f_thread.insert(std::make_pair(name, type));
+        f_thread.insert(std::make_pair(name, s.c_str()));
     }
 }
 

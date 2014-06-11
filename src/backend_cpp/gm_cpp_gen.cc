@@ -14,6 +14,8 @@ std::map<std::string,std::string> f_thread;
 bool sk_lhs = false;
 bool sk_lhs_open = false; // generating write accessor, close after rhs
 char sk_buf[1024];
+bool sk_fr_global_init = false;
+bool sk_fr_thread_init = false;
 std::string last_lhs_id;
 std::vector<std::string> sk_iterators;
 std::map<std::string,std::string> sk_array_mapping;
@@ -143,6 +145,7 @@ void gm_cpp_gen::do_generate_begin() {
     //----------------------------------------
     sprintf(temp, "%s.h", fname);
     add_include(temp, Body, false);
+    add_include("shl.h", Body, false);
     Body.NL();
 }
 
@@ -179,6 +182,20 @@ void gm_cpp_gen::do_generate_end() {
     Header.pushln("};");
     Header.NL();
 
+    Header.push("#define FRAME_DEFAULT {");
+    int j = 0;
+    for (std::map<std::string,std::string>::iterator i=f_global.begin();
+         i!=f_global.end(); i++) {
+
+        if (j++>0)
+            Header.push(", ");
+
+        int t = get_type_id((*i).second.c_str());
+        Header.push(get_lhs_default(t));
+    }
+    Header.pushln("}");
+    Header.NL();
+
     sprintf(tmp, "struct %sper_thread_frame {", SHOAL_PREFIX);
     Header.pushln(tmp);
 
@@ -190,6 +207,20 @@ void gm_cpp_gen::do_generate_end() {
     }
 
     Header.pushln("};");
+    Header.NL();
+
+    Header.push("#define FRAME_THREAD_DEFAULT {");
+    j = 0;
+    for (std::map<std::string,std::string>::iterator i=f_thread.begin();
+         i!=f_thread.end(); i++) {
+
+        if (j++>0)
+            Header.push(", ");
+
+        int t = get_type_id((*i).second.c_str());
+        Header.push(get_lhs_default(t));
+    }
+    Header.pushln("}");
     Header.NL();
 
     Header.pushln("#endif");
@@ -348,13 +379,49 @@ void gm_cpp_gen::generate_lhs_default(int type) {
             return;
     }
 }
+const char* gm_cpp_gen::get_lhs_default(int type) {
+    switch (type) {
+        case GMTYPE_BYTE:
+        case GMTYPE_SHORT:
+        case GMTYPE_INT:
+        case GMTYPE_LONG:
+            return "0";
+            break;
+        case GMTYPE_FLOAT:
+        case GMTYPE_DOUBLE:
+            return "0.0";
+            break;
+        case GMTYPE_BOOL:
+            return "false";
+            break;
+        default:
+            assert(false);
+            return NULL;
+    }
+}
 
 void gm_cpp_gen::generate_lhs_id(ast_id* id) {
 
     if (f_global.find(id->get_genname()) != f_global.end()) {
+        if (!sk_fr_global_init) {
+
+            char tmp[1024];
+            sprintf(tmp, "struct %sframe f = FRAME_DEFAULT;", SHOAL_PREFIX);
+            Body.pushln(tmp);
+
+            sk_fr_global_init = true;
+        }
         Body.push("f.");
     }
     else if (f_thread.find(id->get_genname()) != f_thread.end()) {
+        if (!sk_fr_thread_init) {
+
+            char tmp[1024];
+            sprintf(tmp, "struct %sper_thread_frame ft = FRAME_THREAD_DEFAULT;", SHOAL_PREFIX);
+            Body.pushln(tmp);
+
+            sk_fr_thread_init = true;
+        }
         Body.push("ft.");
     }
 
@@ -442,6 +509,26 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
 
 void gm_cpp_gen::generate_rhs_field(ast_field* f) {
     generate_lhs_field(f);
+}
+
+int gm_cpp_gen::get_type_id(const char* type_string) {
+
+    if (strcmp(type_string, "int8_t")==0)
+        return GMTYPE_BYTE;
+    else if (strcmp(type_string, "int16_t")==0)
+        return GMTYPE_SHORT;
+    else if (strcmp(type_string, "int32_t")==0)
+        return GMTYPE_INT;
+    else if (strcmp(type_string, "int64_t")==0)
+        return GMTYPE_LONG;
+    else if (strcmp(type_string, "float")==0)
+        return GMTYPE_FLOAT;
+    else if (strcmp(type_string, "double")==0)
+        return GMTYPE_DOUBLE;
+    else if (strcmp(type_string, "bool")==0)
+        return GMTYPE_BOOL;
+    else
+        assert (!"Unknown input to get_type_id");
 }
 
 const char* gm_cpp_gen::get_type_string(int type_id) {
@@ -703,6 +790,7 @@ void gm_cpp_gen::generate_sent_vardecl(ast_vardecl* v) {
     } else if (t->is_primitive()) {
         Body.sk_disable(); Body.sk_start();
         generate_idlist_primitive(v->get_idlist());
+        printf("%d\n", v->get_idlist()->get_length());
         sk_name = last_lhs_id;
         skBody.pushln(";");
         Body.sk_revert();
@@ -782,7 +870,8 @@ void gm_cpp_gen::generate_sent_assign(ast_assign* a) {
 
     sk_lhs = false;
 
-    _Body.push(" = ");
+    if (!sk_lhs_open)
+        _Body.push(" = ");
 
     generate_expr(a->get_rhs());
 
@@ -799,6 +888,8 @@ void gm_cpp_gen::generate_sent_block_enter(ast_sentblock* sb) {
     if (sb->find_info_bool(CPPBE_INFO_IS_PROC_ENTRY) && !FE.get_current_proc()->is_local()) {
         Body.pushln("//Initializations");
         sprintf(temp, "%s();", RT_INIT);
+        Body.pushln(temp);
+        sprintf(temp, "%s_init();", SHOAL_PREFIX);
         Body.pushln(temp);
 
         //----------------------------------------------------
