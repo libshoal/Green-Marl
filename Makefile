@@ -82,8 +82,15 @@ $(TEST_DIRS):
 etc/update_setup :
 	g++ etc/update_setup.cc -o etc/update_setup
 
-sk_pagerank:
+GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always)
+
+sk_pagerank: sk_pr_gm | sk_pr_gcc
+
+sk_pr_gm:
 	rm -rf apps/output_cpp/generated/pagerank.cc
 	make -C apps/src/ ../output_cpp/generated/pagerank.cc
 	cat apps/output_cpp/generated/pagerank.cc
 	cat apps/output_cpp/generated/pagerank.h
+
+sk_pr_gcc:
+	cd apps/output_cpp/src; g++ -O3 -DVERSION=\"$(GIT_VERSION)\" -g -I../../../shoal/inc -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/pagerank.cc pagerank_main.cc ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph -o ../bin/pagerank
