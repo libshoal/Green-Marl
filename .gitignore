@@ -53,3 +53,5 @@ apps/output_java/src/main/_64bit
 etc/update_setup
 setup.mk.bak
 .gitignore
+cscope.files
+cscope.out
