@@ -371,10 +371,17 @@ static const char* SEMI_SORT = "do_semi_sort";
 static const char* IS_SEMI_SORTED = "is_semi_sorted";
 static const char* PREPARE_FROM_INFO = "prepare_edge_source";
 
+struct sk_prop {
+
+    std::string name;
+    std::string type;
+};
+
 extern bool sk_lhs;
 extern bool sk_lhs_open;
 extern char sk_buf[];
 extern std::vector<std::string> sk_iterators;
+extern std::vector<struct sk_prop> sk_props;
 extern std::map<std::string,std::string> sk_array_mapping;
 
 #define SHOAL_PREFIX "shl_"
@@ -461,13 +468,10 @@ static void sk_property(gm_code_writer *Body,
                         const char* prop_type,
                         bool dynamic) // whether property is GM internal
 {
-    char str_buf[1000];
-    sprintf(str_buf, "found property [%s] of type [%s], dynamic=[%d]",
-            prop, prop_type, dynamic);
+    printf("found property [%s] of type [%s], dynamic=[%d]",
+           prop, prop_type, dynamic);
 
-    sk_log(Body, str_buf);
-
-    // XXX do something
+    sk_props.push_back({std::string(prop), std::string(prop_type)});
 }
 
 static gm_code_writer sk_temp_buffer(void)
