@@ -393,6 +393,9 @@ extern std::map<std::string,std::string> sk_array_mapping;
 extern std::map<std::string,std::string> f_global;
 extern std::map<std::string,std::string> f_thread;
 
+extern std::set<std::string> sk_write_set;
+extern std::set<std::string> sk_read_set;
+
 //#define SK_DEBUG 1
 
 static char* sk_m_array_access_gen(const char* array_name, const char* index,
@@ -421,13 +424,16 @@ static char* sk_m_array_access_gen(const char* array_name, const char* index,
 
     sk_array_mapping.insert(make_pair(std::string(SHOAL_PREFIX) + "_" + array_name, original_array));
 
-    if (is_write)
+    if (is_write) {
         sprintf(str_buf, "%s_%s_%s(%s, ", SHOAL_PREFIX, array_name,
                 SHOAL_SUFFIX_WR, index);
-    else
+        sk_write_set.insert(array_name);
+    }
+    else {
         sprintf(str_buf, "%s_%s_%s(%s)", SHOAL_PREFIX, array_name,
                 SHOAL_SUFFIX_RD, index);
-
+        sk_read_set.insert(array_name);
+    }
     return str_buf;
 }
 

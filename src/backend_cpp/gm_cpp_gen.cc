@@ -20,6 +20,8 @@ std::string last_lhs_id;
 std::vector<std::string> sk_iterators;
 std::vector<struct sk_prop> sk_props;
 std::map<std::string,std::string> sk_array_mapping;
+std::set<std::string> sk_write_set;
+std::set<std::string> sk_read_set;
 
 void gm_cpp_gen::setTargetDir(const char* d) {
     assert(d != NULL);
@@ -155,6 +157,21 @@ void gm_cpp_gen::do_generate_end() {
     Header.NL();
 
     Header.pushln("/* w/ SHOAL extensions */");
+
+    // Print write and read set
+    // --------------------------------------------------
+    printf("Write set\n------------------------------\n");
+    for (std::set<std::string>::iterator i=sk_write_set.begin();
+         i!=sk_write_set.end(); i++) {
+
+        printf("%s\n", (*i).c_str());
+    }
+    printf("Read set\n------------------------------\n");
+    for (std::set<std::string>::iterator i=sk_read_set.begin();
+         i!=sk_read_set.end(); i++) {
+
+        printf("%s\n", (*i).c_str());
+    }
 
     // Access functions
     // --------------------------------------------------
