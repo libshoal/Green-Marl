@@ -176,39 +176,44 @@ void gm_cpp_gen::do_generate_end() {
     // Access functions
     // --------------------------------------------------
 
-    Header.pushln("#ifdef SHL_DBG_ARR");
+    // Header.pushln("#ifdef SHL_DBG_ARR");
+    // for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
+    //      i!=sk_array_mapping.end(); i++) {
+
+    //     sprintf(tmp, "int64_t num_%s_wr = 0;", (*i).first.c_str());
+    //     Header.pushln(tmp);
+    //     sprintf(tmp, "int64_t num_%s_rd = 0;", (*i).first.c_str());
+    //     Header.pushln(tmp);
+
+    //     sprintf(tmp, "static void %s_%s(int32_t i, int32_t v) { %s[i] = v; num_%s_wr++; }",
+    //             (*i).first.c_str(), SHOAL_SUFFIX_WR, (*i).second.c_str(), (*i).first.c_str());
+    //     Header.pushln(tmp);
+
+    //     sprintf(tmp, "#define %s_%s(i) %s[i]; num_%s_rd++;", (*i).first.c_str(),
+    //             SHOAL_SUFFIX_RD, (*i).second.c_str(), (*i).first.c_str());
+
+    //     Header.pushln(tmp);
+    // }
+    // Header.pushln("#else");
+
     for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
          i!=sk_array_mapping.end(); i++) {
 
-        sprintf(tmp, "int64_t num_%s_wr = 0;", (*i).first.c_str());
-        Header.pushln(tmp);
-        sprintf(tmp, "int64_t num_%s_rd = 0;", (*i).first.c_str());
-        Header.pushln(tmp);
+        // Write
+        if (sk_write_set.find((*i).first.c_str())!=sk_write_set.end()) {
+            sprintf(tmp, "#define %s_%s_%s(i, v) %s[i] = v", SHOAL_PREFIX,
+                    (*i).first.c_str(), SHOAL_SUFFIX_WR, (*i).second.c_str());
+            Header.pushln(tmp);
+        }
 
-        sprintf(tmp, "static void %s_%s(int32_t i, int32_t v) { %s[i] = v; num_%s_wr++; }",
-                (*i).first.c_str(), SHOAL_SUFFIX_WR, (*i).second.c_str(), (*i).first.c_str());
-        Header.pushln(tmp);
-
-        sprintf(tmp, "#define %s_%s(i) %s[i]; num_%s_rd++;", (*i).first.c_str(),
-                SHOAL_SUFFIX_RD, (*i).second.c_str(), (*i).first.c_str());
-
-        Header.pushln(tmp);
-    }
-    Header.pushln("#else");
-
-    for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
-         i!=sk_array_mapping.end(); i++) {
-
-        sprintf(tmp, "#define %s_%s(i, v) %s[i] = v", (*i).first.c_str(),
-                SHOAL_SUFFIX_WR, (*i).second.c_str());
-        Header.pushln(tmp);
-
-        sprintf(tmp, "#define %s_%s(i) %s[i]", (*i).first.c_str(),
-                SHOAL_SUFFIX_RD, (*i).second.c_str());
-
+        // Read
+        if (sk_read_set.find((*i).first.c_str())!=sk_read_set.end()) {
+            sprintf(tmp, "#define %s_%s_%s(i) %s[i]", SHOAL_PREFIX,
+                    (*i).first.c_str(), SHOAL_SUFFIX_RD, (*i).second.c_str());
+        }
         Header.pushln(tmp);
     }
-    Header.pushln("#endif");
+    // Header.pushln("#endif");
 
     Header.NL();
     sprintf(tmp, "struct %sframe {", SHOAL_PREFIX);

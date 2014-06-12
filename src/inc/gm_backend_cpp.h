@@ -422,7 +422,7 @@ static char* sk_m_array_access_gen(const char* array_name, const char* index,
         sk_lhs_open = true;
     }
 
-    sk_array_mapping.insert(make_pair(std::string(SHOAL_PREFIX) + "_" + array_name, original_array));
+    sk_array_mapping.insert(make_pair(array_name, original_array));
 
     if (is_write) {
         sprintf(str_buf, "%s_%s_%s(%s, ", SHOAL_PREFIX, array_name,
