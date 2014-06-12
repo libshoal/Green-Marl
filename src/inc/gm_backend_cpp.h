@@ -377,6 +377,13 @@ struct sk_prop {
     std::string type;
 };
 
+struct sk_gm_array {
+    std::string dest;
+    std::string src;
+    std::string type;
+    std::string num;
+};
+
 extern bool sk_lhs;
 extern bool sk_lhs_open;
 extern char sk_buf[];
@@ -395,6 +402,8 @@ extern std::map<std::string,std::string> f_thread;
 
 extern std::set<std::string> sk_write_set;
 extern std::set<std::string> sk_read_set;
+
+extern std::vector<struct sk_gm_array> sk_gm_arrays;
 
 //#define SK_DEBUG 1
 
@@ -469,15 +478,35 @@ static void sk_iterator(gm_code_writer* Body,
     sk_iterators.push_back(it);
 }
 
+static std::string sk_convert_array_name(std::string in)
+{
+    size_t i = in.find(".");
+    if (i!=std::string::npos)
+        in.replace(i, 1, "_");
+
+    return std::string(SHOAL_PREFIX) + "_" + in;
+}
+
 static void sk_property(gm_code_writer *Body,
                         const char* prop,
                         const char* prop_type,
-                        bool dynamic) // whether property is GM internal
+                        bool dynamic,
+                        bool is_node) // whether property is GM internal
 {
-    printf("found property [%s] of type [%s], dynamic=[%d]",
-           prop, prop_type, dynamic);
+    printf("found property [%s] of type [%s], dynamic=[%d], is_node=%d\n",
+           prop, prop_type, dynamic, is_node);
 
     sk_props.push_back({std::string(prop), std::string(prop_type)});
+
+    // Remove the stupid * in double*
+    // XXX assuming that there is one in prop_type
+    std::string t = std::string(prop_type);
+    t = t.substr(0, t.find("*"));
+
+    sk_gm_arrays.push_back({sk_convert_array_name(prop),
+                std::string(prop), t,
+                std::string(is_node ? "G.num_nodes()" : "G.num_edges()")
+                });
 }
 
 static gm_code_writer sk_temp_buffer(void)
@@ -530,6 +559,30 @@ static void sk_add_to_frame(const char *type, const char *name, bool global)
     else {
         f_thread.insert(std::make_pair(name, s.c_str()));
     }
+}
+
+static void sk_add_default_arrays(void)
+{
+    sk_gm_arrays.push_back({sk_convert_array_name("G.begin"),
+                std::string("G.begin"),
+                std::string("node_t"),
+                std::string("G.num_nodes()")
+                });
+    sk_gm_arrays.push_back({sk_convert_array_name("G.r_begin"),
+                std::string("G.r_begin"),
+                std::string("node_t"),
+                std::string("G.num_nodes()")
+                });
+    sk_gm_arrays.push_back({sk_convert_array_name("G.node"),
+                std::string("G.node"),
+                std::string("edge_t"),
+                std::string("G.num_edges()")
+                });
+    sk_gm_arrays.push_back({sk_convert_array_name("G.r_node"),
+                std::string("G.r_node"),
+                std::string("edge_t"),
+                std::string("G.num_edges()")
+                });
 }
 
 #endif

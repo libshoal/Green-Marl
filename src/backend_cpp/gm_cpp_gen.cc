@@ -22,6 +22,7 @@ std::vector<struct sk_prop> sk_props;
 std::map<std::string,std::string> sk_array_mapping;
 std::set<std::string> sk_write_set;
 std::set<std::string> sk_read_set;
+std::vector<struct sk_gm_array> sk_gm_arrays;
 
 void gm_cpp_gen::setTargetDir(const char* d) {
     assert(d != NULL);
@@ -337,7 +338,10 @@ void gm_cpp_gen::generate_proc_decl(ast_procdef* proc, bool is_body_file) {
             if (T->is_property()) {
 
                 const char *sk_name = (*i)->get_idlist()->get_item(0)->get_genname();
-                sk_property(&Out, sk_name, get_type_string(T), false);
+                assert(T->is_node_property() || T->is_edge_property());
+                sk_property(&Out, sk_name, get_type_string(T), false,
+                            T->is_node_property());
+
             }
 
             assert((*i)->get_idlist()->get_length() == 1);
@@ -365,7 +369,11 @@ void gm_cpp_gen::generate_proc_decl(ast_procdef* proc, bool is_body_file) {
 
             if (T->is_property()) {
                 const char *sk_name = (*i)->get_idlist()->get_item(0)->get_genname();
-                sk_property(&Out, sk_name, get_type_string(T), false);
+                assert(T->is_node_property() || T->is_edge_property());
+                if (is_body_file) {
+                    sk_property(&Out, sk_name, get_type_string(T), false,
+                                T->is_node_property());
+                }
             }
 
             Out.push((*i)->get_idlist()->get_item(0)->get_genname());
@@ -447,16 +455,35 @@ const char* gm_cpp_gen::get_lhs_default(int type) {
     }
 }
 
+void sk_init_done(gm_code_writer *Body)
+{
+    sk_add_default_arrays();
+
+    char tmp[1024];
+    for (std::vector<struct sk_gm_array>::iterator i=sk_gm_arrays.begin();
+         i<sk_gm_arrays.end(); i++) {
+
+        struct sk_gm_array a = (*i);
+
+        sprintf(tmp, "// %s %s %s %s", a.dest.c_str(), a.src.c_str(),
+                a.type.c_str(), a.num.c_str());
+        Body->pushln(tmp);
+    }
+}
+
 void gm_cpp_gen::generate_lhs_id(ast_id* id) {
 
     if (f_global.find(id->get_genname()) != f_global.end()) {
         if (!sk_fr_global_init) {
+
+            sk_init_done(&Body);
 
             char tmp[1024];
             sprintf(tmp, "struct %sframe f = FRAME_DEFAULT;", SHOAL_PREFIX);
             Body.pushln(tmp);
 
             sk_fr_global_init = true;
+
         }
         Body.push("f.");
     }
@@ -826,8 +853,10 @@ void gm_cpp_gen::generate_sent_vardecl(ast_vardecl* v) {
         generate_lhs_id(idl->get_item(0));
         declare_prop_def(t, idl->get_item(0));
 
+        assert(t->is_node_property() || t->is_edge_property());
         sk_property(&Body, idl->get_item(0)->get_genname(),
-                    get_type_string(t), true);
+                    get_type_string(t), true,
+                    t->is_node_property());
 
     } else if (t->is_collection()) {
         ast_idlist* idl = v->get_idlist();
