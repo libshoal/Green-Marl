@@ -382,6 +382,8 @@ struct sk_gm_array {
     std::string src;
     std::string type;
     std::string num;
+    bool dynamic;
+    bool buildin;
 };
 
 extern bool sk_lhs;
@@ -436,12 +438,12 @@ static char* sk_m_array_access_gen(const char* array_name, const char* index,
     if (is_write) {
         sprintf(str_buf, "%s_%s_%s(%s, ", SHOAL_PREFIX, array_name,
                 SHOAL_SUFFIX_WR, index);
-        sk_write_set.insert(array_name);
+        sk_write_set.insert(original_array);
     }
     else {
         sprintf(str_buf, "%s_%s_%s(%s)", SHOAL_PREFIX, array_name,
                 SHOAL_SUFFIX_RD, index);
-        sk_read_set.insert(array_name);
+        sk_read_set.insert(original_array);
     }
     return str_buf;
 }
@@ -505,7 +507,9 @@ static void sk_property(gm_code_writer *Body,
 
     sk_gm_arrays.push_back({sk_convert_array_name(prop),
                 std::string(prop), t,
-                std::string(is_node ? "G.num_nodes()" : "G.num_edges()")
+                std::string(is_node ? "G.num_nodes()" : "G.num_edges()"),
+                dynamic,
+                false
                 });
 }
 
@@ -561,27 +565,46 @@ static void sk_add_to_frame(const char *type, const char *name, bool global)
     }
 }
 
+static bool sk_arr_is_read(const char* name)
+{
+    return sk_read_set.find(name)!=sk_read_set.end();
+
+}
+
+static bool sk_arr_is_write(const char* name)
+{
+    return sk_write_set.find(name)!=sk_write_set.end();
+}
+
 static void sk_add_default_arrays(void)
 {
     sk_gm_arrays.push_back({sk_convert_array_name("G.begin"),
                 std::string("G.begin"),
                 std::string("edge_t"),
-                std::string("G.num_nodes()")
+                std::string("G.num_nodes()"),
+                false,
+                true
                 });
     sk_gm_arrays.push_back({sk_convert_array_name("G.r_begin"),
                 std::string("G.r_begin"),
                 std::string("edge_t"),
-                std::string("G.num_nodes()")
+                std::string("G.num_nodes()"),
+                false,
+                true
                 });
     sk_gm_arrays.push_back({sk_convert_array_name("G.node_idx"),
                 std::string("G.node_idx"),
                 std::string("node_t"),
-                std::string("G.num_edges()")
+                std::string("G.num_edges()"),
+                false,
+                true
                 });
     sk_gm_arrays.push_back({sk_convert_array_name("G.r_node_idx"),
                 std::string("G.r_node_idx"),
                 std::string("node_t"),
-                std::string("G.num_edges()")
+                std::string("G.num_edges()"),
+                false,
+                true
                 });
 }
 

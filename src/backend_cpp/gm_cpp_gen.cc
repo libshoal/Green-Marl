@@ -203,14 +203,14 @@ void gm_cpp_gen::do_generate_end() {
         const char *dest = sk_convert_array_name((*i).second).c_str();
 
         // Write
-        if (sk_write_set.find((*i).first.c_str())!=sk_write_set.end()) {
+        if (sk_arr_is_write((((*i).second).c_str()))) {
             sprintf(tmp, "#define %s_%s_%s(i, v) %s[i] = v", SHOAL_PREFIX,
                     (*i).first.c_str(), SHOAL_SUFFIX_WR, dest);
             Header.pushln(tmp);
         }
 
         // Read
-        if (sk_read_set.find((*i).first.c_str())!=sk_read_set.end()) {
+        if (sk_arr_is_read(((*i).second).c_str())) {
             sprintf(tmp, "#define %s_%s_%s(i) %s[i]", SHOAL_PREFIX,
                     (*i).first.c_str(), SHOAL_SUFFIX_RD, dest);
             Header.pushln(tmp);
@@ -472,6 +472,7 @@ void sk_init_done(gm_code_writer *Body)
         const char* type = a.type.c_str();
         const char* num = a.num.c_str();
 
+
         // Due to data layout in adjacency lists, node and edge arrays are +1
         if (strcmp(src, "G.begin") == 0 ||
             strcmp(src, "G.r_begin") == 0 ||
@@ -481,20 +482,36 @@ void sk_init_done(gm_code_writer *Body)
             num = (std::string("(") + a.num + "+1" + ")").c_str();
         }
 
-        sprintf(tmp, "%s* %s = (%s*) malloc(sizeof(%s)*%s);",
-                type, dest, type, type, num);
-        Body->pushln(tmp);
-
-        sprintf(tmp, "assert(%s!=NULL);", dest);
-        Body->pushln(tmp);
-
-        sprintf(tmp, "memcpy(%s, %s, sizeof(%s)*%s);", dest, src, type, num);
+        sprintf(tmp, "%s* %s = (%s*) shl__copy_array"
+                "(%s, (sizeof(%s)*%s), %s_IS_USED, \"%s\");",
+                type, dest, type, src, type, num, dest, dest);
         Body->pushln(tmp);
 
         Body->NL();
+
     }
 
     Body->NL();
+}
+
+
+void sk_copy_func(gm_code_writer *Body, gm_code_writer *Header)
+{
+    char tmp[1024];
+
+    for (std::vector<struct sk_gm_array>::iterator i=sk_gm_arrays.begin();
+         i<sk_gm_arrays.end(); i++) {
+
+        struct sk_gm_array a = (*i);
+        const char* dest = a.dest.c_str();
+        const char* src = a.src.c_str();
+
+        // Specify everything that needs to be copied
+        bool is_used = sk_arr_is_read(src) || sk_arr_is_write(src);
+        sprintf(tmp, "#define %s_IS_USED %d", dest, (is_used && !a.dynamic));
+        Header->pushln(tmp);
+
+    }
 }
 
 void gm_cpp_gen::generate_lhs_id(ast_id* id) {
@@ -1096,6 +1113,9 @@ void gm_cpp_gen::generate_sent_block(ast_sentblock* sb, bool need_br) {
 
     if (need_br) Body.pushln("}");
 
+    if (sb->find_info_bool(CPPBE_INFO_IS_PROC_ENTRY))
+        sk_copy_func(&Body, &Header);
+
     if (is_under_parallel_sentblock()) set_under_parallel_sentblock(false);
 
     return;
@@ -1132,10 +1152,11 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
                     num = (std::string("(") + a.num + "+1" + ")").c_str();
                 }
 
-                sprintf(tmp, "memcpy(%s, %s, sizeof(%s)*%s);", src, dest, type, num);
-                Body.pushln(tmp);
+                if (sk_arr_is_write(a.src.c_str()) && !a.dynamic) {
+                    sprintf(tmp, "memcpy(%s, %s, sizeof(%s)*%s);", src, dest, type, num);
+                    Body.pushln(tmp);
+                }
 
-                Body.NL();
             }
             Body.NL();
             sprintf(temp, "%s();", CLEANUP_PTR);
