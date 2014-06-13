@@ -29,7 +29,7 @@ test/opt/output/
 test/parse/output/
 test/rw_check/output/
 test/sugars/output/
-src/parse/gm_grammer.output
+gm_grammer.output
 src/parse/gm_grammer.tab.c
 src/parse/gm_grammer.tab.h
 src/parse/gm_lex.c

@@ -565,22 +565,22 @@ static void sk_add_default_arrays(void)
 {
     sk_gm_arrays.push_back({sk_convert_array_name("G.begin"),
                 std::string("G.begin"),
-                std::string("node_t"),
+                std::string("edge_t"),
                 std::string("G.num_nodes()")
                 });
     sk_gm_arrays.push_back({sk_convert_array_name("G.r_begin"),
                 std::string("G.r_begin"),
-                std::string("node_t"),
+                std::string("edge_t"),
                 std::string("G.num_nodes()")
                 });
-    sk_gm_arrays.push_back({sk_convert_array_name("G.node"),
-                std::string("G.node"),
-                std::string("edge_t"),
+    sk_gm_arrays.push_back({sk_convert_array_name("G.node_idx"),
+                std::string("G.node_idx"),
+                std::string("node_t"),
                 std::string("G.num_edges()")
                 });
-    sk_gm_arrays.push_back({sk_convert_array_name("G.r_node"),
-                std::string("G.r_node"),
-                std::string("edge_t"),
+    sk_gm_arrays.push_back({sk_convert_array_name("G.r_node_idx"),
+                std::string("G.r_node_idx"),
+                std::string("node_t"),
                 std::string("G.num_edges()")
                 });
 }

@@ -200,19 +200,21 @@ void gm_cpp_gen::do_generate_end() {
     for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
          i!=sk_array_mapping.end(); i++) {
 
+        const char *dest = sk_convert_array_name((*i).second).c_str();
+
         // Write
         if (sk_write_set.find((*i).first.c_str())!=sk_write_set.end()) {
             sprintf(tmp, "#define %s_%s_%s(i, v) %s[i] = v", SHOAL_PREFIX,
-                    (*i).first.c_str(), SHOAL_SUFFIX_WR, (*i).second.c_str());
+                    (*i).first.c_str(), SHOAL_SUFFIX_WR, dest);
             Header.pushln(tmp);
         }
 
         // Read
         if (sk_read_set.find((*i).first.c_str())!=sk_read_set.end()) {
             sprintf(tmp, "#define %s_%s_%s(i) %s[i]", SHOAL_PREFIX,
-                    (*i).first.c_str(), SHOAL_SUFFIX_RD, (*i).second.c_str());
+                    (*i).first.c_str(), SHOAL_SUFFIX_RD, dest);
+            Header.pushln(tmp);
         }
-        Header.pushln(tmp);
     }
     // Header.pushln("#endif");
 
@@ -465,10 +467,34 @@ void sk_init_done(gm_code_writer *Body)
 
         struct sk_gm_array a = (*i);
 
-        sprintf(tmp, "// %s %s %s %s", a.dest.c_str(), a.src.c_str(),
-                a.type.c_str(), a.num.c_str());
+        const char* dest = a.dest.c_str();
+        const char* src = a.src.c_str();
+        const char* type = a.type.c_str();
+        const char* num = a.num.c_str();
+
+        // Due to data layout in adjacency lists, node and edge arrays are +1
+        if (strcmp(src, "G.begin") == 0 ||
+            strcmp(src, "G.r_begin") == 0 ||
+            strcmp(src, "G.node_idx") == 0 ||
+            strcmp(src, "G.r_node_idx") == 0) {
+
+            num = (std::string("(") + a.num + "+1" + ")").c_str();
+        }
+
+        sprintf(tmp, "%s* %s = (%s*) malloc(sizeof(%s)*%s);",
+                type, dest, type, type, num);
         Body->pushln(tmp);
+
+        sprintf(tmp, "assert(%s!=NULL);", dest);
+        Body->pushln(tmp);
+
+        sprintf(tmp, "memcpy(%s, %s, sizeof(%s)*%s);", dest, src, type, num);
+        Body->pushln(tmp);
+
+        Body->NL();
     }
+
+    Body->NL();
 }
 
 void gm_cpp_gen::generate_lhs_id(ast_id* id) {
@@ -1083,9 +1109,38 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
 
     if (has_prop_decl && !has_return_ahead) {
         if (is_proc_entry) {
+            // SK: copy back arrays into original arrays! Otherwise,
+            // accesses from the main file (or any other calling file
+            // for that matter) might be returning the wrong result.
+            char tmp[1024];
+            for (std::vector<struct sk_gm_array>::iterator i=sk_gm_arrays.begin();
+                 i<sk_gm_arrays.end(); i++) {
+
+                struct sk_gm_array a = (*i);
+
+                const char* dest = a.dest.c_str();
+                const char* src = a.src.c_str();
+                const char* type = a.type.c_str();
+                const char* num = a.num.c_str();
+
+                // Due to data layout in adjacency lists, node and edge arrays are +1
+                if (strcmp(src, "G.begin") == 0 ||
+                    strcmp(src, "G.r_begin") == 0 ||
+                    strcmp(src, "G.node_idx") == 0 ||
+                    strcmp(src, "G.r_node_idx") == 0) {
+
+                    num = (std::string("(") + a.num + "+1" + ")").c_str();
+                }
+
+                sprintf(tmp, "memcpy(%s, %s, sizeof(%s)*%s);", src, dest, type, num);
+                Body.pushln(tmp);
+
+                Body.NL();
+            }
             Body.NL();
             sprintf(temp, "%s();", CLEANUP_PTR);
             Body.pushln(temp);
+
         } else {
             Body.NL();
             gm_symtab* tab = sb->get_symtab_field();
