@@ -204,14 +204,14 @@ void gm_cpp_gen::do_generate_end() {
 
         // Write
         if (sk_arr_is_write((((*i).second).c_str()))) {
-            sprintf(tmp, "#define %s_%s_%s(i, v) %s[i] = v", SHOAL_PREFIX,
+            sprintf(tmp, "#define %s_%s_%s(i, v) %s[0][i] = v", SHOAL_PREFIX,
                     (*i).first.c_str(), SHOAL_SUFFIX_WR, dest);
             Header.pushln(tmp);
         }
 
         // Read
         if (sk_arr_is_read(((*i).second).c_str())) {
-            sprintf(tmp, "#define %s_%s_%s(i) %s[i]", SHOAL_PREFIX,
+            sprintf(tmp, "#define %s_%s_%s(i) %s[0][i]", SHOAL_PREFIX,
                     (*i).first.c_str(), SHOAL_SUFFIX_RD, dest);
             Header.pushln(tmp);
         }
@@ -482,18 +482,16 @@ void sk_init_done(gm_code_writer *Body)
             num = (std::string("(") + a.num + "+1" + ")").c_str();
         }
 
-        sprintf(tmp, "%s* %s = (%s*) shl__copy_array"
-                "(%s, (sizeof(%s)*%s), %s_IS_USED, \"%s\");",
-                type, dest, type, src, type, num, dest, dest);
+        sprintf(tmp, "%s** %s = (%s**) shl__copy_array"
+                "(%s, (sizeof(%s)*%s), %s_IS_USED,"
+                "%s_IS_RO, \"%s\");",
+                type, dest, type, src, type, num, dest, dest, dest);
         Body->pushln(tmp);
-
         Body->NL();
-
     }
 
     Body->NL();
 }
-
 
 void sk_copy_func(gm_code_writer *Body, gm_code_writer *Header)
 {
@@ -507,10 +505,12 @@ void sk_copy_func(gm_code_writer *Body, gm_code_writer *Header)
         const char* src = a.src.c_str();
 
         // Specify everything that needs to be copied
+        bool is_ro = !sk_arr_is_write(src);
         bool is_used = sk_arr_is_read(src) || sk_arr_is_write(src);
         sprintf(tmp, "#define %s_IS_USED %d", dest, (is_used && !a.dynamic));
         Header->pushln(tmp);
-
+        sprintf(tmp, "#define %s_IS_RO %d", dest, (is_ro));
+        Header->pushln(tmp);
     }
 }
 
@@ -1153,7 +1153,7 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
                 }
 
                 if (sk_arr_is_write(a.src.c_str()) && !a.dynamic) {
-                    sprintf(tmp, "memcpy(%s, %s, sizeof(%s)*%s);", src, dest, type, num);
+                    sprintf(tmp, "memcpy(%s, %s[0], sizeof(%s)*%s);", src, dest, type, num);
                     Body.pushln(tmp);
                 }
 
