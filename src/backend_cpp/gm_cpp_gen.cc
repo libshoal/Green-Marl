@@ -507,9 +507,15 @@ void sk_copy_func(gm_code_writer *Body, gm_code_writer *Header)
         // Specify everything that needs to be copied
         bool is_ro = !sk_arr_is_write(src);
         bool is_used = sk_arr_is_read(src) || sk_arr_is_write(src);
+        bool is_graph = a.buildin;
+
         sprintf(tmp, "#define %s_IS_USED %d", dest, (is_used && !a.dynamic));
         Header->pushln(tmp);
         sprintf(tmp, "#define %s_IS_RO %d", dest, (is_ro));
+        Header->pushln(tmp);
+        sprintf(tmp, "#define %s_IS_GRAPH %d", dest, (is_ro));
+        Header->pushln(tmp);
+        sprintf(tmp, "#define %s_IS_DYNAMIC %d", dest, (a.dynamic));
         Header->pushln(tmp);
     }
 }
@@ -1152,10 +1158,10 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
                     num = (std::string("(") + a.num + "+1" + ")").c_str();
                 }
 
-                if (sk_arr_is_write(a.src.c_str()) && !a.dynamic) {
-                    sprintf(tmp, "memcpy(%s, %s[0], sizeof(%s)*%s);", src, dest, type, num);
-                    Body.pushln(tmp);
-                }
+                sprintf(tmp, "shl__copy_back_array((void**)%s, (void*)%s, sizeof(%s)*%s, "
+                        "%s_IS_USED, %s_IS_RO, %s_IS_DYNAMIC, \"%s\");",
+                        dest, src, type, num, dest, dest, dest, dest);
+                Body.pushln(tmp);
 
             }
             Body.NL();
