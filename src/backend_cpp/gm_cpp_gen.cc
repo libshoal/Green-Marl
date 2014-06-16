@@ -472,12 +472,15 @@ void sk_init_done(gm_code_writer *Body)
     assert (sk_gm_arrays.begin()!=sk_gm_arrays.end());
     std::map<std::string,struct sk_gm_array>::iterator i;
 
+    bool first = true;
     for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
 
         struct sk_gm_array a = i->second;
 
-        if (a.init_done)
+        if (a.init_done) {
+            first = false;
             continue;
+        }
 
         const char* dest = a.dest.c_str();
         const char* src = a.src.c_str();
@@ -503,6 +506,8 @@ void sk_init_done(gm_code_writer *Body)
 
         i->second.init_done = true;
     }
+    if (first)
+        Body->pushln("shl__init();");
 
     Body->NL();
 }
@@ -1021,8 +1026,6 @@ void gm_cpp_gen::generate_sent_block_enter(ast_sentblock* sb) {
         Body.pushln("//Initializations");
         sprintf(temp, "%s();", RT_INIT);
         Body.pushln(temp);
-        sprintf(temp, "%s_init();", SHOAL_PREFIX);
-        Body.pushln(temp);
 
         //----------------------------------------------------
         // freeze graph instances
@@ -1164,6 +1167,7 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
             assert (sk_gm_arrays.begin()!=sk_gm_arrays.end());
             std::map<std::string,struct sk_gm_array>::iterator i;
 
+            Body.pushln("shl__end();\n");
             for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
 
                 struct sk_gm_array a = i->second;
@@ -1189,7 +1193,7 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
 
             }
             Body.NL();
-            Body.pushln("shl__end();\n");
+
             sprintf(temp, "%s();", CLEANUP_PTR);
             Body.pushln(temp);
 
