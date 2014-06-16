@@ -46,10 +46,10 @@ $(CONFIG_FILE): setup.mk.in etc/update_setup
 	etc/update_setup setup.mk.bak setup.mk.in $(CONFIG_FILE) ${PWD}
 
 compiler: dirs $(CONFIG_FILE) $(wildcard src/inc/*.h)
-	@cd src; make
+	@cd src; $(MAKE)
 
 apps: dirs compiler $(CONFIG_FILE)
-	@cd apps; make
+	@cd apps; $(MAKE)
 
 coverage:
 	rm -rf coverage coverage.info
@@ -59,14 +59,14 @@ coverage:
 dirs: $(BUILD_DIRS) $(TEST_DIRS) $(CONFIG_FILE)
 
 clean: $(CONFIG_FILE)
-	@cd apps; make clean_all
-	@cd src; make clean
+	@cd apps; $(MAKE) clean_all
+	@cd src; $(MAKE) clean
 
 clean_all: veryclean
 
 veryclean: $(CONFIG_FILE)
-	@cd apps; make clean_all
-	@cd src; make veryclean
+	@cd apps; $(MAKE) clean_all
+	@cd src; $(MAKE) veryclean
 	rm -rf $(BUILD_DIRS) $(TEST_DIRS)
 
 clean_coverage:
@@ -88,7 +88,7 @@ sk_pagerank: sk_pr_gm | sk_pr_gcc
 
 sk_pr_gm:
 	rm -rf apps/output_cpp/generated/pagerank.cc
-	make -C apps/src/ ../output_cpp/generated/pagerank.cc
+	$(MAKE) -C apps/src/ ../output_cpp/generated/pagerank.cc
 	cat apps/output_cpp/generated/pagerank.cc
 	cat apps/output_cpp/generated/pagerank.h
 
@@ -99,7 +99,7 @@ sk_triangle_counting: sk_tc_gm | sk_tc_gcc
 
 sk_tc_gm:
 	rm -rf apps/output_cpp/generated/triangle_counting.cc
-	make -C apps/src/ ../output_cpp/generated/triangle_counting.cc
+	$(MAKE) -C apps/src/ ../output_cpp/generated/triangle_counting.cc
 	cat apps/output_cpp/generated/triangle_counting.cc
 	cat apps/output_cpp/generated/triangle_counting.h
 
