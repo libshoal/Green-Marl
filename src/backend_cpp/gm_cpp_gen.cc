@@ -459,13 +459,14 @@ const char* gm_cpp_gen::get_lhs_default(int type) {
 
 void sk_init_done(gm_code_writer *Body)
 {
-    sk_add_default_arrays();
-
     char tmp[1024];
     for (std::vector<struct sk_gm_array>::iterator i=sk_gm_arrays.begin();
          i<sk_gm_arrays.end(); i++) {
 
         struct sk_gm_array a = (*i);
+
+        if (a.init_done)
+            continue;
 
         const char* dest = a.dest.c_str();
         const char* src = a.src.c_str();
@@ -488,6 +489,8 @@ void sk_init_done(gm_code_writer *Body)
                 type, dest, type, src, type, num, dest, dest, dest);
         Body->pushln(tmp);
         Body->NL();
+
+        (*i).init_done = true;
     }
 
     Body->NL();
@@ -895,6 +898,7 @@ void gm_cpp_gen::generate_sent_vardecl(ast_vardecl* v) {
         sk_property(&Body, idl->get_item(0)->get_genname(),
                     get_type_string(t), true,
                     t->is_node_property());
+        sk_init_done(&Body);
 
     } else if (t->is_collection()) {
         ast_idlist* idl = v->get_idlist();
@@ -1062,17 +1066,20 @@ void gm_cpp_gen::generate_sent_block_enter(ast_sentblock* sb) {
                 }
             }
 
-            // SK: Graph has just been intialized, copy it and
-            // initialize global frame
-            assert (!sk_fr_global_init);
-            sk_fr_global_init = true;
-
-            sk_init_done(&Body);
-
-            char tmp[1024];
-            sprintf(tmp, "struct %sframe f = FRAME_DEFAULT;", SHOAL_PREFIX);
-            Body.pushln(tmp);
         }
+
+        // SK: Graph has just been intialized, copy it and
+        // initialize global frame
+        assert (!sk_fr_global_init);
+        sk_fr_global_init = true;
+
+        sk_add_default_arrays();
+        sk_init_done(&Body);
+
+        char tmp[1024];
+        sprintf(tmp, "struct %sframe f = FRAME_DEFAULT;", SHOAL_PREFIX);
+        Body.pushln(tmp);
+
         Body.NL();
     }
 

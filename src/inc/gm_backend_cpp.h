@@ -384,6 +384,7 @@ struct sk_gm_array {
     std::string num;
     bool dynamic;
     bool buildin;
+    bool init_done;
 };
 
 extern bool sk_lhs;
@@ -509,6 +510,7 @@ static void sk_property(gm_code_writer *Body,
                 std::string(prop), t,
                 std::string(is_node ? "G.num_nodes()" : "G.num_edges()"),
                 dynamic,
+                false,
                 false
                 });
 }
