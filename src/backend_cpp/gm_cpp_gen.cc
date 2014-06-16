@@ -22,7 +22,9 @@ std::vector<struct sk_prop> sk_props;
 std::map<std::string,std::string> sk_array_mapping;
 std::set<std::string> sk_write_set;
 std::set<std::string> sk_read_set;
-std::vector<struct sk_gm_array> sk_gm_arrays;
+std::map<std::string,struct sk_gm_array> sk_gm_arrays;
+
+using namespace std;
 
 void gm_cpp_gen::setTargetDir(const char* d) {
     assert(d != NULL);
@@ -140,6 +142,7 @@ void gm_cpp_gen::do_generate_begin() {
     add_include("cmath", Header);
     add_include("algorithm", Header);
     add_include("omp.h", Header);
+    add_include("shl.h", Header);
     //add_include(get_lib()->get_header_info(), Header, false);
     add_include(RT_INCLUDE, Header, false);
     Header.NL();
@@ -150,6 +153,7 @@ void gm_cpp_gen::do_generate_begin() {
     sprintf(temp, "%s.h", fname);
     add_include(temp, Body, false);
     add_include("shl.h", Body, false);
+    add_include("omp.h", Body, false);
     Body.NL();
 }
 
@@ -201,6 +205,10 @@ void gm_cpp_gen::do_generate_end() {
          i!=sk_array_mapping.end(); i++) {
 
         const char *dest = sk_convert_array_name((*i).second).c_str();
+        //        struct sk_gm_array a = (*sk_gm_arrays.find(std::string(dest))).second;
+
+        bool replicate = !sk_arr_is_write((((*i).second).c_str()));
+        const char* lookup = replicate ? "shl__get_rep_id()" : "0";
 
         // Write
         if (sk_arr_is_write((((*i).second).c_str()))) {
@@ -211,8 +219,8 @@ void gm_cpp_gen::do_generate_end() {
 
         // Read
         if (sk_arr_is_read(((*i).second).c_str())) {
-            sprintf(tmp, "#define %s_%s_%s(i) %s[0][i]", SHOAL_PREFIX,
-                    (*i).first.c_str(), SHOAL_SUFFIX_RD, dest);
+            sprintf(tmp, "#define %s_%s_%s(i) %s[%s][i]", SHOAL_PREFIX,
+                    (*i).first.c_str(), SHOAL_SUFFIX_RD, dest, lookup);
             Header.pushln(tmp);
         }
     }
@@ -460,10 +468,13 @@ const char* gm_cpp_gen::get_lhs_default(int type) {
 void sk_init_done(gm_code_writer *Body)
 {
     char tmp[1024];
-    for (std::vector<struct sk_gm_array>::iterator i=sk_gm_arrays.begin();
-         i<sk_gm_arrays.end(); i++) {
 
-        struct sk_gm_array a = (*i);
+    assert (sk_gm_arrays.begin()!=sk_gm_arrays.end());
+    std::map<std::string,struct sk_gm_array>::iterator i;
+
+    for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
+
+        struct sk_gm_array a = i->second;
 
         if (a.init_done)
             continue;
@@ -490,7 +501,7 @@ void sk_init_done(gm_code_writer *Body)
         Body->pushln(tmp);
         Body->NL();
 
-        (*i).init_done = true;
+        i->second.init_done = true;
     }
 
     Body->NL();
@@ -500,10 +511,13 @@ void sk_copy_func(gm_code_writer *Body, gm_code_writer *Header)
 {
     char tmp[1024];
 
-    for (std::vector<struct sk_gm_array>::iterator i=sk_gm_arrays.begin();
-         i<sk_gm_arrays.end(); i++) {
+    assert (sk_gm_arrays.begin()!=sk_gm_arrays.end());
+    std::map<std::string,struct sk_gm_array>::iterator i;
 
-        struct sk_gm_array a = (*i);
+    for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
+
+        struct sk_gm_array a = i->second;
+
         const char* dest = a.dest.c_str();
         const char* src = a.src.c_str();
 
@@ -1146,10 +1160,13 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
             // accesses from the main file (or any other calling file
             // for that matter) might be returning the wrong result.
             char tmp[1024];
-            for (std::vector<struct sk_gm_array>::iterator i=sk_gm_arrays.begin();
-                 i<sk_gm_arrays.end(); i++) {
 
-                struct sk_gm_array a = (*i);
+            assert (sk_gm_arrays.begin()!=sk_gm_arrays.end());
+            std::map<std::string,struct sk_gm_array>::iterator i;
+
+            for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
+
+                struct sk_gm_array a = i->second;
 
                 const char* dest = a.dest.c_str();
                 const char* src = a.src.c_str();
