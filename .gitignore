@@ -55,3 +55,4 @@ setup.mk.bak
 .gitignore
 cscope.files
 cscope.out
+/contrib/*
