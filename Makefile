@@ -94,3 +94,14 @@ sk_pr_gm:
 
 sk_pr_gcc:
 	cd apps/output_cpp/src; g++ -O3 -DVERSION=\"$(GIT_VERSION)\" -g -I../../../shoal/inc -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/pagerank.cc pagerank_main.cc ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph -o ../bin/pagerank
+
+sk_triangle_counting: sk_tc_gm | sk_tc_gcc
+
+sk_tc_gm:
+	rm -rf apps/output_cpp/generated/triangle_counting.cc
+	make -C apps/src/ ../output_cpp/generated/triangle_counting.cc
+	cat apps/output_cpp/generated/triangle_counting.cc
+	cat apps/output_cpp/generated/triangle_counting.h
+
+sk_tc_gcc:
+	cd apps/output_cpp/src; g++ -O3 -DVERSION=\"$(GIT_VERSION)\" -g -I../../../shoal/inc -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/triangle_counting.cc triangle_counting_main.cc ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph -o ../bin/triangle_counting
