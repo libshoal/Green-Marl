@@ -48,21 +48,21 @@ endif
 all: lib gen bin
 
 lib:
-	@cd $(tdir); make lib
+	@cd $(tdir); $(MAKE) lib
 
 bin: lib gen
-	@cd $(tdir); make 
+	@cd $(tdir); $(MAKE) 
 
 gen:
-	@cd src; make 
+	@cd src; $(MAKE) 
 
 clean:
 	\rm -f *.java *.cc *.h
-	@cd src; make clean
+	@cd src; $(MAKE) clean
 
 clean_all:
-	@cd $(tdir); make clean_all
-	@cd src; make clean
+	@cd $(tdir); $(MAKE) clean_all
+	@cd src; $(MAKE) clean
 
 help:
 	@echo "make [env=<env>] <what>"

@@ -86,6 +86,10 @@ GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always)
 
 sk_pagerank: sk_pr_gm | sk_pr_gcc
 
+INC := -I../../../contrib/numactl-2.0.9 -I../../../shoal/inc -I../../../contrib/papi-5.3.0/src
+LIB := -L../../../contrib/numactl-2.0.9 -lnuma -L../../../contrib/papi-5.3.0/src -lpapi \
+	-L../../../contrib/papi-5.3.0/src/libpfm4/lib -lpfm
+
 sk_pr_gm:
 	rm -rf apps/output_cpp/generated/pagerank.cc
 	$(MAKE) -C apps/src/ ../output_cpp/generated/pagerank.cc
@@ -93,7 +97,7 @@ sk_pr_gm:
 	cat apps/output_cpp/generated/pagerank.h
 
 sk_pr_gcc:
-	cd apps/output_cpp/src; g++ -O3 -DVERSION=\"$(GIT_VERSION)\" -g -I../../../contrib/numactl-2.0.9 -I../../../shoal/inc -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/pagerank.cc pagerank_main.cc -L../../../contrib/numactl-2.0.9 -lnuma ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph -o ../bin/pagerank
+	cd apps/output_cpp/src; g++ -O3 -DVERSION=\"$(GIT_VERSION)\" -g $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/pagerank.cc pagerank_main.cc ../gm_graph/lib/libgmgraph.a $(LIB) -o ../bin/pagerank
 
 sk_triangle_counting: sk_tc_gm | sk_tc_gcc
 
@@ -104,4 +108,4 @@ sk_tc_gm:
 	cat apps/output_cpp/generated/triangle_counting.h
 
 sk_tc_gcc:
-	cd apps/output_cpp/src; g++ -O3 -DVERSION=\"$(GIT_VERSION)\" -g -I../../../contrib/numactl-2.0.9 -I../../../shoal/inc -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/triangle_counting.cc triangle_counting_main.cc ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph -o ../bin/triangle_counting
+	cd apps/output_cpp/src; g++ -O3 -DVERSION=\"$(GIT_VERSION)\" -g $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/triangle_counting.cc triangle_counting_main.cc ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/triangle_counting
