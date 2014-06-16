@@ -523,17 +523,6 @@ void sk_copy_func(gm_code_writer *Body, gm_code_writer *Header)
 void gm_cpp_gen::generate_lhs_id(ast_id* id) {
 
     if (f_global.find(id->get_genname()) != f_global.end()) {
-        if (!sk_fr_global_init) {
-
-            sk_init_done(&Body);
-
-            char tmp[1024];
-            sprintf(tmp, "struct %sframe f = FRAME_DEFAULT;", SHOAL_PREFIX);
-            Body.pushln(tmp);
-
-            sk_fr_global_init = true;
-
-        }
         Body.push("f.");
     }
     else if (f_thread.find(id->get_genname()) != f_thread.end()) {
@@ -1072,6 +1061,17 @@ void gm_cpp_gen::generate_sent_block_enter(ast_sentblock* sb) {
                     Body.pushln(temp);
                 }
             }
+
+            // SK: Graph has just been intialized, copy it and
+            // initialize global frame
+            assert (!sk_fr_global_init);
+            sk_fr_global_init = true;
+
+            sk_init_done(&Body);
+
+            char tmp[1024];
+            sprintf(tmp, "struct %sframe f = FRAME_DEFAULT;", SHOAL_PREFIX);
+            Body.pushln(tmp);
         }
         Body.NL();
     }
