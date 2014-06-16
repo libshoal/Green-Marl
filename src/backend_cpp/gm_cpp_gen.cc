@@ -1189,6 +1189,7 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
 
             }
             Body.NL();
+            Body.pushln("shl__end();\n");
             sprintf(temp, "%s();", CLEANUP_PTR);
             Body.pushln(temp);
 
