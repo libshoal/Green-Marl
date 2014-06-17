@@ -201,6 +201,7 @@ void gm_cpp_gen::do_generate_end() {
     // }
     // Header.pushln("#else");
 
+    Header.pushln("#ifdef INDIRECTION");
     for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
          i!=sk_array_mapping.end(); i++) {
 
@@ -224,6 +225,49 @@ void gm_cpp_gen::do_generate_end() {
             Header.pushln(tmp);
         }
     }
+    Header.pushln("#else /* INDIRECTION */");
+    Header.pushln("#ifdef COPY");
+    for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
+         i!=sk_array_mapping.end(); i++) {
+
+        const char *dest = sk_convert_array_name((*i).second).c_str();
+
+        // Write
+        if (sk_arr_is_write((((*i).second).c_str()))) {
+            sprintf(tmp, "#define %s_%s_%s(i, v) %s[i] = v", SHOAL_PREFIX,
+                    (*i).first.c_str(), SHOAL_SUFFIX_WR, dest);
+            Header.pushln(tmp);
+        }
+
+        // Read
+        if (sk_arr_is_read(((*i).second).c_str())) {
+            sprintf(tmp, "#define %s_%s_%s(i) %s[i]", SHOAL_PREFIX,
+                    (*i).first.c_str(), SHOAL_SUFFIX_RD, dest);
+            Header.pushln(tmp);
+        }
+    }
+    Header.pushln("#else /* COPY */");
+    for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
+         i!=sk_array_mapping.end(); i++) {
+
+        const char *src = (*i).second.c_str();
+
+        // Write
+        if (sk_arr_is_write((((*i).second).c_str()))) {
+            sprintf(tmp, "#define %s_%s_%s(i, v) %s[i] = v", SHOAL_PREFIX,
+                    (*i).first.c_str(), SHOAL_SUFFIX_WR, src);
+            Header.pushln(tmp);
+        }
+
+        // Read
+        if (sk_arr_is_read(((*i).second).c_str())) {
+            sprintf(tmp, "#define %s_%s_%s(i) %s[i]", SHOAL_PREFIX,
+                    (*i).first.c_str(), SHOAL_SUFFIX_RD, src);
+            Header.pushln(tmp);
+        }
+    }
+    Header.pushln("#endif /* COPY */");
+    Header.pushln("#endif /* INDIRECTION */");
     // Header.pushln("#endif");
 
     Header.NL();
@@ -497,11 +541,21 @@ void sk_init_done(gm_code_writer *Body)
             num = (std::string("(") + a.num + "+1" + ")").c_str();
         }
 
+        Body->pushln("#ifdef INDIRECTION");
         sprintf(tmp, "%s** %s = (%s**) shl__copy_array"
                 "(%s, (sizeof(%s)*%s), %s_IS_USED,"
                 "%s_IS_RO, \"%s\");",
                 type, dest, type, src, type, num, dest, dest, dest);
         Body->pushln(tmp);
+        Body->pushln("#else");
+        Body->pushln("#ifdef COPY");
+        sprintf(tmp, "%s* %s = ((%s**) shl__copy_array"
+                "(%s, (sizeof(%s)*%s), %s_IS_USED,"
+                "%s_IS_RO, \"%s\"))[0];",
+                type, dest, type, src, type, num, dest, dest, dest);
+        Body->pushln(tmp);
+        Body->pushln("#endif");
+        Body->pushln("#endif");
         Body->NL();
 
         i->second.init_done = true;
@@ -1185,12 +1239,20 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
 
                     num = (std::string("(") + a.num + "+1" + ")").c_str();
                 }
-
+                Body.pushln("#ifdef INDIRECTION");
                 sprintf(tmp, "shl__copy_back_array((void**)%s, (void*)%s, sizeof(%s)*%s, "
                         "%s_IS_USED, %s_IS_RO, %s_IS_DYNAMIC, \"%s\");",
                         dest, src, type, num, dest, dest, dest, dest);
                 Body.pushln(tmp);
-
+                Body.pushln("#else");
+                Body.pushln("#ifdef COPY");
+                sprintf(tmp, "shl__copy_back_array_single((void*)%s, (void*)%s, sizeof(%s)*%s, "
+                        "%s_IS_USED, %s_IS_RO, %s_IS_DYNAMIC, \"%s\");",
+                        dest, src, type, num, dest, dest, dest, dest);
+                Body.pushln(tmp);
+                Body.pushln("#endif");
+                Body.pushln("#endif");
+                Body.NL();
             }
             Body.NL();
 
