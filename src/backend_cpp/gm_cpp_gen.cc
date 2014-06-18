@@ -208,22 +208,46 @@ void gm_cpp_gen::do_generate_end() {
         const char *dest = sk_convert_array_name((*i).second).c_str();
         //        struct sk_gm_array a = (*sk_gm_arrays.find(std::string(dest))).second;
 
-        bool replicate = !sk_arr_is_write((((*i).second).c_str()));
-        const char* lookup = replicate ? "shl__get_rep_id()" : "0";
+        bool is_write = sk_arr_is_write((((*i).second).c_str()));
+        bool is_read = sk_arr_is_read(((*i).second).c_str());
 
         // Write
-        if (sk_arr_is_write((((*i).second).c_str()))) {
-            sprintf(tmp, "#define %s_%s_%s(i, v) %s[0][i] = v", SHOAL_PREFIX,
+        if (is_write) {
+            sprintf(tmp, "#define %s_%s_%s(i, v) %s[i] = v", SHOAL_PREFIX,
                     (*i).first.c_str(), SHOAL_SUFFIX_WR, dest);
             Header.pushln(tmp);
         }
 
         // Read
-        if (sk_arr_is_read(((*i).second).c_str())) {
-            sprintf(tmp, "#define %s_%s_%s(i) %s[%s][i]", SHOAL_PREFIX,
-                    (*i).first.c_str(), SHOAL_SUFFIX_RD, dest, lookup);
+        if (is_read) {
+            sprintf(tmp, "#define %s_%s_%s(i) %s[i]", SHOAL_PREFIX,
+                    (*i).first.c_str(), SHOAL_SUFFIX_RD, dest);
             Header.pushln(tmp);
         }
+    }
+    std::map<std::string,struct sk_gm_array>::iterator i;
+    for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
+
+        struct sk_gm_array a = i->second;
+
+        const char* dest = a.dest.c_str();
+        const char* src = a.src.c_str();
+
+        bool is_write = sk_arr_is_write(src);
+        bool is_read = sk_arr_is_read(src);
+
+        bool replicate = !is_write;
+        const char* lookup = replicate ? "shl__get_rep_id()" : "0";
+
+        // Lookup function
+        if (is_read || is_write) {
+            sprintf(tmp, "#define LOOKUP_%s %s__set[%s];", dest, dest, lookup);
+            Header.pushln(tmp);
+        } else {
+            sprintf(tmp, "#define LOOKUP_%s NULL;", dest);
+            Header.pushln(tmp);
+        }
+
     }
     Header.pushln("#else /* INDIRECTION */");
     Header.pushln("#ifdef COPY");
@@ -517,6 +541,7 @@ void sk_init_done(gm_code_writer *Body)
     std::map<std::string,struct sk_gm_array>::iterator i;
 
     bool first = true;
+    Body->pushln("shl__start_timer();");
     for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
 
         struct sk_gm_array a = i->second;
@@ -542,7 +567,7 @@ void sk_init_done(gm_code_writer *Body)
         }
 
         Body->pushln("#ifdef INDIRECTION");
-        sprintf(tmp, "%s** %s = (%s**) shl__copy_array"
+        sprintf(tmp, "%s** %s__set = (%s**) shl__copy_array"
                 "(%s, (sizeof(%s)*%s), %s_IS_USED,"
                 "%s_IS_RO, \"%s\");",
                 type, dest, type, src, type, num, dest, dest, dest);
@@ -560,6 +585,7 @@ void sk_init_done(gm_code_writer *Body)
 
         i->second.init_done = true;
     }
+    Body->pushln("shl__end_timer();");
     if (first)
         Body->pushln("shl__init();");
 
@@ -812,9 +838,11 @@ void gm_cpp_gen::generate_sent_foreach(ast_foreach* f) {
         get_lib()->generate_up_initializer(f, Body);
     }
 
+    bool sk_needs_init = false;
+
     if (f->is_parallel()) {
         Body.NL();
-        prepare_parallel_for(gm_cpp_should_be_dynamic_scheduling(f));
+        sk_needs_init = prepare_parallel_for(gm_cpp_should_be_dynamic_scheduling(f));
     }
 
     get_lib()->generate_foreach_header(f, Body);
@@ -837,6 +865,11 @@ void gm_cpp_gen::generate_sent_foreach(ast_foreach* f) {
         Body.push_indent();
         generate_sent(f->get_body());
         Body.pop_indent();
+        Body.NL();
+    }
+
+    if (sk_needs_init) {
+        Body.pushln("} // opened in prepare_parallel_for");
         Body.NL();
     }
 }
@@ -1157,6 +1190,8 @@ void gm_cpp_gen::generate_sent_block_enter(ast_sentblock* sb) {
 }
 
 void gm_cpp_gen::generate_sent_block(ast_sentblock* sb, bool need_br) {
+
+    bool sk_parallel = false;
     if (is_target_omp()) {
         bool is_par_scope = sb->find_info_bool(LABEL_PAR_SCOPE);
         if (is_par_scope) {
@@ -1164,10 +1199,14 @@ void gm_cpp_gen::generate_sent_block(ast_sentblock* sb, bool need_br) {
             set_under_parallel_sentblock(true);
             need_br = true;
             Body.pushln("#pragma omp parallel");
+            sk_parallel = true;
         }
     }
 
     if (need_br) Body.pushln("{");
+
+    assert(!sk_parallel || need_br);
+    if (sk_parallel) sk_init_accessors(&Body);
 
     // sentblock exit
     generate_sent_block_enter(sb);
@@ -1221,7 +1260,7 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
             assert (sk_gm_arrays.begin()!=sk_gm_arrays.end());
             std::map<std::string,struct sk_gm_array>::iterator i;
 
-            Body.pushln("shl__end();\n");
+            Body.pushln("shl__start_timer();");
             for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
 
                 struct sk_gm_array a = i->second;
@@ -1240,7 +1279,7 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
                     num = (std::string("(") + a.num + "+1" + ")").c_str();
                 }
                 Body.pushln("#ifdef INDIRECTION");
-                sprintf(tmp, "shl__copy_back_array((void**)%s, (void*)%s, sizeof(%s)*%s, "
+                sprintf(tmp, "shl__copy_back_array((void**)%s__set, (void*)%s, sizeof(%s)*%s, "
                         "%s_IS_USED, %s_IS_RO, %s_IS_DYNAMIC, \"%s\");",
                         dest, src, type, num, dest, dest, dest, dest);
                 Body.pushln(tmp);
@@ -1255,7 +1294,9 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
                 Body.NL();
             }
             Body.NL();
+            Body.pushln("shl__end_timer();");
 
+            Body.pushln("shl__end();\n");
             sprintf(temp, "%s();", CLEANUP_PTR);
             Body.pushln(temp);
 
@@ -1612,11 +1653,20 @@ void gm_cpp_gen::generate_expr_builtin(ast_expr* ee) {
     }
 }
 
-void gm_cpp_gen::prepare_parallel_for(bool need_dynamic) {
+bool gm_cpp_gen::prepare_parallel_for(bool need_dynamic) {
+    bool res = false;
+
     if (is_under_parallel_sentblock())
         Body.push("#pragma omp for nowait"); // already under parallel region.
-    else
-        Body.push("#pragma omp parallel for");
+    else {
+        Body.push("#pragma omp parallel ");
+
+        Body.NL();
+        res = true;
+        Body.pushln("{");
+        sk_init_accessors(&Body);
+        Body.push("#pragma omp for");
+    }
 
     if (need_dynamic) {
         Body.push(" schedule(dynamic,128)");
@@ -1624,4 +1674,5 @@ void gm_cpp_gen::prepare_parallel_for(bool need_dynamic) {
     }
 
     Body.NL();
+    return res;
 }

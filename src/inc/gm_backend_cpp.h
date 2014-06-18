@@ -178,7 +178,7 @@ protected:
     virtual void init_opt_steps();
     virtual void init_gen_steps();
 
-    virtual void prepare_parallel_for(bool b);
+    virtual bool prepare_parallel_for(bool b);
     int _ptr, _indent;
 
 public:
@@ -614,6 +614,25 @@ static void sk_add_default_arrays(void)
                 false,
                 true, false
                 }));
+}
+
+static void sk_init_accessors(gm_code_writer *Body)
+{
+    char tmp[1024];
+
+    std::map<std::string,struct sk_gm_array>::iterator i;
+    for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
+
+        struct sk_gm_array a = i->second;
+
+        const char* dest = a.dest.c_str();
+        const char* src = a.src.c_str();
+        const char* type = a.type.c_str();
+        const char* num = a.num.c_str();
+
+        sprintf(tmp, "%s* %s = LOOKUP_%s;", type, dest, dest);
+        Body->pushln(tmp);
+    }
 }
 
 #endif
