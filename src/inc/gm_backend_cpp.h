@@ -620,6 +620,8 @@ static void sk_init_accessors(gm_code_writer *Body)
 {
     char tmp[1024];
 
+    Body->pushln("#ifdef INDIRECTION");
+
     std::map<std::string,struct sk_gm_array>::iterator i;
     for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
 
@@ -633,6 +635,8 @@ static void sk_init_accessors(gm_code_writer *Body)
         sprintf(tmp, "%s* %s = LOOKUP_%s;", type, dest, dest);
         Body->pushln(tmp);
     }
+
+    Body->pushln("#endif");
 }
 
 #endif
