@@ -1,11 +1,11 @@
 #include "shl_graph.h"
 
-shl_graph::shl_graph() {
-    begin = NULL;
-    node_idx = NULL;
+shl_graph::shl_graph(edge_t *b, edge_t *r_b, node_t *n, node_t *r_n) {
+    begin = b;
+    node_idx = n;
 
-    r_begin = NULL;
-    r_node_idx = NULL;
+    r_begin = r_b;
+    r_node_idx = r_n;
 }
 
 shl_graph::~shl_graph() {

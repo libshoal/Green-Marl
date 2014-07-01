@@ -1,14 +1,5 @@
-#ifndef GM_GRAPH_H_
-#define GM_GRAPH_H_
-#include <assert.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <map>
-#include <vector>
-#include <stdlib.h>
-#include <omp.h>
-#include <string>
-#include <unordered_map>
+#ifndef SHL_GRAPH_H_
+#define SHL_GRAPH_H_
 
 #include "gm_internal.h"
 
@@ -116,16 +107,11 @@ typedef edge_t edge_id;
 //     Map<node_ID, vector<Node_ID, Edge_ID> > ; neighborhood list
 //
 //--------------------------------------------------------------------------
-struct edge_dest_t  // for flexible graph representation
-{
-    node_id dest;
-    edge_id edge;
-};
 
 class shl_graph
 {
   public:
-    shl_graph();
+    shl_graph(edge_t *b, edge_t *r_b, node_t *n, node_t *r_n);
     ~shl_graph();
 
     edge_t* begin;             // O(N) array of edge_t

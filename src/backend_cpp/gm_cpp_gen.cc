@@ -143,6 +143,7 @@ void gm_cpp_gen::do_generate_begin() {
     add_include("algorithm", Header);
     add_include("omp.h", Header);
     add_include("shl.h", Header);
+    add_include("shl_graph.h", Header);
     //add_include(get_lib()->get_header_info(), Header, false);
     add_include(RT_INCLUDE, Header, false);
     Header.NL();

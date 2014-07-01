@@ -636,6 +636,24 @@ static void sk_init_accessors(gm_code_writer *Body)
         Body->pushln(tmp);
     }
 
+    int num = 0;
+
+    Body->push("shl_graph shl_G(");
+    for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
+
+        struct sk_gm_array a = i->second;
+
+        if (a.buildin) {
+
+            if (num++>0)
+                Body->push(", ");
+
+            const char* dest = a.dest.c_str();
+            Body->push(dest);
+        }
+    }
+    Body->pushln(");");
+
     Body->pushln("#endif");
 }
 
