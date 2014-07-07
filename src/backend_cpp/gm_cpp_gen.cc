@@ -1480,26 +1480,36 @@ void gm_cpp_gen::generate_sent_reduce_argmin_assign(ast_assign *a) {
     Body.push(rhs_temp);
     Body.pushln(") {");
 
+    sk_lhs = true;
+
     // lhs = rhs_temp
     if (a->is_target_scalar()) {
         generate_lhs_id(a->get_lhs_scala());
     } else {
         generate_lhs_field(a->get_lhs_field());
     }
-    Body.push(" = ");
+
+    //    Body.push(" = ");
+    sk_lhs = false;
+
     Body.push(rhs_temp);
+
+    sk_rhs_end(&Body);
     Body.pushln(";");
 
     i = 0;
     for (I = L.begin(); I != L.end(); I++, i++) {
+        sk_lhs = true;
         ast_node* n = *I;
         if (n->get_nodetype() == AST_ID) {
             generate_lhs_id((ast_id*) n);
         } else {
             generate_lhs_field((ast_field*) n);
         }
-        Body.push(" = ");
+        sk_lhs = false;
+        //        Body.push(" = ");
         Body.push(names[i]);
+        sk_rhs_end(&Body);
         Body.pushln(";");
     }
 
@@ -1530,6 +1540,8 @@ void gm_cpp_gen::generate_sent_return(ast_return *r) {
         Body.push(CLEANUP_PTR);
         Body.pushln("();");
     }
+
+    Body.pushln("shl__end();\n");
 
     Body.push("return");
     if (r->get_expr() != NULL) {
