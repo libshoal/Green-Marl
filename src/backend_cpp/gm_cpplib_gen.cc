@@ -487,7 +487,10 @@ void gm_cpplib::generate_expr_builtin(ast_expr_builtin* e, gm_code_writer& Body)
                 case GM_BLTIN_NODE_HAS_EDGE_TO:
                     assert(i->getTypeInfo()->get_target_graph_id() != NULL);
                     //sprintf(str_buf, "%s.has_edge_to(", i->getTypeInfo()->get_target_graph_id()->get_genname());
-                    sprintf(str_buf, "%s.is_neighbor(", i->getTypeInfo()->get_target_graph_id()->get_genname());
+                    // SK: withing is_neighbor read-access to the following arrays happens
+                    sk_read_set.insert("G.node_idx");
+                    sk_read_set.insert("G.begin");
+                    sprintf(str_buf, "%s.is_neighbor(", "shl_G");
                     Body.push(str_buf);
                     sprintf(str_buf, "%s,", i->get_genname());
                     Body.push(str_buf);
