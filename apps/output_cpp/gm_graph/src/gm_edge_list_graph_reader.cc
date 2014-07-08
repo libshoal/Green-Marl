@@ -66,7 +66,7 @@ void gm_edge_list_graph_reader::builtGraph() {
             G.add_node();
             maxNodeId++;
         }
-        p = strtok(NULL, " \t");
+        p = strtok(NULL, " \t\n\r");
         if (*p != '*') {
             node_t destination = readValueFromToken<node_t>(p);
             while (destination > maxNodeId) {
@@ -91,7 +91,7 @@ bool gm_edge_list_graph_reader::loadEdgeList() {
     builtGraph();
     if ((nodePropertyCount == 0) && (edgePropertyCount == 0))
         return true;
-    
+
 
     inputFileStream.open(fileName);
     if (!inputFileStream.is_open()) {
