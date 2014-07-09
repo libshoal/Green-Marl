@@ -85,12 +85,13 @@ void gm_edge_list_graph_reader::builtGraph() {
     int maxSize = 1024;
     char lineData[maxSize]; // should be enough right?
     node_t maxNodeId = -1;
+    int sklines = 0;
 
     // Let's assume that the input graph is sorted
     node_t curr_src = -1;
 
     while (!inputFileStream.eof()) {
-        currentLine++;
+        currentLine++; sklines++;
         inputFileStream.getline(lineData, maxSize);
         if (strlen(lineData) == 0 || lineData[0] == '#') continue;
 
@@ -99,29 +100,28 @@ void gm_edge_list_graph_reader::builtGraph() {
         // Make sure input is sorted!
         assert(nodeId >= curr_src); curr_src = max(nodeId, curr_src);
         assert(nodeId<LOOKUP_SIZE);
+        if (sklines%1000000 == 0) printf("current line is % 15d - % 15d\n",
+                                       sklines, skmax);
         if (lookup[nodeId]<0) {
-            if (skmax%10000 == 0) printf("current index is % 15d\n", skmax);
             lookup[nodeId] = skmax++;
+            G.add_node();
         }
         nodeId = lookup[nodeId];
-        while (nodeId > maxNodeId) {
-            G.add_node();
-            maxNodeId++;
-        }
         p = strtok(NULL, " \t\n\r");
         if (*p != '*') {
             node_t destination = readValueFromToken<node_t>(p);
             assert (destination<LOOKUP_SIZE);
-            if (lookup[destination] < 0)
+            if (lookup[destination] < 0) {
                 lookup[destination] = skmax++;
-            destination = lookup[destination];
-            while (destination > maxNodeId) {
                 G.add_node();
-                maxNodeId++;
             }
+            destination = lookup[destination];
             G.add_edge(nodeId, destination);
         }
+
     }
+
+    printf("maxNodeId: %d\n", skmax);
 
     inputFileStream.close();
     G.freeze();
