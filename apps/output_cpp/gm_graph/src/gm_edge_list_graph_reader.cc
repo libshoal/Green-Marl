@@ -43,7 +43,38 @@ gm_edge_list_graph_reader::~gm_edge_list_graph_reader() {
     if (inputFileStream.is_open()) inputFileStream.close();
 }
 
+// http://stackoverflow.com/questions/3437404/min-and-max-in-c/3437484#3437484
+#define max(a,b) \
+    ({ __typeof__ (a) _a = (a); \
+    __typeof__ (b) _b = (b); \
+    _a > _b ? _a : _b; })
+
+/*
+ * For the twitter graph, we need to "normalize" the user IDs. The
+ * resulting graph should not contain users who's profile has been
+ * deleted.
+ *
+ * From http://twitter.mpi-sws.org/
+ *
+ * These accounts were in use in August 2009. We obtained the list of
+ * user IDs by repeatedly checking all possible IDs from 0 to 80
+ * million. We scanned the list twice at a two week time gap. We did
+ * not look beyond 80 million, because no single user in the collected
+ * data had a link to a user whose ID was greater than that value.
+ *
+ * i.e. the biggest ID (for the the input data should be 80'000'000
+ */
+#define LOOKUP_SIZE 80000000
 void gm_edge_list_graph_reader::builtGraph() {
+
+    // Need temporary data structure for mapping USERID -> NODEID
+    printf("Stefan: Initializing lookup array .. ");
+    int32_t *lookup = (int32_t*) malloc(sizeof(int32_t)*LOOKUP_SIZE);
+    assert (lookup!=NULL);
+    for (int i=0; i<LOOKUP_SIZE; i++)
+        lookup[i] = -1;
+    node_t skmax = 0;
+    printf("done\n");
 
     inputFileStream.open(fileName);
     if (!inputFileStream.is_open()) {
@@ -55,6 +86,9 @@ void gm_edge_list_graph_reader::builtGraph() {
     char lineData[maxSize]; // should be enough right?
     node_t maxNodeId = -1;
 
+    // Let's assume that the input graph is sorted
+    node_t curr_src = -1;
+
     while (!inputFileStream.eof()) {
         currentLine++;
         inputFileStream.getline(lineData, maxSize);
@@ -62,6 +96,14 @@ void gm_edge_list_graph_reader::builtGraph() {
 
         char* p = strtok(lineData, " \t");
         node_t nodeId = readValueFromToken<node_t>(p);
+        // Make sure input is sorted!
+        assert(nodeId >= curr_src); curr_src = max(nodeId, curr_src);
+        assert(nodeId<LOOKUP_SIZE);
+        if (lookup[nodeId]<0) {
+            if (skmax%10000 == 0) printf("current index is % 15d\n", skmax);
+            lookup[nodeId] = skmax++;
+        }
+        nodeId = lookup[nodeId];
         while (nodeId > maxNodeId) {
             G.add_node();
             maxNodeId++;
@@ -69,6 +111,10 @@ void gm_edge_list_graph_reader::builtGraph() {
         p = strtok(NULL, " \t\n\r");
         if (*p != '*') {
             node_t destination = readValueFromToken<node_t>(p);
+            assert (destination<LOOKUP_SIZE);
+            if (lookup[destination] < 0)
+                lookup[destination] = skmax++;
+            destination = lookup[destination];
             while (destination > maxNodeId) {
                 G.add_node();
                 maxNodeId++;
