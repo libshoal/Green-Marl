@@ -65,6 +65,7 @@ gm_edge_list_graph_reader::~gm_edge_list_graph_reader() {
  * i.e. the biggest ID (for the the input data should be 80'000'000
  */
 #define LOOKUP_SIZE 80000000
+#define NUM_LINES 1468365182
 void gm_edge_list_graph_reader::builtGraph() {
 
     // Need temporary data structure for mapping USERID -> NODEID
@@ -90,8 +91,51 @@ void gm_edge_list_graph_reader::builtGraph() {
     // Let's assume that the input graph is sorted
     node_t curr_src = -1;
 
+    // Step 1: determine which node IDs are present
     while (!inputFileStream.eof()) {
         currentLine++; sklines++;
+        if (sklines%1000000 == 0) printf("current line is % 15d - % 3.2f\n",
+                                         sklines, (float)sklines/(float)NUM_LINES);
+        inputFileStream.getline(lineData, maxSize);
+        if (strlen(lineData) == 0 || lineData[0] == '#') continue;
+
+        char* p = strtok(lineData, " \t");
+        node_t nodeId = readValueFromToken<node_t>(p);
+        // mark source node as being used
+        lookup[nodeId] = 1;
+        p = strtok(NULL, " \t\n\r");
+        if (*p != '*') {
+            node_t destination = readValueFromToken<node_t>(p);
+            // mark destination as being used
+            lookup[destination] = 1;
+        }
+
+    }
+
+    // Build the lookup table
+    int sk_node_ctr = 0;
+    for (int i=0; i<LOOKUP_SIZE; i++) {
+        lookup[i] = lookup[i] > 0 ? sk_node_ctr++ : -1;
+    }
+    printf("Number of nodes found: %d\n", sk_node_ctr);
+
+    // Add nodes to graph
+    for (int i=0; i<sk_node_ctr; i++) {
+            G.add_node();
+    }
+
+    // Close and reopen file
+    inputFileStream.close();
+    inputFileStream.open(fileName);
+    if (!inputFileStream.is_open()) {
+        printf("Error: Error while opening file.\n");
+        assert(false);
+    }
+
+    currentLine = 0;
+
+    while (!inputFileStream.eof()) {
+        currentLine++; sklines--;
         inputFileStream.getline(lineData, maxSize);
         if (strlen(lineData) == 0 || lineData[0] == '#') continue;
 
@@ -102,19 +146,13 @@ void gm_edge_list_graph_reader::builtGraph() {
         assert(nodeId<LOOKUP_SIZE);
         if (sklines%1000000 == 0) printf("current line is % 15d - % 15d\n",
                                        sklines, skmax);
-        if (lookup[nodeId]<0) {
-            lookup[nodeId] = skmax++;
-            G.add_node();
-        }
+        assert(lookup[nodeId]>=0);
         nodeId = lookup[nodeId];
         p = strtok(NULL, " \t\n\r");
         if (*p != '*') {
             node_t destination = readValueFromToken<node_t>(p);
             assert (destination<LOOKUP_SIZE);
-            if (lookup[destination] < 0) {
-                lookup[destination] = skmax++;
-                G.add_node();
-            }
+            assert (lookup[destination]>=0);
             destination = lookup[destination];
             G.add_edge(nodeId, destination);
         }
