@@ -588,7 +588,7 @@ void sk_init_done(gm_code_writer *Body)
     }
     Body->pushln("shl__end_timer();");
     if (first)
-        Body->pushln("shl__init();");
+        Body->pushln("shl__init(gm_rt_get_num_threads());");
 
     Body->NL();
 }
