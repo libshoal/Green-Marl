@@ -82,6 +82,9 @@ $(TEST_DIRS):
 etc/update_setup :
 	g++ etc/update_setup.cc -o etc/update_setup
 
+# --------------------------------------------------
+#
+
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always)
 
 sk_pagerank: sk_pr_gm | sk_pr_gcc
@@ -90,13 +93,14 @@ BASE := ../../../
 INC := -I$(BASE)contrib/numactl-2.0.9 -I$(BASE)shoal/inc -I$(BASE)contrib/papi-5.3.0/src
 LIB := -L$(BASE)contrib/numactl-2.0.9 -lnuma -L$(BASE)contrib/papi-5.3.0/src -lpapi \
 	-L$(BASE)contrib/papi-5.3.0/src/libpfm4/lib -lpfm
-OBJS := $(BASE)shoal/src/misc.c $(BASE)shoal/src/linux.c
+OBJS := $(BASE)shoal/src/misc.c \
+	$(BASE)shoal/src/linux.c \
+	$(BASE)/shoal/src/shl.c \
+	$(BASE)/shoal/src/shl_array.cpp
 
 sk_pr_gm:
 	rm -rf apps/output_cpp/generated/pagerank.cc
 	$(MAKE) -C apps/src/ ../output_cpp/generated/pagerank.cc
-#	cat apps/output_cpp/generated/pagerank.cc
-#	cat apps/output_cpp/generated/pagerank.h
 
 sk_pr_gcc:
 	cd apps/output_cpp/src; g++ -O3 -DVERSION=\"$(GIT_VERSION)\" -g $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/pagerank.cc pagerank_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a $(LIB) -o ../bin/pagerank
@@ -106,8 +110,6 @@ sk_triangle_counting: sk_tc_gm | sk_tc_gcc
 sk_tc_gm:
 	rm -rf apps/output_cpp/generated/triangle_counting.cc
 	$(MAKE) -C apps/src/ ../output_cpp/generated/triangle_counting.cc
-#	cat apps/output_cpp/generated/triangle_counting.cc
-#	cat apps/output_cpp/generated/triangle_counting.h
 
 sk_tc_gcc:
 	cd apps/output_cpp/src; g++ -O3 -DVERSION=\"$(GIT_VERSION)\" -g $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/triangle_counting.cc triangle_counting_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/triangle_counting
@@ -117,8 +119,6 @@ sk_hop_dist: sk_hd_gm | sk_hd_gcc
 sk_hd_gm:
 	rm -rf apps/output_cpp/generated/hop_dist.cc
 	$(MAKE) -C apps/src/ ../output_cpp/generated/hop_dist.cc
-#	cat apps/output_cpp/generated/hop_dist.cc
-#	cat apps/output_cpp/generated/hop_dist.h
 
 sk_hd_gcc:
 	cd apps/output_cpp/src; g++ -O3 -DVERSION=\"$(GIT_VERSION)\" -g $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/hop_dist.cc hop_dist_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/hop_dist
