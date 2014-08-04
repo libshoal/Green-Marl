@@ -105,16 +105,16 @@ LIB := \
 
 OBJS :=
 
-BUILDTYPE := debug
-#BUILDTYPE := release
+#BUILDTYPE := debug
+BUILDTYPE := release
 
 ifeq ($(BUILDTYPE),debug)
-	CXXFLAGS += -O0  -pg -g
+	FLAGS += -O0  -pg -g -DSHL_DEBUG
 else
-	CXXFLAGS +=  -O3 -g
+	FLAGS +=  -O3 -g
 endif
 
-FLAGS += -DVERSION=\"$(GIT_VERSION)\"
+FLAGS += -DVERSION=\"$(GIT_VERSION)\" -Wall
 
 sk_pr_gm:
 	rm -rf apps/output_cpp/generated/pagerank.cc
