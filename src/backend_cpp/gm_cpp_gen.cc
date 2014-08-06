@@ -154,6 +154,7 @@ void gm_cpp_gen::do_generate_begin() {
     sprintf(temp, "%s.h", fname);
     add_include(temp, Body, false);
     add_include("shl.h", Body, false);
+    add_include("shl_array.hpp", Body, false);
     add_include("omp.h", Body, false);
     Body.NL();
 }
@@ -567,22 +568,26 @@ void sk_init_done(gm_code_writer *Body)
             num = (std::string("(") + a.num + "+1" + ")").c_str();
         }
 
-        Body->pushln("#ifdef INDIRECTION");
-        sprintf(tmp, "%s** %s__set = (%s**) shl__copy_array"
-                "(%s, (sizeof(%s)*%s), %s_IS_USED,"
-                "%s_IS_RO, \"%s\");",
-                type, dest, type, src, type, num, dest, dest, dest);
+        // Allocate array
+        sprintf(tmp, "shl_array<%s>* %s__set = "
+                "shl__malloc<%s>(%s, %s_IS_RO);",
+                type,   // 1) type
+                dest,   // 2) name
+                type,   // 3) type
+                num,    // 4) size
+                dest);  // 5) read-only property
         Body->pushln(tmp);
-        Body->pushln("#else");
-        Body->pushln("#ifdef COPY");
-        sprintf(tmp, "%s* %s = ((%s**) shl__copy_array"
-                "(%s, (sizeof(%s)*%s), %s_IS_USED,"
-                "%s_IS_RO, \"%s\"))[0];",
-                type, dest, type, src, type, num, dest, dest, dest);
+
+        // Alloc Green Marl array
+        sprintf(tmp, "%s__set->alloc();",
+                dest);   // 1) name
         Body->pushln(tmp);
-        Body->pushln("#endif");
-        Body->pushln("#endif");
-        Body->NL();
+
+        // Copy Green Marl array
+        sprintf(tmp, "%s__set->copy_from(%s);",
+                dest,   // 1) name
+                src);   // 2) Green Marl source
+        Body->pushln(tmp);
 
         i->second.init_done = true;
     }

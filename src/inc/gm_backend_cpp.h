@@ -620,8 +620,6 @@ static void sk_init_accessors(gm_code_writer *Body)
 {
     char tmp[1024];
 
-    Body->pushln("#ifdef INDIRECTION");
-
     std::map<std::string,struct sk_gm_array>::iterator i;
     for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
 
@@ -632,7 +630,11 @@ static void sk_init_accessors(gm_code_writer *Body)
         const char* type = a.type.c_str();
         const char* num = a.num.c_str();
 
-        sprintf(tmp, "%s* %s = LOOKUP_%s;", type, dest, dest);
+        /* sprintf(tmp, "%s* %s = LOOKUP_%s;", type, dest, dest); */
+        /* Body->pushln(tmp); */
+
+        sprintf(tmp, "%s* %s __attribute__ ((unused)) = %s__set->get_array();",
+                type, dest, dest);
         Body->pushln(tmp);
     }
 
@@ -644,8 +646,6 @@ static void sk_init_accessors(gm_code_writer *Body)
     Body->push(sk_convert_array_name("G.node_idx").c_str()); Body->push(", ");
     Body->push(sk_convert_array_name("G.r_node_idx").c_str());
     Body->pushln(");");
-
-    Body->pushln("#endif");
 }
 
 #endif
