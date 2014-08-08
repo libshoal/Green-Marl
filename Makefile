@@ -105,7 +105,7 @@ LIB := \
 
 OBJS :=
 
-#BUILDTYPE := debug
+# Switch buildtype: supported are "debug" and "release"
 BUILDTYPE := release
 
 ifeq ($(BUILDTYPE),debug)
@@ -124,7 +124,7 @@ sk_clean:
 
 .PHONY: sk_shoal
 sk_shoal:
-	$(MAKE) -C $(SHOAL)
+	$(MAKE) -C $(SHOAL) BUILDTYPE=$(BUILDTYPE)
 
 sk_pr_gm:
 	rm -rf apps/output_cpp/generated/pagerank.cc
