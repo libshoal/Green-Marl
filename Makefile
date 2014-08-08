@@ -116,11 +116,21 @@ endif
 
 FLAGS += -DVERSION=\"$(GIT_VERSION)\" -Wall
 
+sk_clean:
+	$(MAKE) -C $(BASE)/src clean
+	$(MAKE) -C $(SHOAL) clean
+	$(MAKE) -C $(SHOAL)
+	$(MAKE) compiler -j $(shell nproc)
+
+.PHONY: sk_shoal
+sk_shoal:
+	$(MAKE) -C $(SHOAL)
+
 sk_pr_gm:
 	rm -rf apps/output_cpp/generated/pagerank.cc
 	$(MAKE) -C apps/src/ ../output_cpp/generated/pagerank.cc
 
-sk_pr_gcc:
+sk_pr_gcc: sk_shoal
 	$(MAKE) -C $(SHOAL)
 	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/pagerank.cc pagerank_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a $(LIB) -o ../bin/pagerank
 

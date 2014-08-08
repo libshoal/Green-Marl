@@ -203,7 +203,6 @@ void gm_cpp_gen::do_generate_end() {
     // }
     // Header.pushln("#else");
 
-    Header.pushln("#ifdef INDIRECTION");
     for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
          i!=sk_array_mapping.end(); i++) {
 
@@ -227,74 +226,6 @@ void gm_cpp_gen::do_generate_end() {
             Header.pushln(tmp);
         }
     }
-    std::map<std::string,struct sk_gm_array>::iterator i;
-    for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
-
-        struct sk_gm_array a = i->second;
-
-        const char* dest = a.dest.c_str();
-        const char* src = a.src.c_str();
-
-        bool is_write = sk_arr_is_write(src);
-        bool is_read = sk_arr_is_read(src);
-
-        bool replicate = !is_write;
-        const char* lookup = replicate ? "shl__get_rep_id()" : "0";
-
-        // Lookup function
-        if (is_read || is_write) {
-            sprintf(tmp, "#define LOOKUP_%s %s__set[%s];", dest, dest, lookup);
-            Header.pushln(tmp);
-        } else {
-            sprintf(tmp, "#define LOOKUP_%s NULL;", dest);
-            Header.pushln(tmp);
-        }
-
-    }
-    Header.pushln("#else /* INDIRECTION */");
-    Header.pushln("#ifdef COPY");
-    for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
-         i!=sk_array_mapping.end(); i++) {
-
-        const char *dest = sk_convert_array_name((*i).second).c_str();
-
-        // Write
-        if (sk_arr_is_write((((*i).second).c_str()))) {
-            sprintf(tmp, "#define %s_%s_%s(i, v) %s[i] = v", SHOAL_PREFIX,
-                    (*i).first.c_str(), SHOAL_SUFFIX_WR, dest);
-            Header.pushln(tmp);
-        }
-
-        // Read
-        if (sk_arr_is_read(((*i).second).c_str())) {
-            sprintf(tmp, "#define %s_%s_%s(i) %s[i]", SHOAL_PREFIX,
-                    (*i).first.c_str(), SHOAL_SUFFIX_RD, dest);
-            Header.pushln(tmp);
-        }
-    }
-    Header.pushln("#else /* COPY */");
-    for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
-         i!=sk_array_mapping.end(); i++) {
-
-        const char *src = (*i).second.c_str();
-
-        // Write
-        if (sk_arr_is_write((((*i).second).c_str()))) {
-            sprintf(tmp, "#define %s_%s_%s(i, v) %s[i] = v", SHOAL_PREFIX,
-                    (*i).first.c_str(), SHOAL_SUFFIX_WR, src);
-            Header.pushln(tmp);
-        }
-
-        // Read
-        if (sk_arr_is_read(((*i).second).c_str())) {
-            sprintf(tmp, "#define %s_%s_%s(i) %s[i]", SHOAL_PREFIX,
-                    (*i).first.c_str(), SHOAL_SUFFIX_RD, src);
-            Header.pushln(tmp);
-        }
-    }
-    Header.pushln("#endif /* COPY */");
-    Header.pushln("#endif /* INDIRECTION */");
-    // Header.pushln("#endif");
 
     Header.NL();
     sprintf(tmp, "struct %sframe {", SHOAL_PREFIX);
@@ -538,20 +469,25 @@ const char* gm_cpp_gen::get_lhs_default(int type) {
 void sk_init_done(gm_code_writer *Body)
 {
     char tmp[1024];
+    static bool first = true;
 
     assert (sk_gm_arrays.begin()!=sk_gm_arrays.end());
     std::map<std::string,struct sk_gm_array>::iterator i;
 
-    bool first = true;
+    if (first)
+        Body->pushln("shl__init(gm_rt_get_num_threads());");
+
+    first = false;
+
     Body->pushln("shl__start_timer();");
     for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
 
         struct sk_gm_array a = i->second;
 
         if (a.init_done) {
-            first = false;
             continue;
         }
+
 
         const char* dest = a.dest.c_str();
         const char* src = a.src.c_str();
@@ -570,11 +506,12 @@ void sk_init_done(gm_code_writer *Body)
 
         // Allocate array
         sprintf(tmp, "shl_array<%s>* %s__set = "
-                "shl__malloc<%s>(%s, %s_IS_RO);",
+                "shl__malloc<%s>(%s, \"%s\", %s_IS_RO);",
                 type,   // 1) type
                 dest,   // 2) name
                 type,   // 3) type
                 num,    // 4) size
+                src,    // 5) name of source
                 dest);  // 5) read-only property
         Body->pushln(tmp);
 
@@ -592,8 +529,6 @@ void sk_init_done(gm_code_writer *Body)
         i->second.init_done = true;
     }
     Body->pushln("shl__end_timer();");
-    if (first)
-        Body->pushln("shl__init(gm_rt_get_num_threads());");
 
     Body->NL();
 }
@@ -1276,31 +1211,13 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
                 const char* type = a.type.c_str();
                 const char* num = a.num.c_str();
 
-                // Due to data layout in adjacency lists, node and edge arrays are +1
-                if (strcmp(src, "G.begin") == 0 ||
-                    strcmp(src, "G.r_begin") == 0 ||
-                    strcmp(src, "G.node_idx") == 0 ||
-                    strcmp(src, "G.r_node_idx") == 0) {
+                // Copy Green Marl array back
+                sprintf(tmp, "%s__set->copy_back(%s);", dest, src);   // 1) name
+                Body.pushln(tmp);
 
-                    num = (std::string("(") + a.num + "+1" + ")").c_str();
-                }
-                Body.pushln("#ifdef INDIRECTION");
-                sprintf(tmp, "shl__copy_back_array((void**)%s__set, (void*)%s, sizeof(%s)*%s, "
-                        "%s_IS_USED, %s_IS_RO, %s_IS_DYNAMIC, \"%s\");",
-                        dest, src, type, num, dest, dest, dest, dest);
-                Body.pushln(tmp);
-                Body.pushln("#else");
-                Body.pushln("#ifdef COPY");
-                sprintf(tmp, "shl__copy_back_array_single((void*)%s, (void*)%s, sizeof(%s)*%s, "
-                        "%s_IS_USED, %s_IS_RO, %s_IS_DYNAMIC, \"%s\");",
-                        dest, src, type, num, dest, dest, dest, dest);
-                Body.pushln(tmp);
-                Body.pushln("#endif");
-                Body.pushln("#endif");
-                Body.NL();
             }
-            Body.NL();
             Body.pushln("shl__end_timer();");
+            Body.NL();
 
             Body.pushln("shl__end();\n");
             sprintf(temp, "%s();", CLEANUP_PTR);
