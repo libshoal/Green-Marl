@@ -385,6 +385,8 @@ struct sk_gm_array {
     bool dynamic;
     bool buildin;
     bool init_done;
+    bool is_edge_property;
+    bool is_node_property;
 };
 
 extern bool sk_lhs;
@@ -494,8 +496,10 @@ static void sk_property(gm_code_writer *Body,
                         const char* prop,
                         const char* prop_type,
                         bool dynamic,
-                        bool is_node) // whether property is GM internal
+                        bool is_node)
 {
+    assert (is_node); // If the input is not a node property, is it an edge property?
+
     printf("found property [%s] of type [%s], dynamic=[%d], is_node=%d\n",
            prop, prop_type, dynamic, is_node);
 
@@ -512,7 +516,9 @@ static void sk_property(gm_code_writer *Body,
                                           std::string(is_node ? "G.num_nodes()" : "G.num_edges()"),
                                           dynamic,
                                           false,
-                                          false
+                                          false,
+                                          !is_node,
+                                          is_node
                                           }));
 }
 
@@ -587,7 +593,7 @@ static void sk_add_default_arrays(void)
                 std::string("edge_t"),
                 std::string("G.num_nodes()"),
                 false,
-                true, false
+                true, false, false, true
                 }));
     sk_gm_arrays.insert(std::make_pair<std::string, struct sk_gm_array>(sk_convert_array_name("G.r_begin"),
         {sk_convert_array_name("G.r_begin"),
@@ -595,7 +601,7 @@ static void sk_add_default_arrays(void)
                 std::string("edge_t"),
                 std::string("G.num_nodes()"),
                 false,
-                true, false
+                true, false, false, true
                 }));
 
     sk_gm_arrays.insert(std::make_pair<std::string, struct sk_gm_array>(sk_convert_array_name("G.node_idx"),
@@ -604,7 +610,7 @@ static void sk_add_default_arrays(void)
                 std::string("node_t"),
                 std::string("G.num_edges()"),
                 false,
-                true, false
+                true, false, true, false
                 }));
     sk_gm_arrays.insert(std::make_pair<std::string, struct sk_gm_array>(sk_convert_array_name("G.r_node_idx"),
         {sk_convert_array_name("G.r_node_idx"),
@@ -612,7 +618,7 @@ static void sk_add_default_arrays(void)
                 std::string("node_t"),
                 std::string("G.num_edges()"),
                 false,
-                true, false
+                true, false, true, false
                 }));
 }
 

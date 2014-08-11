@@ -165,43 +165,50 @@ void gm_cpp_gen::do_generate_end() {
 
     Header.pushln("/* w/ SHOAL extensions */");
 
+    // Dump information about all arrays
+    printf("\n");
+    printf("+------------------------------------------------+\n");
+    printf("| %-30s      %c   %c      |\n", "ARRAY", 'N', 'E');
+    printf("+------------------------------------------------+\n");
+    std::map<std::string,struct sk_gm_array>::iterator i;
+    for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
+
+        struct sk_gm_array a = i->second;
+
+        const char* dest = a.dest.c_str();
+        const char* src = a.src.c_str();
+        const char* type = a.type.c_str();
+        const char* num = a.num.c_str();
+
+        printf("| %-30s     [%c] [%c]     |\n",
+               dest, a.is_node_property ? 'X' : ' ',
+               a.is_edge_property ? 'X' : ' ');
+    }
+    printf("+------------------------------------------------+\n");
+
     // Print write and read set
     // --------------------------------------------------
-    printf("Write set\n------------------------------\n");
+    printf("\n");
+    printf("+------------------------------------------------+\n");
+    printf("| WRITE SET                                      |\n");
+    printf("+------------------------------------------------+\n");
     for (std::set<std::string>::iterator i=sk_write_set.begin();
          i!=sk_write_set.end(); i++) {
 
-        printf("%s\n", (*i).c_str());
+        printf("| %-46s |\n", (*i).c_str());
     }
-    printf("Read set\n------------------------------\n");
+    printf("+------------------------------------------------+\n");
+    printf("| READ SET                                       |\n");
+    printf("+------------------------------------------------+\n");
     for (std::set<std::string>::iterator i=sk_read_set.begin();
          i!=sk_read_set.end(); i++) {
 
-        printf("%s\n", (*i).c_str());
+        printf("| %-46s |\n", (*i).c_str());
     }
+    printf("+------------------------------------------------+\n");
 
     // Access functions
     // --------------------------------------------------
-
-    // Header.pushln("#ifdef SHL_DBG_ARR");
-    // for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
-    //      i!=sk_array_mapping.end(); i++) {
-
-    //     sprintf(tmp, "int64_t num_%s_wr = 0;", (*i).first.c_str());
-    //     Header.pushln(tmp);
-    //     sprintf(tmp, "int64_t num_%s_rd = 0;", (*i).first.c_str());
-    //     Header.pushln(tmp);
-
-    //     sprintf(tmp, "static void %s_%s(int32_t i, int32_t v) { %s[i] = v; num_%s_wr++; }",
-    //             (*i).first.c_str(), SHOAL_SUFFIX_WR, (*i).second.c_str(), (*i).first.c_str());
-    //     Header.pushln(tmp);
-
-    //     sprintf(tmp, "#define %s_%s(i) %s[i]; num_%s_rd++;", (*i).first.c_str(),
-    //             SHOAL_SUFFIX_RD, (*i).second.c_str(), (*i).first.c_str());
-
-    //     Header.pushln(tmp);
-    // }
-    // Header.pushln("#else");
 
     for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
          i!=sk_array_mapping.end(); i++) {
@@ -506,13 +513,15 @@ void sk_init_done(gm_code_writer *Body)
 
         // Allocate array
         sprintf(tmp, "shl_array<%s>* %s__set = "
-                "shl__malloc<%s>(%s, \"%s\", %s_IS_RO);",
+                "shl__malloc<%s>(%s, \"%s\", %s_IS_RO, %s_IS_DYNAMIC, %s_IS_USED);",
                 type,   // 1) type
                 dest,   // 2) name
                 type,   // 3) type
                 num,    // 4) size
                 src,    // 5) name of source
-                dest);  // 5) read-only property
+                dest,   // 5) read-only property
+                dest,   // 6) dynamic property
+                dest);  // 7) used property
         Body->pushln(tmp);
 
         // Alloc Green Marl array

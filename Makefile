@@ -117,9 +117,9 @@ endif
 FLAGS += -DVERSION=\"$(GIT_VERSION)\" -Wall
 
 sk_clean:
-	$(MAKE) -C $(BASE)/src clean
 	$(MAKE) -C $(SHOAL) clean
 	$(MAKE) -C $(SHOAL)
+	$(MAKE) -C $(BASE)/src clean
 	$(MAKE) compiler -j $(shell nproc)
 
 .PHONY: sk_shoal
