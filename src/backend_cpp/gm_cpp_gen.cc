@@ -1626,10 +1626,14 @@ bool gm_cpp_gen::prepare_parallel_for(bool need_dynamic) {
         Body.push("#pragma omp for");
     }
 
+#if 0
     if (need_dynamic) {
         Body.push(" schedule(dynamic,128)");
 
     }
+#else
+    Body.push(" schedule(static,1024)");
+#endif
 
     Body.NL();
     return res;
