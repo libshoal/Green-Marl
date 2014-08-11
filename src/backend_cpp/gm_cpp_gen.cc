@@ -167,9 +167,10 @@ void gm_cpp_gen::do_generate_end() {
 
     // Dump information about all arrays
     printf("\n");
-    printf("+------------------------------------------------+\n");
-    printf("| %-30s      %c   %c      |\n", "ARRAY", 'N', 'E');
-    printf("+------------------------------------------------+\n");
+    printf("+--------------------------------------------------------------------+\n");
+    printf("| %-30s     %c    %c    %c    %c    %c    %c   %c |\n",
+           "ARRAY", 'N', 'E', 'U', 'R', 'G', 'D', 'I');
+    printf("+--------------------------------------------------------------------+\n");
     std::map<std::string,struct sk_gm_array>::iterator i;
     for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
 
@@ -180,11 +181,22 @@ void gm_cpp_gen::do_generate_end() {
         const char* type = a.type.c_str();
         const char* num = a.num.c_str();
 
-        printf("| %-30s     [%c] [%c]     |\n",
+        bool is_used = sk_arr_is_read(src) || sk_arr_is_write(src);
+        bool is_ro = !sk_arr_is_write(src) && is_used;
+        bool is_buildin = a.buildin && is_used;
+        bool is_dynamic = a.dynamic && is_used;
+        bool is_indexed = a.is_indexed && is_used;
+
+        printf("| %-30s    [%c]  [%c]  [%c]  [%c]  [%c]  [%c] [%c] |\n",
                dest, a.is_node_property ? 'X' : ' ',
-               a.is_edge_property ? 'X' : ' ');
+               a.is_edge_property ? 'X' : ' ',
+               is_used ? 'X' : ' ',
+               is_ro ? 'X' : ' ',
+               is_buildin ? 'X' : ' ',
+               is_dynamic ? 'X' : ' ',
+               is_indexed ? 'X' : ' ');
     }
-    printf("+------------------------------------------------+\n");
+    printf("+--------------------------------------------------------------------+\n");
 
     // Print write and read set
     // --------------------------------------------------
@@ -513,7 +525,8 @@ void sk_init_done(gm_code_writer *Body)
 
         // Allocate array
         sprintf(tmp, "shl_array<%s>* %s__set = "
-                "shl__malloc<%s>(%s, \"%s\", %s_IS_RO, %s_IS_DYNAMIC, %s_IS_USED);",
+                "shl__malloc<%s>(%s, \"%s\", %s_IS_RO, %s_IS_DYNAMIC, "
+                "%s_IS_USED, %s_IS_GRAPH);",
                 type,   // 1) type
                 dest,   // 2) name
                 type,   // 3) type
@@ -521,7 +534,8 @@ void sk_init_done(gm_code_writer *Body)
                 src,    // 5) name of source
                 dest,   // 5) read-only property
                 dest,   // 6) dynamic property
-                dest);  // 7) used property
+                dest,   // 7) used property
+                dest);  // 8) graph property
         Body->pushln(tmp);
 
         // Alloc Green Marl array
@@ -561,11 +575,11 @@ void sk_copy_func(gm_code_writer *Body, gm_code_writer *Header)
         bool is_used = sk_arr_is_read(src) || sk_arr_is_write(src);
         bool is_graph = a.buildin;
 
-        sprintf(tmp, "#define %s_IS_USED %d", dest, (is_used && !a.dynamic));
+        sprintf(tmp, "#define %s_IS_USED %d", dest, (is_used));
         Header->pushln(tmp);
         sprintf(tmp, "#define %s_IS_RO %d", dest, (is_ro));
         Header->pushln(tmp);
-        sprintf(tmp, "#define %s_IS_GRAPH %d", dest, (is_ro));
+        sprintf(tmp, "#define %s_IS_GRAPH %d", dest, is_graph);
         Header->pushln(tmp);
         sprintf(tmp, "#define %s_IS_DYNAMIC %d", dest, (a.dynamic));
         Header->pushln(tmp);

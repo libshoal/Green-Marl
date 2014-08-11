@@ -387,6 +387,7 @@ struct sk_gm_array {
     bool init_done;
     bool is_edge_property;
     bool is_node_property;
+    bool is_indexed;
 };
 
 extern bool sk_lhs;
@@ -412,13 +413,49 @@ extern std::map<std::string,struct sk_gm_array> sk_gm_arrays;
 
 //#define SK_DEBUG 1
 
+extern std::set<std::string> its;
+using namespace std;
+
+static std::string sk_convert_array_name(std::string in)
+{
+    size_t i = in.find(".");
+    if (i!=std::string::npos)
+        in.replace(i, 1, "_");
+
+    return std::string(SHOAL_PREFIX) + "_" + in;
+}
+
+static bool sk_m_is_iterator(std::string it)
+{
+    return its.find(it)!=its.end();
+}
+
 static char* sk_m_array_access_gen(const char* array_name, const char* index,
                    std::string original_array)
 {
     char str_buf[1024*8];
     bool is_write = sk_lhs;
+
+    // XXX I don't know what the following is, but it does not work,
+    // so let's remove it
     bool is_indexed = std::find(sk_iterators.begin(),
                                 sk_iterators.end(), index)!=sk_iterators.end();
+
+    bool is_indexed_2 = sk_m_is_iterator(string(index));
+
+    printf("arr access: [%-30s] idx [%-15s] is for-loop idx [%c] write [%c]\n",
+           array_name, index, is_indexed_2 ? 'X' : ' ',
+           is_write ? 'X' : ' ');
+
+    if (!is_indexed_2) {
+
+        string s = sk_convert_array_name(string(original_array));
+        assert (sk_gm_arrays.find(s) != sk_gm_arrays.end()); // otherwise the array name used is wrong
+
+        struct sk_gm_array a = sk_gm_arrays[s];
+        a.is_indexed = false;
+        sk_gm_arrays[s] = a;
+    }
 
 #ifdef SK_DEBUG
     sprintf(str_buf, "/* RTS array %s, index %s [wr=%d] [idx=%d]*/",
@@ -483,15 +520,6 @@ static void sk_iterator(gm_code_writer* Body,
     sk_iterators.push_back(it);
 }
 
-static std::string sk_convert_array_name(std::string in)
-{
-    size_t i = in.find(".");
-    if (i!=std::string::npos)
-        in.replace(i, 1, "_");
-
-    return std::string(SHOAL_PREFIX) + "_" + in;
-}
-
 static void sk_property(gm_code_writer *Body,
                         const char* prop,
                         const char* prop_type,
@@ -518,7 +546,8 @@ static void sk_property(gm_code_writer *Body,
                                           false,
                                           false,
                                           !is_node,
-                                          is_node
+                                          is_node,
+                                          true
                                           }));
 }
 
@@ -593,7 +622,7 @@ static void sk_add_default_arrays(void)
                 std::string("edge_t"),
                 std::string("G.num_nodes()"),
                 false,
-                true, false, false, true
+                true, false, false, true, true
                 }));
     sk_gm_arrays.insert(std::make_pair<std::string, struct sk_gm_array>(sk_convert_array_name("G.r_begin"),
         {sk_convert_array_name("G.r_begin"),
@@ -601,7 +630,7 @@ static void sk_add_default_arrays(void)
                 std::string("edge_t"),
                 std::string("G.num_nodes()"),
                 false,
-                true, false, false, true
+                true, false, false, true, true
                 }));
 
     sk_gm_arrays.insert(std::make_pair<std::string, struct sk_gm_array>(sk_convert_array_name("G.node_idx"),
@@ -610,7 +639,7 @@ static void sk_add_default_arrays(void)
                 std::string("node_t"),
                 std::string("G.num_edges()"),
                 false,
-                true, false, true, false
+                true, false, true, false, true
                 }));
     sk_gm_arrays.insert(std::make_pair<std::string, struct sk_gm_array>(sk_convert_array_name("G.r_node_idx"),
         {sk_convert_array_name("G.r_node_idx"),
@@ -618,7 +647,7 @@ static void sk_add_default_arrays(void)
                 std::string("node_t"),
                 std::string("G.num_edges()"),
                 false,
-                true, false, true, false
+                true, false, true, false, true
                 }));
 }
 

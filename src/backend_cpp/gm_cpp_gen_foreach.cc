@@ -22,6 +22,11 @@
 // }
 //--------------------------
 
+#include <set>
+using namespace std;
+
+set<string> its;
+
 bool gm_cpplib::need_up_initializer(ast_foreach* f) {
     int iter_type = f->get_iter_type();
     if (gm_is_simple_collection_iteration(iter_type) || gm_is_collection_of_collection_iteration(iter_type))
@@ -196,8 +201,9 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
             graph_name = source->get_genname();
         }
         char* it_name = iter->get_genname();
+        assert(its.insert(string(it_name)).second); // otherwise, the index is already there, which is an error
 
-        sprintf(str_buf, "for (%s %s = 0; /*7*/%s < %s.%s(); %s ++) ",
+        sprintf(str_buf, "for (%s %s = 0; %s < %s.%s(); %s ++) /*7*/ ",
                 get_type_string(iter->getTypeSummary()),
                 it_name, it_name, graph_name,
                 gm_is_node_iteration(type) ? NUM_NODES : NUM_EDGES, it_name);
@@ -272,6 +278,7 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         sprintf(str_buf, "%s < %s.%s[%s+1] ; %s ++) ", alias_name, graph_name, array_name, src_name, alias_name);
         Body.pushln(str_buf);
 #else
+        assert (its.insert(alias_name).second);
         sprintf(str_buf, "for (%s %s = ", EDGE_T, alias_name);
         Body.push(str_buf);
 
@@ -283,7 +290,7 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         sprintf(str_buf, "%s+1", src_name);
         sk_m_array_access(&Body, array_name, str_buf, (std::string(graph_name) + "." + array_name));
 
-        sprintf(str_buf, "; %s ++) ", alias_name);
+        sprintf(str_buf, "; %s ++) /*8*/ ", alias_name);
         Body.push(str_buf);
 #endif
         // SET_TYPE
