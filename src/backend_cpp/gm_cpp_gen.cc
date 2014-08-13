@@ -493,8 +493,13 @@ void sk_init_done(gm_code_writer *Body)
     assert (sk_gm_arrays.begin()!=sk_gm_arrays.end());
     std::map<std::string,struct sk_gm_array>::iterator i;
 
-    if (first)
-        Body->pushln("shl__init(gm_rt_get_num_threads());");
+    if (first) {
+        Body->pushln("#ifdef SHL_STATIC");
+        Body->pushln("shl__init(gm_rt_get_num_threads(), 1);");
+        Body->pushln("#else");
+        Body->pushln("shl__init(gm_rt_get_num_threads(), 0);");
+        Body->pushln("#endif");
+    }
 
     first = false;
 
@@ -1617,8 +1622,18 @@ void gm_cpp_gen::generate_expr_builtin(ast_expr* ee) {
 bool gm_cpp_gen::prepare_parallel_for(bool need_dynamic) {
     bool res = false;
 
-    if (is_under_parallel_sentblock())
+    if (is_under_parallel_sentblock()) {
+        Body.pushln("#ifdef SHL_STATIC");
+        Body.pushln("#pragma omp for nowait schedule(static,1024)");
+        Body.pushln("#else");
         Body.push("#pragma omp for nowait"); // already under parallel region.
+        if (need_dynamic) {
+            Body.push(" schedule(dynamic,128)");
+
+        }
+        Body.NL();
+        Body.pushln("#endif");
+    }
     else {
         Body.push("#pragma omp parallel ");
 
@@ -1626,18 +1641,17 @@ bool gm_cpp_gen::prepare_parallel_for(bool need_dynamic) {
         res = true;
         Body.pushln("{");
         sk_init_accessors(&Body);
+        Body.pushln("#ifdef SHL_STATIC");
+        Body.pushln("#pragma omp for schedule(static,1024)");
+        Body.pushln("#else");
         Body.push("#pragma omp for");
+        if (need_dynamic) {
+            Body.push(" schedule(dynamic,128)");
+
+        }
+        Body.NL();
+        Body.pushln("#endif");
     }
 
-#if 0
-    if (need_dynamic) {
-        Body.push(" schedule(dynamic,128)");
-
-    }
-#else
-    Body.push(" schedule(static,1024)");
-#endif
-
-    Body.NL();
     return res;
 }

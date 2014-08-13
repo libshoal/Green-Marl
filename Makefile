@@ -107,6 +107,7 @@ OBJS :=
 
 # Switch buildtype: supported are "debug" and "release"
 BUILDTYPE := release
+FLAGS=$(CXXFLAGS)
 
 ifeq ($(BUILDTYPE),debug)
 	FLAGS += -O0  -pg -g -DSHL_DEBUG
