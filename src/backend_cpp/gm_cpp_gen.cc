@@ -526,7 +526,7 @@ void sk_init_done(gm_code_writer *Body)
         // Allocate array
         sprintf(tmp, "shl_array<%s>* %s__set = "
                 "shl__malloc<%s>(%s, \"%s\", %s_IS_RO, %s_IS_DYNAMIC, "
-                "%s_IS_USED, %s_IS_GRAPH);",
+                "%s_IS_USED, %s_IS_GRAPH, %s_IS_INDEXED);",
                 type,   // 1) type
                 dest,   // 2) name
                 type,   // 3) type
@@ -535,7 +535,8 @@ void sk_init_done(gm_code_writer *Body)
                 dest,   // 5) read-only property
                 dest,   // 6) dynamic property
                 dest,   // 7) used property
-                dest);  // 8) graph property
+                dest,   // 8) graph property
+                dest);  // 9) indexed property
         Body->pushln(tmp);
 
         // Alloc Green Marl array
@@ -582,6 +583,8 @@ void sk_copy_func(gm_code_writer *Body, gm_code_writer *Header)
         sprintf(tmp, "#define %s_IS_GRAPH %d", dest, is_graph);
         Header->pushln(tmp);
         sprintf(tmp, "#define %s_IS_DYNAMIC %d", dest, (a.dynamic));
+        Header->pushln(tmp);
+        sprintf(tmp, "#define %s_IS_INDEXED %d", dest, (a.is_indexed));
         Header->pushln(tmp);
     }
 }
