@@ -7,6 +7,12 @@
 #include <sys/time.h>
 #include "gm.h"
 
+#ifdef BARRELFISH
+extern "C" {
+#include <vfs/vfs.h>
+}
+#endif
+
 class main_t
 {
 protected:
@@ -38,9 +44,13 @@ public:
     virtual void main(int argc, char** argv) {
         bool b;
 
+#ifdef BARRELFISH
+        vfs_init();
+#endif
+
         // check if node/edge size matches with the library (runtime-check)
         gm_graph_check_node_edge_size_at_link_time();
-        
+
         if (argc < 3) {
 
             printf("%s <graph_name> <num_threads> ", argv[0]);
