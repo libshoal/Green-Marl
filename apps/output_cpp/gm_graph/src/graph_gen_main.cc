@@ -28,7 +28,11 @@ int main(int argc, char** argv) {
     edge_t M = (edge_t) atoll(argv[2]);
     int gtype = atoi(argv[4]);
     if (N == 0) {printf("Empty graph not allowed\n"); return EXIT_FAILURE;}
+#ifdef BARRELFISH
+    printf("Creating Graph, N = %" PRId64 ", M = %" PRId64 ", Type = %d\n", (int64_t)N, (int64_t) M, gtype);
+#else
     printf("Creating Graph, N = %I64d, M = %I64d , Type = %d\n", (int64_t)N, (int64_t) M, gtype);
+#endif
 
 
     gm_graph* g;

@@ -85,7 +85,7 @@ void gm_edge_list_graph_reader::builtGraph() {
 
     int maxSize = 1024;
     char lineData[maxSize]; // should be enough right?
-    node_t maxNodeId = -1;
+    //node_t maxNodeId = -1;
     int sklines = 0;
 
     // Let's assume that the input graph is sorted

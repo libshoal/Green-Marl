@@ -208,7 +208,7 @@ void gm_graph::make_reverse_edges() {
     node_t n_nodes = num_nodes();
 
     r_begin = new edge_t[num_nodes() + 1];
-    r_node_idx = new node_t[num_edges()]; 
+    r_node_idx = new node_t[num_edges()];
     e_rev2idx = new node_t[num_edges()];
 
     edge_t* loc = new edge_t[num_edges()];
@@ -282,13 +282,14 @@ void gm_graph::make_reverse_edges() {
     if (is_edge_source_ready()) prepare_edge_source_reverse();
 
     gettimeofday(&t2, NULL);
-    //printf("time to compute reverse edge: %lf ms\n", 
+    //printf("time to compute reverse edge: %lf ms\n",
     //        (t2.tv_sec - t1.tv_sec) * 1000 - (t2.tv_usec-t1.tv_usec)*0.001);
 
     // TODO: if id2idx?
     delete[] loc;
 }
 
+#if 0
 static void swap(edge_t idx1, edge_t idx2, node_t* dest_array, edge_t* aux_array, edge_t* aux_array2) {
     if (idx1 == idx2) return;
 
@@ -310,7 +311,7 @@ static void swap(edge_t idx1, edge_t idx2, node_t* dest_array, edge_t* aux_array
 }
 
 
-#if 0
+
 // begin idx is inclusive
 // end idx is exclusive
 static void sort(edge_t begin_idx, edge_t end_idx, node_t* dest_array, edge_t* aux_array, edge_t* aux_array2=NULL) {
@@ -438,7 +439,7 @@ void gm_graph::do_semi_sort_reverse() {
     assert(r_begin != NULL);
 
     semi_sort_main(num_nodes(), num_edges(), r_begin, r_node_idx, e_rev2idx, NULL);
-                   
+
 }
 
 void gm_graph::do_semi_sort() {
@@ -513,7 +514,7 @@ node_t gm_graph::add_node() {
 
     std::vector<edge_dest_t> T;  // empty vector
     flexible_graph[_numNodes] = T; // T is copied
-       
+
     return _numNodes++;
 }
 
@@ -549,7 +550,7 @@ void gm_graph::clear_graph() {
 }
 
 
-edge_t gm_graph::get_edge_idx_for_src_dest(node_t src, node_t to) 
+edge_t gm_graph::get_edge_idx_for_src_dest(node_t src, node_t to)
 {
 
     // assumption: Edges are semi-sorted.
@@ -561,7 +562,7 @@ edge_t gm_graph::get_edge_idx_for_src_dest(node_t src, node_t to)
 
     node_t left_node = node_idx[begin_edge];
     node_t right_node = node_idx[end_edge];
-    if (to == left_node) return begin_edge; 
+    if (to == left_node) return begin_edge;
     if (to == right_node) return end_edge;
 
     /*int cnt = 0;*/
@@ -596,6 +597,7 @@ edge_t gm_graph::get_edge_idx_for_src_dest(node_t src, node_t to)
 }
 
 // check if node size has been changed after this library is built
+void gm_graph_check_if_size_is_correct(int node_size, int edge_size);
 void gm_graph_check_if_size_is_correct(int node_size, int edge_size)
 {
     if (node_size != sizeof(node_t)) {
@@ -624,7 +626,7 @@ void gm_graph::prepare_nodekey()
 
 
 void gm_graph::delete_nodekey() {
-    _nodekey_defined = false; 
+    _nodekey_defined = false;
     _numeric_key.clear();
     _numeric_reverse_key.clear();
     _numeric_reverse_key.resize(4*1024*1024);    // initial reservation = 4 M
@@ -654,7 +656,7 @@ node_t gm_graph::add_nodekey(node_t key) {
 
 
 #ifdef HDFS
-bool gm_graph::load_binary_hdfs(char* filename) 
+bool gm_graph::load_binary_hdfs(char* filename)
 {
     // deprecated
     assert(false);

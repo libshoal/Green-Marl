@@ -5,6 +5,8 @@
 #include <string>
 #include <assert.h>
 
+#include "gm.h"
+
 static bool skip_whitespace(char*& c) { // return false if meet \n, \n is replaced with \0
     while (true) {
         if (*c=='\0') return false;
@@ -25,7 +27,7 @@ static char find_end_of_key(char*& c) {
     }
 }
 static bool process_variable_expansion
-    (std::map<std::string, std::string>& setup, 
+    (std::map<std::string, std::string>& setup,
     const char*& var_begin, char*& buffer2, char to_find) {
 
         char buffer[16*1024];
@@ -35,7 +37,7 @@ static bool process_variable_expansion
                 *p++ = *var_begin++;
                 continue;
             }
-                
+
             if (*var_begin == to_find) {
                 // end of variable
                 *p = '\0';
@@ -65,8 +67,8 @@ static bool process_variable_expansion
         return false; // error to fine '}'
     }
 
-static bool create_value_expand_variables(std::map<std::string, std::string>& setup, 
-        const char* val_begin, 
+static bool create_value_expand_variables(std::map<std::string, std::string>& setup,
+        const char* val_begin,
         char* buffer2) {
     const char* p = val_begin;
     bool escape_on = false;
@@ -84,7 +86,7 @@ static bool create_value_expand_variables(std::map<std::string, std::string>& se
             if (*(p+1)=='{' || *(p+1) == '(') {
                 char to_find = *(p+1)=='{' ? '}' : ')';
                 p+=2;
-                if (!process_variable_expansion(setup, p, buffer2, to_find)) 
+                if (!process_variable_expansion(setup, p, buffer2, to_find))
                     return false; // error in variable expansion
                 else
                     continue;
@@ -100,6 +102,7 @@ static bool create_value_expand_variables(std::map<std::string, std::string>& se
 }
 
 #define SETUP_FILE "setup.mk"
+bool gm_read_setup_file(std::map<std::string, std::string>& setup, bool export_env);
 bool gm_read_setup_file(std::map<std::string, std::string>& setup, bool export_env)
 {
     char buffer[1024*16];
@@ -136,7 +139,7 @@ bool gm_read_setup_file(std::map<std::string, std::string>& setup, bool export_e
 
         // returns last char of key
         // ptr points to the next charactor after '\0' of key
-        char last_char = find_end_of_key(ptr); 
+        char last_char = find_end_of_key(ptr);
         std::string Key(key_begin);
 
         // if env-val is set for this key, use env-val.
@@ -150,7 +153,7 @@ bool gm_read_setup_file(std::map<std::string, std::string>& setup, bool export_e
         if (last_char == '\n') { // end of line
             goto case_empty_value;
         } else if (last_char == ' ') { // white space
-            if (skip_whitespace(ptr) == false) 
+            if (skip_whitespace(ptr) == false)
                 goto case_empty_value;
 
             last_char = *ptr;
@@ -159,12 +162,12 @@ bool gm_read_setup_file(std::map<std::string, std::string>& setup, bool export_e
 
         if (last_char == ':') {
             if (*ptr == '=') ptr++;
-            last_char = '='; 
+            last_char = '=';
         }
 
         if (last_char != '=') {
             continue;           // error in key: e.g) A B = c
-        } 
+        }
 
         if (skip_whitespace(ptr) == false) {
             goto case_empty_value;
@@ -178,7 +181,7 @@ bool gm_read_setup_file(std::map<std::string, std::string>& setup, bool export_e
             if (export_env) {
                 setenv(key_begin, buffer2, 0); // donot override existing environmetal vairable
             }
-        } 
+        }
 
         continue;
 

@@ -40,19 +40,19 @@ class gm_property_of_collection_impl: public gm_property_of_collection<T>
     }
 
   public:
-    gm_property_of_collection_impl(int size) :
-            size(size), locks(NULL) {
+    gm_property_of_collection_impl(int _size) :
+            size(_size), locks(NULL) {
 
-        data = new T*[size];
-        if(lazy) locks = new gm_spinlock_t[size];
+        data = new T*[_size];
+        if(lazy) locks = new gm_spinlock_t[_size];
 
         #pragma omp parallel for
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < _size; i++) {
             if (lazy) {
                 data[i] = NULL;
                 locks[i] = 0;
             } else {
-                data[i] = new T(size);
+                data[i] = new T(_size);
             }
         }
     }

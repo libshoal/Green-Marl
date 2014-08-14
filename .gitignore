@@ -56,3 +56,4 @@ setup.mk.bak
 cscope.files
 cscope.out
 /contrib/*
+*.swp

@@ -1,5 +1,5 @@
-#ifndef GM_FILE_HANDLING_H_
-#define GM_FILE_HANDLING_H_
+#ifndef GM_FILE_HANDLING_C_H_
+#define GM_FILE_HANDLING_C_H_
 
 /*
  * Interface with C code for handling operations on regular files and

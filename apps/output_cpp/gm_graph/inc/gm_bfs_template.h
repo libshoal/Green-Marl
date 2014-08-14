@@ -233,7 +233,7 @@ class gm_bfs_template
                     }
                     break;
                 }
-                             
+
                 // reverse read2Q
                 case ST_RR2Q: {
                     #pragma omp parallel if (use_multithread)
@@ -267,7 +267,7 @@ class gm_bfs_template
             printf("time = %6.5f ms\n", (T2.tv_sec - T1.tv_sec)*1000 + (T2.tv_usec - T1.tv_usec)*0.001);
 #endif
         } // end of while
-        
+
     }
 
     void do_bfs_reverse() {
@@ -279,12 +279,12 @@ class gm_bfs_template
             //node_t* queue_ptr = level_start_ptr[level];
             node_t* queue_ptr;
             node_t begin_idx = level_queue_begin[level];
-            if (begin_idx == -1) { 
+            if (begin_idx == -1) {
                 queue_ptr = NULL;
             } else {
                 queue_ptr = & (global_vector[begin_idx]);
             }
-           
+
             if (queue_ptr == NULL) {
 #pragma omp parallel if (use_multithread)
                 {
@@ -367,11 +367,11 @@ class gm_bfs_template
             case ST_QUE:
                if (already_expanded) break;
 
-               if (next_count >= G.num_nodes()*RRD_THRESHOLD)  
+               if (next_count >= G.num_nodes()*RRD_THRESHOLD)
                {
                    already_expanded = true;
                     prepare_read();
-                    if (!save_child && G.has_reverse_edge()) 
+                    if (!save_child && G.has_reverse_edge())
                     {
                         next_state = ST_RRD;
                     }
@@ -420,8 +420,8 @@ class gm_bfs_template
         return false;
     }
 
-    void finish_level(int state) {
-        if ((state == ST_RD) || (state == ST_Q2R)) {
+    void finish_level(int _state) {
+        if ((_state == ST_RD) || (_state == ST_Q2R)) {
             // output queue is not valid
         } else { // move output queue
             //node_t* temp = &(global_next_level[next_count]);
@@ -437,7 +437,7 @@ class gm_bfs_template
 
         // save 'new current' level status
         level_count.push_back(curr_count);
-        if ((state == ST_RD) || (state == ST_Q2R) || (state == ST_RRD)) {
+        if ((_state == ST_RD) || (_state == ST_Q2R) || (_state == ST_RRD)) {
             //level_start_ptr.push_back(NULL);
             level_queue_begin.push_back(-1);
         } else {
@@ -499,7 +499,7 @@ class gm_bfs_template
 
                 small_visited[u] = curr_level + 1;
                 //global_next_level[next_count++] = u;
-                global_vector.push_back(u); 
+                global_vector.push_back(u);
                 next_count++;
             }
             else if (save_child) {
@@ -627,8 +627,8 @@ class gm_bfs_template
         if (local_cnt > 0) {
             node_t old_idx = _gm_atomic_fetch_and_add_node(&next_count, local_cnt);
             // copy to global vector
-            memcpy(&(global_vector[global_next_level_begin + old_idx]), 
-                   &(thread_local_next_level[tid][0]), 
+            memcpy(&(global_vector[global_next_level_begin + old_idx]),
+                   &(thread_local_next_level[tid][0]),
                    local_cnt * sizeof(node_t));
         }
         thread_local_next_level[tid].clear();
@@ -694,14 +694,14 @@ class gm_bfs_template
         get_range_rev(begin, end, t);
 
         if (has_navigator) {
-           // [XXX] fixme 
+           // [XXX] fixme
            if (check_navigator(t, 0) == false) return false;
         }
 
         for (edge_t nx = begin; nx < end; nx++) {
             node_t u = get_node_rev(nx);
             //if (_gm_get_bit(visited_bitmap, u) == 0) continue;
-            if (visited_level[u] == (curr_level )) 
+            if (visited_level[u] == (curr_level ))
                 return true;
         }
         return false;
@@ -720,7 +720,7 @@ class gm_bfs_template
     static const int THRESHOLD1 = 128;  // single threaded
     static const int THRESHOLD2 = 1024; // move to RD-based
 
-    // not -1. 
+    // not -1.
     //(why? because curr_level-1 might be -1, when curr_level = 0)
     static const level_t __INVALID_LEVEL = -2;
 
@@ -742,7 +742,7 @@ class gm_bfs_template
     //node_t* global_next_level;
     //node_t* global_curr_level;
     //node_t* global_queue;
-    std::vector<node_t> global_vector; 
+    std::vector<node_t> global_vector;
     node_t global_curr_level_begin;
     node_t global_next_level_begin;
 

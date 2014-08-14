@@ -30,13 +30,13 @@
 //   {[KEY            : Size(NODE_T)*numNodes]} optional
 //   [Num node properties : 4B]
 //     [prop_type: 4B]
-//     [prop_size: 8B]  
-//     [prop_data: xxxB]   
+//     [prop_size: 8B]
+//     [prop_data: xxxB]
 //     ...
 //   [Num edge properties : 4B]
 //     [prop_type: 4B]
-//     [prop_size: 8B]  
-//     [prop_data: xxxB]   
+//     [prop_size: 8B]
+//     [prop_data: xxxB]
 //--------------------------------------------
 
 bool gm_graph::load_binary(char* filename)
@@ -54,7 +54,7 @@ bool gm_graph::load_binary(char* filename)
     return b;
 }
 
-bool gm_graph::load_binary_internal(FILE*f, uint32_t magic_word, bool need_semi_sort) 
+bool gm_graph::load_binary_internal(FILE*f, uint32_t magic_word, bool need_semi_sort)
 {
     clear_graph();
 
@@ -62,10 +62,10 @@ bool gm_graph::load_binary_internal(FILE*f, uint32_t magic_word, bool need_semi_
     int i;
 
 #if GM_GRAPH_NUMA_OPT
-    edge_t* temp_begin; 
+    edge_t* temp_begin;
     node_t* temp_node_idx;
 #endif
-    bool old_flipped_format= false; 
+    bool old_flipped_format= false;
     int32_t key2 = key;
 
 
@@ -132,55 +132,55 @@ bool gm_graph::load_binary_internal(FILE*f, uint32_t magic_word, bool need_semi_
     printf("N = %ld, M = %ld\n", (long)N,(long)M);
     allocate_memory_for_frozen_graph(N, M);
 
-#if GM_GRAPH_NUMA_OPT 
+#if GM_GRAPH_NUMA_OPT
     // sequential load & parallel copy
     temp_begin    = new edge_t[N + 1];
 #endif
 
-    for (node_t i = 0; i < N + 1; i++) {
-        edge_t key;
-        int k = fread(&key, saved_edge_t_size, 1, f);
-        key = BITS_TO_EDGE(key);
+    for (node_t j = 0; j < N + 1; j++) {
+        edge_t ekey;
+        int k = fread(&ekey, saved_edge_t_size, 1, f);
+        ekey = BITS_TO_EDGE(ekey);
         if ((k != 1)) {
             fprintf(stderr, "Error reading node begin array\n");
             goto error_return;
         }
     #if GM_GRAPH_NUMA_OPT
-        temp_begin[i] = key;
+        temp_begin[j] = ekey;
     #else
-        this->begin[i] = key;
+        this->begin[j] = ekey;
     #endif
     }
 
 #if GM_GRAPH_NUMA_OPT
     #pragma omp parallel for
-    for(edge_t i = 0; i < N + 1; i ++)
-        this->begin[i] = temp_begin[i];
+    for(edge_t j = 0; j < N + 1; j ++)
+        this->begin[j] = temp_begin[j];
 
     delete [] temp_begin;
 
     temp_node_idx = new node_t[M];
 #endif
 
-    for (edge_t i = 0; i < M; i++) {
-        node_t key;
-        int k = fread(&key, saved_node_t_size, 1, f);
-        key = BITS_TO_NODE(key);
+    for (edge_t j = 0; j < M; j++) {
+        node_t nkey;
+        int k = fread(&nkey, saved_node_t_size, 1, f);
+        nkey = BITS_TO_NODE(nkey);
         if ((k != 1)) {
             fprintf(stderr, "Error reading edge-end array\n");
             goto error_return;
         }
 #if GM_GRAPH_NUMA_OPT
-        temp_node_idx[i] = key;
+        temp_node_idx[j] = nkey;
 #else
-        this->node_idx[i] = key;
+        this->node_idx[j] = nkey;
 #endif
     }
 
 #if GM_GRAPH_NUMA_OPT
     #pragma omp parallel for
-    for(node_t i = 0; i < N ; i ++) {
-        for(edge_t j = begin[i]; j < begin[i+1]; j ++)
+    for(node_t k = 0; k < N ; k ++) {
+        for(edge_t j = begin[k]; j < begin[k+1]; j ++)
             this->node_idx[j] = temp_node_idx[j];
     }
     delete [] temp_node_idx;
@@ -198,7 +198,7 @@ bool gm_graph::load_binary_internal(FILE*f, uint32_t magic_word, bool need_semi_
 
     return true;
 
-error_return: 
+error_return:
     clear_graph();
 
     return false;
@@ -232,11 +232,11 @@ bool gm_graph::store_binary_internal(FILE* f, uint32_t magic_word) {
     key = htonl(sizeof(edge_t));
     fwrite(&key, 4, 1, f);  // edge_t size (in 4B)
 
-    node_t num_nodes = htonnode(this->_numNodes);
-    fwrite(&num_nodes, sizeof(node_t), 1, f);
+    node_t nnodes = htonnode(this->_numNodes);
+    fwrite(&nnodes, sizeof(node_t), 1, f);
 
-    edge_t num_edges = htonedge(this->_numEdges);
-    fwrite(&(num_edges), sizeof(edge_t), 1, f);
+    edge_t nedges = htonedge(this->_numEdges);
+    fwrite(&(nedges), sizeof(edge_t), 1, f);
 
     for (node_t i = 0; i < _numNodes + 1; i++) {
         edge_t e = htonedge(this->begin[i]);
@@ -251,7 +251,7 @@ bool gm_graph::store_binary_internal(FILE* f, uint32_t magic_word) {
     return true;
 }
 
-static inline uint8_t READ1B(FILE* f, bool& okay) 
+static inline uint8_t READ1B(FILE* f, bool& okay)
 {
     uint8_t key;
     int i = fread(&key, 1, 1, f);
@@ -260,7 +260,7 @@ static inline uint8_t READ1B(FILE* f, bool& okay)
 
 }
 
-static inline uint32_t READ4B(FILE* f, bool& okay) 
+static inline uint32_t READ4B(FILE* f, bool& okay)
 {
     uint32_t key;
     int i = fread(&key, 4, 1, f);
@@ -268,7 +268,7 @@ static inline uint32_t READ4B(FILE* f, bool& okay)
     return  ntohl(key);
 }
 
-static inline uint64_t READ8B(FILE* f, bool& okay) 
+static inline uint64_t READ8B(FILE* f, bool& okay)
 {
     uint64_t key;
     int i = fread(&key, 8, 1, f);
@@ -336,7 +336,7 @@ static bool load_binary_property(FILE* f, VALUE_TYPE expected_type, size_t num_i
             target_array[i] = READ8B(f, b); if (!b) return false;
         }
     }
-    else 
+    else
     {
         assert(false);
     }
@@ -380,7 +380,7 @@ bool gm_graph::load_extended_binary(
     // load number of node properties
     int i;
     int32_t num_node_props;
-    num_node_props = READ4B(f, b); 
+    num_node_props = READ4B(f, b);
     //printf("num_node_prop = %d\n", num_node_props);
     if (!b) {
         fprintf(stderr, "error reading num_node properties\n");
@@ -395,12 +395,12 @@ bool gm_graph::load_extended_binary(
     for(i=0; i < num_node_props; i++)
     {
         void* array=NULL;
-        bool b = load_binary_property(f, vprop_schema[i], num_nodes(), array);
+        bool bl = load_binary_property(f, vprop_schema[i], num_nodes(), array);
         vertex_props.push_back(array);
         assert(array!=NULL);
-        if (!b) {
+        if (!bl) {
             fprintf(stderr, "error reading node properties\n");
-            goto error_return; 
+            goto error_return;
         }
     }
 
@@ -408,7 +408,7 @@ bool gm_graph::load_extended_binary(
     // load node properties
     //------------------------------------------------
     int32_t num_edge_props;
-    num_edge_props = READ4B(f, b); 
+    num_edge_props = READ4B(f, b);
     //printf("num_edge_prop = %d\n", num_edge_props);
     if (!b) {
         fprintf(stderr, "error reading num_node properties\n");
@@ -423,12 +423,12 @@ bool gm_graph::load_extended_binary(
     for(i=0; i < num_edge_props; i++)
     {
         void* array=NULL;
-        bool b = load_binary_property(f, eprop_schema[i], num_edges(), array);
+        bool bl = load_binary_property(f, eprop_schema[i], num_edges(), array);
         assert(array!=NULL);
         edge_props.push_back(array);
-        if (!b) {
+        if (!bl) {
             fprintf(stderr, "error reading node properties\n");
-            goto error_return; 
+            goto error_return;
         }
     }
 
@@ -439,14 +439,14 @@ error_return:
     return false;
 }
 
-static inline void WRITE1B(FILE* f, uint8_t key, bool& okay) 
+static inline void WRITE1B(FILE* f, uint8_t key, bool& okay)
 {
     int i = fwrite(&key, 1, 1, f);
     okay = (i==1);
     return;
 }
 
-static inline void WRITE4B(FILE* f, uint32_t key, bool& okay) 
+static inline void WRITE4B(FILE* f, uint32_t key, bool& okay)
 {
     key = htonl(key);
     int i = fwrite(&key, 4, 1, f);
@@ -454,7 +454,7 @@ static inline void WRITE4B(FILE* f, uint32_t key, bool& okay)
     return;
 }
 
-static inline void WRITE8B(FILE* f, uint64_t key, bool& okay) 
+static inline void WRITE8B(FILE* f, uint64_t key, bool& okay)
 {
     int i;
     uint64_t key2 = hton64(key);
@@ -498,7 +498,7 @@ static bool store_binary_property(FILE* f, VALUE_TYPE type, size_t num_items, vo
     if (item_sz == 1)
     {
         uint8_t* target_array = (uint8_t*) array;
-        for(i=0;i<num_items; i++) 
+        for(i=0;i<num_items; i++)
         {
             WRITE1B(f, target_array[i], b); if (!b) return false;
         }
@@ -506,7 +506,7 @@ static bool store_binary_property(FILE* f, VALUE_TYPE type, size_t num_items, vo
     else if (item_sz == 4)
     {
         uint32_t* target_array = (uint32_t*) array;
-        for(i=0;i<num_items; i++) 
+        for(i=0;i<num_items; i++)
         {
             WRITE4B(f, target_array[i], b); if (!b) return false;
         }
@@ -514,7 +514,7 @@ static bool store_binary_property(FILE* f, VALUE_TYPE type, size_t num_items, vo
     else if (item_sz == 8)
     {
         uint64_t* target_array = (uint64_t*) array;
-        for(i=0;i<num_items; i++) 
+        for(i=0;i<num_items; i++)
         {
             WRITE8B(f, target_array[i], b); if (!b) return false;
         }
@@ -560,7 +560,7 @@ bool gm_graph::store_extended_binary(const char* filename, // input parameter
     // store node properties
     //---------------------------------------
     num_node_props = vprop_schema.size();
-    WRITE4B(f, num_node_props, b); 
+    WRITE4B(f, num_node_props, b);
     if (!b) {
         fprintf(stderr, "error writing num_node properties\n");
         goto error_return;
@@ -571,15 +571,15 @@ bool gm_graph::store_extended_binary(const char* filename, // input parameter
         b = store_binary_property(f, vprop_schema[i], num_nodes(), array);
         if (!b) {
             fprintf(stderr, "error writing node properties\n");
-            goto error_return; 
+            goto error_return;
         }
     }
-    
+
     //---------------------------------------
     // store edge properties
     //---------------------------------------
     num_edge_props = eprop_schema.size();
-    WRITE4B(f, num_edge_props, b); 
+    WRITE4B(f, num_edge_props, b);
     if (!b) {
         fprintf(stderr, "error writing num_edge properties\n");
         goto error_return;
@@ -590,7 +590,7 @@ bool gm_graph::store_extended_binary(const char* filename, // input parameter
         b = store_binary_property(f, eprop_schema[i], num_edges(), array);
         if (!b) {
             fprintf(stderr, "error writing edge properties\n");
-            goto error_return; 
+            goto error_return;
         }
     }
 
@@ -617,7 +617,7 @@ bool gm_graph::store_nodekey_binary(FILE* f)
     /* store only reverse keys */
     for(node_t i = 0; i < num_nodes(); i++)
     {
-        WRITE_NODE(f, _numeric_reverse_key[i], b); 
+        WRITE_NODE(f, _numeric_reverse_key[i], b);
         if (!b) return false;
     }
 
@@ -627,14 +627,14 @@ bool gm_graph::store_nodekey_binary(FILE* f)
 bool gm_graph::load_nodekey_binary(FILE* f)
 {
     bool b;
-    bool defined = READ1B(f,b)==0?false:true; 
+    bool defined = READ1B(f,b)==0?false:true;
     if (!b) return false;
 
     _nodekey_defined = defined;
     if (!_nodekey_defined) return true; // nodekey not defined in original graph
 
     // assert 1:1 mapping key<->idx
-    // load reverese key-mapping 
+    // load reverese key-mapping
     // and create foward key-mapping
     _numeric_reverse_key.reserve(num_nodes());
     for(node_t i = 0; i < num_nodes(); i++)

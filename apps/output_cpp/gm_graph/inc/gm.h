@@ -3,6 +3,10 @@
 #include <math.h>
 #include <stdlib.h>
 
+#ifndef DEFAULT_GM_TOP
+#define DEFAULT_GM_TOP "."
+#endif
+
 //------------------------------------------------------------
 // This is the root header for external applications.
 // This header includes all the 'modules' in gm_graph lib

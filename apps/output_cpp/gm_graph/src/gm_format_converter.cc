@@ -1,11 +1,11 @@
 #include "gm.h"
 
 /* Convert one file format into another (with properties)
- *    ./gm_format_converter <in_schema.txt> 
+ *    ./gm_format_converter <in_schema.txt>
  *
  */
-void print_schema_file_format()
-{   
+static void print_schema_file_format(void)
+{
     fprintf(stderr, "#Schema File Format:\n");
     fprintf(stderr, "\t# begins line-comment\n");
     fprintf(stderr, "\t# no distinguish between upper character and lower character\n");
@@ -43,8 +43,7 @@ std::vector<VALUE_TYPE>  input_schema_type_node;
 std::vector<std::string> input_schema_name_edge;
 std::vector<VALUE_TYPE>  input_schema_type_edge;
 //std::vector<std::string> output_schema_names; // to be added
-//
-int get_schema_name_index(std::string &S, bool is_node)
+static int get_schema_name_index(std::string &S, bool is_node)
 {
     std::vector<std::string> &input_schema_name =
         is_node ? input_schema_name_node : input_schema_name_edge;
@@ -57,7 +56,7 @@ int get_schema_name_index(std::string &S, bool is_node)
 }
 
 // push copy of name and type into vectors
-void push_name_and_type(std::string &S, VALUE_TYPE type, bool is_node)
+static void push_name_and_type(std::string &S, VALUE_TYPE type, bool is_node)
 {
     std::vector<std::string> &input_schema_name =
         is_node ? input_schema_name_node : input_schema_name_edge;
@@ -70,7 +69,7 @@ void push_name_and_type(std::string &S, VALUE_TYPE type, bool is_node)
     //printf("adding %s, %d\n", S.c_str(), type);
 }
 
-void redefine_options(gm_useropt& OPTIONS, char* name)
+static void redefine_options(gm_useropt& OPTIONS, char* name)
 {
     OPTIONS.set_execname(name);
     OPTIONS.remove_all();
@@ -83,7 +82,7 @@ void redefine_options(gm_useropt& OPTIONS, char* name)
     OPTIONS.add_option("GMInputFormat",  GMTYPE_END,   NULL, "ADJ, EBIN, EDGE_LIST\n");
 }
 
-void create_schema_definitions(gm_default_usermain& Main)
+static void create_schema_definitions(gm_default_usermain& Main)
 {
     if (output_schema_defined)
     {
@@ -103,7 +102,7 @@ void create_schema_definitions(gm_default_usermain& Main)
     }
 }
 
-bool process_arguments(int argc, char** argv, gm_default_usermain& Main)
+static bool process_arguments(int argc, char** argv, gm_default_usermain& Main)
 {
     gm_useropt& OPTIONS = Main.get_options();
     redefine_options(OPTIONS, argv[0]);
@@ -114,7 +113,7 @@ bool process_arguments(int argc, char** argv, gm_default_usermain& Main)
     if (OPTIONS.is_option_defined("?"))
         goto err_return;
 
-    if (OPTIONS.get_num_args_defined() <  OPTIONS.get_num_args_declared()) 
+    if (OPTIONS.get_num_args_defined() <  OPTIONS.get_num_args_declared())
     {
         printf("Error: need more arguements\n");
         goto err_return;
@@ -167,7 +166,7 @@ static int ptr;
 static bool line_finished;
 static int counter = 0;
 
-void skip_space()
+static void skip_space()
 {
     if (line_finished) return;
 
@@ -179,7 +178,7 @@ void skip_space()
     }
 }
 
-char* get_alpha_numeric()
+static char* get_alpha_numeric()
 {
     char temp[1024];
     skip_space();
@@ -192,16 +191,16 @@ char* get_alpha_numeric()
     ptr++;
 
     while(true) {
-        char c = tolower(linebuf[ptr]);
-        if (!isalpha(c) && !isdigit(c)) {
+        char ch = tolower(linebuf[ptr]);
+        if (!isalpha(ch) && !isdigit(ch)) {
             temp[idx] = '\0';
             return strdup(temp);
         }
         ptr++;
-        temp[idx++] = c;
+        temp[idx++] = ch;
     }
 }
-bool look_for_token(char token)
+static bool look_for_token(char token)
 {
     skip_space();
     if (line_finished) return false;
@@ -210,10 +209,11 @@ bool look_for_token(char token)
         ptr ++;  // consume
         return true;
     }
-    else 
+    else
         return false;
 }
 
+bool get_nonempty_line(FILE *f);
 bool get_nonempty_line(FILE *f)
 {
    while (true) {
@@ -228,7 +228,7 @@ bool get_nonempty_line(FILE *f)
    }
 }
 
-bool look_for_keyword(const char* KW)
+static bool look_for_keyword(const char* KW)
 {
     char* word =  get_alpha_numeric();
     if ((word != NULL) && (!strcmp(word, KW)))
@@ -239,7 +239,7 @@ bool look_for_keyword(const char* KW)
 
 
 
-bool process_keyword_line(FILE*f, const char* KW, bool print_error)
+static bool process_keyword_line(FILE*f, const char* KW, bool print_error)
 {
     if (!get_nonempty_line(f)) goto error_ret;
     if (!look_for_keyword(KW)) goto error_ret;
@@ -252,7 +252,7 @@ error_ret:
     return false;
 }
 
-VALUE_TYPE parse_gm_type(const char* c)
+static VALUE_TYPE parse_gm_type(const char* c)
 {
     if (!strcmp(c, "int")) {return GMTYPE_INT;}
     else if (!strcmp(c, "bool"))   {return GMTYPE_BOOL;}
@@ -264,6 +264,7 @@ VALUE_TYPE parse_gm_type(const char* c)
     else return GMTYPE_END;
 }
 
+bool process_input_schema(FILE*f, bool is_node);
 bool process_input_schema(FILE*f, bool is_node)
 {
     const char* keyword = is_node ? "node" : "edge";
@@ -297,7 +298,7 @@ bool process_input_schema(FILE*f, bool is_node)
                 fprintf(stderr, "cannot find property name after '('\n");
                 return false;
             }
-            std::string S(name); 
+            std::string S(name);
             if (get_schema_name_index(S, is_node) != -1) {
                 fprintf(stderr, "name %s has been already defined\n", name);
                 return false;
@@ -313,7 +314,7 @@ bool process_input_schema(FILE*f, bool is_node)
         else {
             char temp[128];
             sprintf(temp, "__prop%d", counter++);
-            std::string S(temp); 
+            std::string S(temp);
             push_name_and_type(S, t, is_node);
         }
 
@@ -325,7 +326,7 @@ bool process_input_schema(FILE*f, bool is_node)
 }
 
 
-bool parse_schema_file(char* filename, gm_default_usermain& Main) 
+bool parse_schema_file(char* filename, gm_default_usermain& Main)
 {
     FILE *f = fopen(filename, "r");
     if (f==NULL) {
@@ -337,7 +338,7 @@ bool parse_schema_file(char* filename, gm_default_usermain& Main)
     if (!process_input_schema(f, true)) goto error;
     if (!process_input_schema(f, false)) goto error;
 
-    // no output section. ignore 
+    // no output section. ignore
     if (!process_keyword_line(f, "output", false)) return true;
 
     return true;

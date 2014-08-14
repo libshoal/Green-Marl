@@ -11,7 +11,7 @@ void gm_useropt::remove_option(const char* opt_name)
         option_type.erase(opt_name);
         option_values.erase(opt_name);
     }
-   
+
 }
 void gm_useropt::add_option(const char* opt_name, VALUE_TYPE t, const char* def_value, const char* description)
 {
@@ -77,16 +77,16 @@ void gm_useropt::print_help()
     printf("usage: ");
     if (_execname == NULL)
         printf("<program_name> ");
-    else 
+    else
         printf("%s ", _execname);
 
     for(size_t i=0;i<arg_names.size();i++) {
         if (arg_types[i] == GMTYPE_END)
             printf("<%s> ", arg_names[i]);
-        else 
+        else
             printf("<%s:%s> ", arg_names[i], get_type_string(arg_types[i]));
     }
-    if (option_desc.size() > 0) 
+    if (option_desc.size() > 0)
         printf("[");
     std::map<const char*,const char*>::iterator I;
     for(I=option_desc.begin(); I!=option_desc.end(); I++)
@@ -94,17 +94,17 @@ void gm_useropt::print_help()
         printf(" -%s=<%s>", I->first, get_type_string(option_type[I->first]));
     }
 
-    if (option_desc.size() > 0) 
+    if (option_desc.size() > 0)
         printf(" ]");
     printf("\n");
-    
-    if (arg_names.size() > 0) 
+
+    if (arg_names.size() > 0)
         printf("Arguments: \n");
     for(size_t i=0;i<arg_names.size();i++) {
         printf("    <%s>:%s\n", arg_names[i], arg_descs[i]);
     }
 
-    if (option_desc.size() > 0) 
+    if (option_desc.size() > 0)
         printf("Options: \n");
     for(I=option_desc.begin(); I!=option_desc.end(); I++)
     {
@@ -118,28 +118,28 @@ void gm_useropt::print_help()
 bool gm_useropt::parse_command_args(int argc, char** argv)
 {
     bool ret=true;
-    set_execname(argv[0]); 
+    set_execname(argv[0]);
     for(int i=1;i<argc;i++)
     {
-        char* p = argv[i]; 
+        char* p = argv[i];
         if (p[0] == '-') { // option
             // find deliminater (=)
             int sz = strlen(p);
             if (sz==1) continue; // ignoreing single -
-            int i;
-            for(i=1;i<=sz;i++) {
-                if (p[i] == '=') {
-                    p[i] = '\0';
+            int j;
+            for(j=1;j<=sz;j++) {
+                if (p[j] == '=') {
+                    p[j] = '\0';
                     break;
                 }
             }
             const char* opt_name =&(p[1]);
             const char* opt_val;
-            if (i>sz) { 
+            if (j>sz) {
                 opt_val = "1";
             }
             else {
-                opt_val = &p[i+1];
+                opt_val = &p[j+1];
             }
             if (is_option_declared(opt_name)) {
                 set_option(opt_name, opt_val);

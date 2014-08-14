@@ -61,9 +61,9 @@ void gm_default_usermain::declare_return(VALUE_TYPE t) {
     return_schema.is_input = false;
     return_schema.is_output = false;
     return_schema.schema_type = GM_SCALAR;
-} 
+}
 
-static void load_scalar_variable_from_option(gm_useropt &O, const char* name, VALUE_TYPE t, void* var) 
+static void load_scalar_variable_from_option(gm_useropt &O, const char* name, VALUE_TYPE t, void* var)
 {
     switch(t) {
         case GMTYPE_BOOL:   *((bool*)var)    = O.get_option_bool(name); break;
@@ -78,7 +78,7 @@ static void load_scalar_variable_from_option(gm_useropt &O, const char* name, VA
     }
 }
 
-static void* create_scalar_variable(VALUE_TYPE t) 
+static void* create_scalar_variable(VALUE_TYPE t)
 {
     switch(t) {
         case GMTYPE_BOOL: return new bool;
@@ -92,7 +92,7 @@ static void* create_scalar_variable(VALUE_TYPE t)
             assert(false);
     }
 }
-static void* create_array_variable(VALUE_TYPE t, size_t s) 
+static void* create_array_variable(VALUE_TYPE t, size_t s)
 {
     switch(t) {
         case GMTYPE_BOOL: return new bool[s];
@@ -132,13 +132,13 @@ void gm_default_usermain::declare_property(const char* name, VALUE_TYPE t, bool 
     //    is_input = is_output = true;
    // }
 
-    gm_schema schema; 
+    gm_schema schema;
     schema.name = name;
     schema.type = t;
     schema.is_input = is_input;
     schema.is_output = is_output;
     schema.schema_type = i;
-    
+
     property_schema.push_back(schema);
 }
 
@@ -226,10 +226,10 @@ static bool guess_file_format_from_extension(const char* fname, GM_FILE_FORMAT& 
 bool gm_default_usermain::determine_formats()
 {
     const char* format="";
-    
+
     if (OPTIONS.is_option_defined(OPT_INTYPE))
     {
-        format = OPTIONS.get_option(OPT_INTYPE);  
+        format = OPTIONS.get_option(OPT_INTYPE);
         if (parse_format_string(format, this->in_format) == false) {
             printf("Error:Unknown input format:%s\n", format);
             return false;
@@ -239,9 +239,9 @@ bool gm_default_usermain::determine_formats()
             OPTIONS.get_arg(0), this->in_format) == false) {
         printf("Warning: assuming input is ADJ list\n");
     }
-    if ((in_format != GM_ADJ_LIST) && 
-        (in_format != GM_ADJ_LIST_AVRO) && 
-        (in_format != GM_EDGE_LIST) && 
+    if ((in_format != GM_ADJ_LIST) &&
+        (in_format != GM_ADJ_LIST_AVRO) &&
+        (in_format != GM_EDGE_LIST) &&
         (in_format != GM_BINARY) &&
         (in_format != GM_EXTENDED_BINARY)
         ) {
@@ -258,7 +258,7 @@ bool gm_default_usermain::determine_formats()
 
     if (create_output_graph) {
         if (OPTIONS.is_option_defined(OPT_OUTTYPE)) {
-            format = OPTIONS.get_option(OPT_OUTTYPE);  
+            format = OPTIONS.get_option(OPT_OUTTYPE);
             if (parse_format_string(format, this->out_format) == false) {
                 printf("Error:Unknown output format:%s\n", format);
                 return false;
@@ -269,12 +269,12 @@ bool gm_default_usermain::determine_formats()
             printf("Warning: assuming output is ADJ list\n");
         }
 
-        if ((out_format != GM_ADJ_LIST) && 
-            (out_format != GM_ADJ_LIST_AVRO) && 
-            (out_format != GM_NODE_PROP_LIST) && 
-            (out_format != GM_NULL_FORMAT) && 
-            (out_format != GM_EDGE_LIST) && 
-            (out_format != GM_EXTENDED_BINARY) && 
+        if ((out_format != GM_ADJ_LIST) &&
+            (out_format != GM_ADJ_LIST_AVRO) &&
+            (out_format != GM_NODE_PROP_LIST) &&
+            (out_format != GM_NULL_FORMAT) &&
+            (out_format != GM_EDGE_LIST) &&
+            (out_format != GM_EXTENDED_BINARY) &&
             (out_format != GM_BINARY)) {
             printf("Error:output format not supported.\n");
             return false;
@@ -283,9 +283,9 @@ bool gm_default_usermain::determine_formats()
         printf("out_format : %s\n", (out_format == GM_ADJ_LIST)  ? "ADJ" :
                                  (out_format == GM_ADJ_LIST_AVRO) ? "ADJ_AVRO" :
                                  (out_format == GM_NODE_PROP_LIST) ? "PROP_LIST" :
-                                 (out_format == GM_NULL_FORMAT)? "NULL_FORMAT" : 
-                                 (out_format == GM_EDGE_LIST)? "EDGE_LIST" : 
-                                 (out_format == GM_BINARY)? "BINARY" : 
+                                 (out_format == GM_NULL_FORMAT)? "NULL_FORMAT" :
+                                 (out_format == GM_EDGE_LIST)? "EDGE_LIST" :
+                                 (out_format == GM_BINARY)? "BINARY" :
                                  (out_format == GM_EXTENDED_BINARY) ? "EXTENDED_BINARY" :
                                  "Unknown");
     }
@@ -305,14 +305,14 @@ bool gm_default_usermain::process_arguments(int argc, char** argv)
     create_property_in_out_schema();
 
     /*
-    if (OPTIONS.get_option_int(OPT_DUMPGRAPH) == 1) 
+    if (OPTIONS.get_option_int(OPT_DUMPGRAPH) == 1)
     {
         // should create a graph format
         create_output_graph = true;
-    } 
+    }
     else if ((OPTIONS.get_option_int(OPT_DUMPGRAPH)) == 2)
     {
-        if (eprop_out_schema.size() > 0) 
+        if (eprop_out_schema.size() > 0)
             create_output_graph = true;
         else if (vprop_out_schema.size() > 0 )
         {
@@ -332,7 +332,7 @@ bool gm_default_usermain::process_arguments(int argc, char** argv)
         OPTIONS.remove_last_argument();
     }
 
-    if (OPTIONS.get_num_args_defined() <  OPTIONS.get_num_args_declared()) 
+    if (OPTIONS.get_num_args_defined() <  OPTIONS.get_num_args_declared())
     {
         printf("Error: need more arguements\n");
         goto err_return;
@@ -344,10 +344,10 @@ bool gm_default_usermain::process_arguments(int argc, char** argv)
         return false;
     }
 
-    // binary format does not support input properties 
+    // binary format does not support input properties
     // (should we initiate it with random values?)
     if (in_format == GM_BINARY) {
-        for(size_t i=0;i<property_schema.size(); i++) 
+        for(size_t i=0;i<property_schema.size(); i++)
         {
             gm_schema S = property_schema[i];
             assert (!S.is_input) ;
@@ -373,6 +373,7 @@ err_return:
     OPTIONS.print_help();
     return false;
 }
+#ifdef AVRO
 static bool check_schema_consistency(
         std::vector<VALUE_TYPE>& vprop_avro_schema,
         std::vector<std::string>& vprop_avro_names,
@@ -394,7 +395,7 @@ static bool check_schema_consistency(
     for(size_t i=0;i<vprop_avro_schema.size();i++) {
         if (vprop_avro_schema[i] != vprop_in_schema[i]) {
             printf("Schema type mismatch for %s, expected type: %s, read: %s\n",
-                    vprop_avro_names[i].c_str(), 
+                    vprop_avro_names[i].c_str(),
                     gmutil_getTypeString(vprop_in_schema[i]),
                     gmutil_getTypeString(vprop_avro_schema[i]));
             return false;
@@ -403,7 +404,7 @@ static bool check_schema_consistency(
     for(size_t i=0;i<eprop_avro_schema.size();i++) {
         if (eprop_avro_schema[i] != eprop_in_schema[i]) {
             printf("Schema type mismatch for %s, expected type: %s, read: %s\n",
-                    eprop_avro_names[i].c_str(), 
+                    eprop_avro_names[i].c_str(),
                     gmutil_getTypeString(eprop_in_schema[i]),
                     gmutil_getTypeString(eprop_avro_schema[i]));
             return false;
@@ -412,12 +413,13 @@ static bool check_schema_consistency(
 
     return true;
 }
+#endif
 
 
 bool gm_default_usermain::do_preprocess()
 {
     // setup number of threads
-    if (OPTIONS.is_option_defined(OPT_NUMTHREAD)) 
+    if (OPTIONS.is_option_defined(OPT_NUMTHREAD))
     {
         int num_threads = OPTIONS.get_option_int(OPT_NUMTHREAD);
         gm_rt_set_num_threads(num_threads);
@@ -449,7 +451,7 @@ bool gm_default_usermain::do_preprocess()
         }
     }
 
-    // load the graph 
+    // load the graph
     sprintf(fullpath_name,"%s%s",input_path, OPTIONS.get_arg(0));
 
     if (OPTIONS.is_option_defined(OPT_MEASURETIME) && OPTIONS.get_option_bool(OPT_MEASURETIME)) {
@@ -462,7 +464,7 @@ bool gm_default_usermain::do_preprocess()
     use_hdfs = OPTIONS.is_option_defined(OPT_USEHDFS) && OPTIONS.get_option_bool(OPT_USEHDFS) ;
 #endif
 
-    if (get_input_format() == GM_ADJ_LIST) 
+    if (get_input_format() == GM_ADJ_LIST)
     {
         bool okay = GRAPH.load_adjacency_list(fullpath_name,
                 vprop_in_schema,
@@ -490,7 +492,7 @@ bool gm_default_usermain::do_preprocess()
         }
 
     }
-    else if (get_input_format() == GM_EXTENDED_BINARY) 
+    else if (get_input_format() == GM_EXTENDED_BINARY)
     {
         bool okay = GRAPH.load_extended_binary(fullpath_name,
                 vprop_in_schema,
@@ -504,7 +506,7 @@ bool gm_default_usermain::do_preprocess()
             return false;
         }
     }
-    else if (get_input_format() == GM_EDGE_LIST) 
+    else if (get_input_format() == GM_EDGE_LIST)
     {
         bool okay = GRAPH.load_edge_list(fullpath_name,
                 vprop_in_schema,
@@ -556,7 +558,7 @@ bool gm_default_usermain::do_preprocess()
 
     }
 #endif
-    else 
+    else
     {
         printf("format not supported yet\n");
         return false;
@@ -602,7 +604,7 @@ void gm_default_usermain::create_property_in_out_schema()
     {
         if ((vprop_in_schema.size() == 0) || (vprop_out_schema.size() == 0))
         {
-            gm_schema schema; 
+            gm_schema schema;
             schema.name = "dummy np";
             schema.type = GMTYPE_DOUBLE;
             schema.is_input = (vprop_in_schema.size() == 0) ? true : false;
@@ -614,7 +616,7 @@ void gm_default_usermain::create_property_in_out_schema()
         }
         if ((eprop_in_schema.size() == 0) || (eprop_out_schema.size() == 0))
         {
-            gm_schema schema; 
+            gm_schema schema;
             schema.name = "dummy ep";
             schema.type = GMTYPE_DOUBLE;
             schema.is_input = (eprop_in_schema.size() == 0) ? true : false;
@@ -651,7 +653,7 @@ void gm_default_usermain::create_and_register_property_arrays()
         if (S.is_output) {
             void* array;
             if (S.schema_type == GM_NODEPROP) {
-                if (S.is_input) 
+                if (S.is_input)
                     array = properties[S.name];
                 else {
                     array = create_array_variable(S.type, GRAPH.num_nodes());
@@ -661,7 +663,7 @@ void gm_default_usermain::create_and_register_property_arrays()
                 std::string N(S.name);
                 vprop_out_names.push_back(N);
             } else {
-                if (S.is_input) 
+                if (S.is_input)
                     array = properties[S.name];
                 else {
                     array = create_array_variable(S.type, GRAPH.num_edges());
@@ -707,7 +709,7 @@ bool gm_default_usermain::do_postprocess()
         print_value(S.type, scalar_var);
         printf("\n");
     }
-    
+
     // dump graph or properties
     char fullpath_name[1024*64];
     sprintf(fullpath_name,"%s%s",output_path, OPTIONS.get_arg(1));
@@ -725,7 +727,7 @@ bool gm_default_usermain::do_postprocess()
 
         bool okay = true;
         // dump output graph
-        if (get_output_format() == GM_ADJ_LIST) 
+        if (get_output_format() == GM_ADJ_LIST)
         {
            okay = GRAPH.store_adjacency_list(fullpath_name,
                 vprop_out_schema,
@@ -742,7 +744,7 @@ bool gm_default_usermain::do_postprocess()
             assert(!use_hdfs);
             okay = GRAPH.store_binary(fullpath_name);
         }
-        else if (get_output_format() == GM_EXTENDED_BINARY) 
+        else if (get_output_format() == GM_EXTENDED_BINARY)
         {
            okay = GRAPH.store_extended_binary(fullpath_name,
                 vprop_out_schema,
@@ -751,7 +753,7 @@ bool gm_default_usermain::do_postprocess()
                 eprop_out_array,
                 use_hdfs);
         }
-        else if (get_output_format() == GM_EDGE_LIST) 
+        else if (get_output_format() == GM_EDGE_LIST)
         {
            okay = GRAPH.store_edge_list(fullpath_name,
                 vprop_out_schema,
@@ -761,7 +763,7 @@ bool gm_default_usermain::do_postprocess()
                 use_hdfs);
         }
 #ifdef AVRO
-        else if (get_output_format() == GM_ADJ_LIST_AVRO) 
+        else if (get_output_format() == GM_ADJ_LIST_AVRO)
         {
            okay = GRAPH.store_adjacency_list_avro(fullpath_name,
                 vprop_out_schema,

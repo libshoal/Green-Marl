@@ -1,14 +1,16 @@
 #ifndef GM_RUNTIME_H_
 #define GM_RUNTIME_H_
 #include <assert.h>
+extern "C" {
 #include <omp.h>
+}
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include "gm_mem_helper.h"
 
 //----------------------------------------------------
-// A thin layer over openmp 
+// A thin layer over openmp
 //----------------------------------------------------
 
 class gm_runtime

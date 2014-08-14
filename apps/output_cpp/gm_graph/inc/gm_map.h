@@ -193,7 +193,7 @@ class gm_map_small : public gm_map<Key, Value>
     }
 
   public:
-    gm_map_small(Value defaultValue) : lock(0), defaultValue(defaultValue) {
+    gm_map_small(Value _defaultValue) : lock(0), defaultValue(_defaultValue) {
     }
 
     ~gm_map_small() {
@@ -392,10 +392,10 @@ class gm_map_large : public gm_map<Key, Value>
     }
 
   public:
-    gm_map_large(size_t size, Value defaultValue) :
-            size_(size), data(new Value[size]), valid(new bool[size]), defaultValue(defaultValue) {
+    gm_map_large(size_t _size, Value _defaultValue) :
+            size_(_size), data(new Value[_size]), valid(new bool[_size]), defaultValue(_defaultValue) {
         #pragma omp parallel for
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < _size; i++) {
             valid[i] = false;
         }
     }
@@ -528,7 +528,7 @@ class gm_map_medium : public gm_map<Key, Value>
     {
         uint32_t P = 0;
 
-        if (sizeof(Key) == 1) { 
+        if (sizeof(Key) == 1) {
             const uint8_t* c = (const uint8_t*) &key;
             P = *c;
         } else if (sizeof(Key) == 2) {
@@ -537,7 +537,7 @@ class gm_map_medium : public gm_map<Key, Value>
         } else if (sizeof(Key) >= 4) {
             const uint32_t* c = (const uint32_t*) &key;
             P = *c;
-        } 
+        }
         return P & bitmask;
     }
 
@@ -727,7 +727,7 @@ class gm_map_medium : public gm_map<Key, Value>
 
 
   public:
-    gm_map_medium(int threadCount, Value defaultValue) : innerSize(getSize(threadCount)), bitmask(getBitMask(innerSize)), defaultValue(defaultValue) {
+    gm_map_medium(int threadCount, Value _defaultValue) : innerSize(getSize(threadCount)), bitmask(getBitMask(innerSize)), defaultValue(_defaultValue) {
         locks = new gm_spinlock_t[innerSize];
         innerMaps = new map<Key, Value>[innerSize];
         #pragma omp parallel for
@@ -826,12 +826,12 @@ class gm_map_medium : public gm_map<Key, Value>
     }
 
     size_t size() {
-        size_t size = 0;
-        #pragma omp parallel for reduction(+ : size)
+        size_t _size = 0;
+        #pragma omp parallel for reduction(+ : _size)
         for(int i = 0; i < innerSize; i++) {
-            size += innerMaps[i].size();
+            _size += innerMaps[i].size();
         }
-        return size;
+        return _size;
     }
 
     void clear() {
