@@ -1,7 +1,7 @@
 #ifndef COMMON_MAIN_H
 #define COMMON_MAIN_H
 
-#include <omp.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -9,8 +9,17 @@
 
 #ifdef BARRELFISH
 extern "C" {
+#include <omp.h>
 #include <vfs/vfs.h>
+#include <xomp/xomp.h>
+#include <barrelfish/waitset.h>
+extern void messages_wait_and_handle_next(void);
+char **argvals;
+int argcount;
+
 }
+#else
+#include <omp.h>
 #endif
 
 class main_t
@@ -45,7 +54,42 @@ public:
         bool b;
 
 #ifdef BARRELFISH
+
+        argvals = argv;
+        argcount = argc;
+
+
+        printf("Barrelfish specific prepare..\n");
         vfs_init();
+        #if OMP_BACKEND == OMP_USE_XOMP
+        errval_t err;
+
+        xomp_wid_t wid;
+        err = xomp_worker_parse_cmdline(argc, argv, &wid);
+        switch (err_no(err)) {
+            case SYS_ERR_OK:
+                printf("initializing XOMP worker...");
+                err = xomp_worker_init(wid);
+                if (err_is_fail(err)) {
+                    printf("XOMP worker initialization failed.\n");
+                    exit (EXIT_FAILURE);
+                }
+
+                printf("XOMP worker waiting for tasks...\n");
+                while(1) {
+                    messages_wait_and_handle_next();
+                }
+
+                break;
+            case XOMP_ERR_BAD_INVOCATION:
+                /* no op */
+                break;
+            default:
+                printf("Unexpected failure during argument parsing\n");
+                exit (EXIT_FAILURE);
+                break;
+        }
+        #endif
 #endif
 
         // check if node/edge size matches with the library (runtime-check)
