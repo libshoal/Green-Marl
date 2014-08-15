@@ -142,6 +142,7 @@ sk_tc_gm:
 	$(MAKE) -C apps/src/ ../output_cpp/generated/triangle_counting.cc
 
 sk_tc_gcc:
+	$(MAKE) -C $(SHOAL)
 	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/triangle_counting.cc triangle_counting_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/triangle_counting
 
 sk_hop_dist: sk_hd_gm | sk_hd_gcc
@@ -151,4 +152,5 @@ sk_hd_gm:
 	$(MAKE) -C apps/src/ ../output_cpp/generated/hop_dist.cc
 
 sk_hd_gcc:
+	$(MAKE) -C $(SHOAL)
 	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/hop_dist.cc hop_dist_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/hop_dist
