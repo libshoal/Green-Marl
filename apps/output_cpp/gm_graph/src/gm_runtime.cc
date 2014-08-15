@@ -37,6 +37,11 @@ int gm_runtime::get_num_threads() {
 }
 
 void gm_runtime::set_num_threads(int n) {
+#ifdef BARRELFISH
+    printf("Doing Barrelfish Specific setup: num_threads:%d\n", n);
+    bomp_bomp_init(n);
+#endif
+
     if ((is_init == false) || (n > num_threads)) {
         int old = num_threads;
         _GM_MEM.resize(n);
@@ -72,7 +77,7 @@ void gm_runtime::expand_random_seeds(int old, int n) {
 
     // new random seeds
     // short[0]   : 0x330E  (arbitary number)
-    // short[1~2] : thread id 
+    // short[1~2] : thread id
     for (int i = old; i < n; i++) {
         int base = i * 3;
         random_seeds[base + 0] = (unsigned short) 0x330E;
