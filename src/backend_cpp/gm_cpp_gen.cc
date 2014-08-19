@@ -181,8 +181,13 @@ void gm_cpp_gen::do_generate_end() {
         const char* type = a.type.c_str();
         const char* num = a.num.c_str();
 
-        bool is_used = sk_arr_is_read(src) || sk_arr_is_write(src);
-        bool is_ro = !sk_arr_is_write(src) && is_used;
+        // array name after translation
+        const char* s = sk_convert_array_name(std::string(src)).c_str();
+
+        // XXX maybe s == dest ?
+
+        bool is_used = sk_arr_is_read(s) || sk_arr_is_write(s);
+        bool is_ro = !sk_arr_is_write(s) && is_used;
         bool is_buildin = a.buildin && is_used;
         bool is_dynamic = a.dynamic && is_used;
         bool is_indexed = a.is_indexed && is_used;
@@ -226,10 +231,9 @@ void gm_cpp_gen::do_generate_end() {
          i!=sk_array_mapping.end(); i++) {
 
         const char *dest = sk_convert_array_name((*i).second).c_str();
-        //        struct sk_gm_array a = (*sk_gm_arrays.find(std::string(dest))).second;
 
-        bool is_write = sk_arr_is_write((((*i).second).c_str()));
-        bool is_read = sk_arr_is_read(((*i).second).c_str());
+        bool is_write = sk_arr_is_write(dest);
+        bool is_read = sk_arr_is_read(dest);
 
         // Write
         if (is_write) {
@@ -576,9 +580,11 @@ void sk_copy_func(gm_code_writer *Body, gm_code_writer *Header)
         const char* dest = a.dest.c_str();
         const char* src = a.src.c_str();
 
+        const char* s = sk_convert_array_name(std::string(src)).c_str();
+
         // Specify everything that needs to be copied
-        bool is_ro = !sk_arr_is_write(src);
-        bool is_used = sk_arr_is_read(src) || sk_arr_is_write(src);
+        bool is_ro = !sk_arr_is_write(s);
+        bool is_used = sk_arr_is_read(s) || sk_arr_is_write(s);
         bool is_graph = a.buildin;
 
         sprintf(tmp, "#define %s_IS_USED %d", dest, (is_used));

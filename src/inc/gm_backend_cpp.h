@@ -430,6 +430,39 @@ static bool sk_m_is_iterator(std::string it)
     return its.find(it)!=its.end();
 }
 
+/*
+ * \brief Record array access
+ *
+ * \param array_name The name of the array after sk_convert_array_name
+ */
+static void sk_record_array_access(const char* array_name, bool is_indexed,
+                                   bool is_write)
+{
+
+    if (!is_indexed) {
+
+        string s(array_name);
+        assert (sk_gm_arrays.find(s) != sk_gm_arrays.end()); // otherwise the array name used is wrong
+
+        struct sk_gm_array a = sk_gm_arrays[s];
+        a.is_indexed = false;
+        sk_gm_arrays[s] = a;
+    }
+
+#ifdef SK_DEBUG
+    sprintf(str_buf, "/* RTS array %s [wr=%d] [idx=%d]*/",
+            array_name, is_write, is_indexed);
+    Body->push(str_buf);
+#endif
+
+    if (is_write) {
+        sk_write_set.insert(array_name);
+    } else {
+        sk_read_set.insert(array_name);
+    }
+
+}
+
 static char* sk_m_array_access_gen(const char* array_name, const char* index,
                    std::string original_array)
 {
@@ -447,43 +480,19 @@ static char* sk_m_array_access_gen(const char* array_name, const char* index,
            array_name, index, is_indexed_2 ? 'X' : ' ',
            is_write ? 'X' : ' ');
 
-    if (!is_indexed_2) {
-
-        string s = sk_convert_array_name(string(original_array));
-        assert (sk_gm_arrays.find(s) != sk_gm_arrays.end()); // otherwise the array name used is wrong
-
-        struct sk_gm_array a = sk_gm_arrays[s];
-        a.is_indexed = false;
-        sk_gm_arrays[s] = a;
-    }
-
-#ifdef SK_DEBUG
-    sprintf(str_buf, "/* RTS array %s, index %s [wr=%d] [idx=%d]*/",
-            array_name, index, sk_lhs, is_indexed);
-    Body->push(str_buf);
-#endif
-
-    /* this obviously does not work right now
-    if (is_indexed)
-        index = SHOAL_IDX_NAME;
-    */
-
-    if (is_write) {
-
-        sk_lhs_open = true;
-    }
-
     sk_array_mapping.insert(make_pair(array_name, original_array));
+    sk_record_array_access(sk_convert_array_name(string(original_array)).c_str(), is_indexed, is_write);
 
     if (is_write) {
         sprintf(str_buf, "%s_%s_%s(%s, ", SHOAL_PREFIX, array_name,
                 SHOAL_SUFFIX_WR, index);
-        sk_write_set.insert(original_array);
+
+        sk_lhs_open = true;
+
     }
     else {
         sprintf(str_buf, "%s_%s_%s(%s)", SHOAL_PREFIX, array_name,
                 SHOAL_SUFFIX_RD, index);
-        sk_read_set.insert(original_array);
     }
     return str_buf;
 }
