@@ -826,7 +826,7 @@ void gm_cpp_gen::generate_sent_foreach(ast_foreach* f) {
     get_lib()->generate_foreach_header(f, Body);
 
     if (get_lib()->need_down_initializer(f)) {
-        Body.pushln("{");
+        Body.pushln("{ /* PUSH */ ");
         get_lib()->generate_down_initializer(f, Body);
 
         if (f->get_body()->get_nodetype() != AST_SENTBLOCK) {
@@ -835,14 +835,18 @@ void gm_cpp_gen::generate_sent_foreach(ast_foreach* f) {
             // '{' '} already handled
             generate_sent_block((ast_sentblock*) f->get_body(), false);
         }
-        Body.pushln("}");
+        Body.pushln("} /* POP */");
 
     } else if (f->get_body()->get_nodetype() == AST_SENTBLOCK) {
+        Body.pushln("{ /* PUSH */ ");
         generate_sent(f->get_body());
+        Body.pushln("} /* POP */");
     } else {
+        Body.pushln("{ /* PUSH */ ");
         Body.push_indent();
         generate_sent(f->get_body());
         Body.pop_indent();
+        Body.pushln("} /* POP */");
         Body.NL();
     }
 

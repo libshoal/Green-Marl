@@ -366,21 +366,21 @@ void gm_code_generator::generate_sent_while(ast_while *w) {
     assert(b->get_nodetype() == AST_SENTBLOCK);
 
     if (w->is_do_while()) {
-        _Body.pushln("do");
+        _Body.pushln("do /* => /k*/");
 
         generate_sent(b);
 
         _Body.push("while (");
         generate_expr(w->get_cond());
-        _Body.pushln(");");
+        _Body.pushln("); /* => /k*/");
         _Body.NL();
     } else {
         _Body.push("while (");
         generate_expr(w->get_cond());
         _Body.pushln(")");
-
+        _Body.pushln("{ /*=>k*/ ");
         generate_sent(b);
+        _Body.pushln("} /*=>/k*/ ");
     }
 
 }
-

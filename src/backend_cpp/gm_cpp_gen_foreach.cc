@@ -203,7 +203,7 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         char* it_name = iter->get_genname();
         assert(its.insert(string(it_name)).second); // otherwise, the index is already there, which is an error
 
-        sprintf(str_buf, "for (%s %s = 0; %s < %s.%s(); %s ++) /*7*/ ",
+        sprintf(str_buf, "for (%s %s = 0; %s < %s.%s(); %s ++) /*7 => N*/ ",
                 get_type_string(iter->getTypeSummary()),
                 it_name, it_name, graph_name,
                 gm_is_node_iteration(type) ? NUM_NODES : NUM_EDGES, it_name);
@@ -290,7 +290,7 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         sprintf(str_buf, "%s+1", src_name);
         sk_m_array_access(&Body, array_name, str_buf, (std::string(graph_name) + "." + array_name));
 
-        sprintf(str_buf, "; %s ++) /*8*/ ", alias_name);
+        sprintf(str_buf, "; %s ++) /*8 => neighbor node*/ ", alias_name);
         Body.push(str_buf);
 #endif
         // SET_TYPE
