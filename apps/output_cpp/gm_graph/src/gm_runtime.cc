@@ -32,6 +32,7 @@ void gm_runtime::initialize() {
     }
 }
 
+#ifdef BARRELFISH
 void gm_runtime::initialize_barrelfish(unsigned nthreads) {
     if (is_init) {
         printf("ERROR: initialize_barrelfish called but it is already init\n");
@@ -46,7 +47,7 @@ void gm_runtime::initialize_barrelfish(unsigned nthreads) {
     set_num_threads (nthreads);
     is_init = true;
 }
-
+#endif
 
 bool gm_runtime::is_initialized() {
     return is_init;
@@ -127,9 +128,11 @@ long gm_runtime::rand_long(long max, int tid) {
 void gm_rt_initialize() {
     _GM_RT.initialize();
 }
+#ifdef BARRELFISH
 void gm_rt_initialize_barrelfish(unsigned nthreads) {
     _GM_RT.initialize_barrelfish(nthreads);
 }
+#endif
 bool gm_rt_is_initialized() {
     return _GM_RT.is_initialized();
 }
