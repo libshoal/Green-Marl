@@ -15,7 +15,7 @@
 #include "gm_lock.h"
 #include "gm_file_handling.h"
 
-
+#define GM_OMP_SCHEDULE static
 
 // The following option uses parallel prefix sum during reverse edge computation.
 // However, the exeprimental result says that it is acturally slower to do so.
@@ -221,7 +221,7 @@ void gm_graph::make_reverse_edges() {
         r_begin[i] = 0;
     }
 
-#pragma omp parallel for schedule(dynamic,128)
+#pragma omp parallel for schedule(GM_OMP_SCHEDULE,128)
     for (node_t i = 0; i < n_nodes; i++) {
         for (edge_t e = begin[i]; e < begin[i + 1]; e++) {
             node_t dest = node_idx[e];
@@ -251,7 +251,7 @@ void gm_graph::make_reverse_edges() {
 #endif
 
     // now update destination
-#pragma omp parallel for schedule(dynamic,128)
+#pragma omp parallel for schedule(GM_OMP_SCHEDULE,128)
     for (node_t i = 0; i < n_nodes; i++) {
         for (edge_t e = begin[i]; e < begin[i + 1]; e++) {
             node_t dest = node_idx[e];
@@ -265,8 +265,8 @@ void gm_graph::make_reverse_edges() {
         }
     }
 #if GM_GRAPH_NUMA_OPT
-    #pragma omp parallel for schedule(dynamic,128)
-    for (node_t i = 0; i < n_nodes; i++) {
+    #pragma omp parallel for schedule(GM_OMP_SCHEDULE,128)
+        for (node_t i = 0; i < n_nodes; i++) {
         for (edge_t e = r_begin[i]; e < r_begin[i + 1]; e++) {
             r_node_idx[e] = temp_r_node_idx[e];
         }
@@ -372,7 +372,7 @@ static void semi_sort_main(node_t N, edge_t M, edge_t* begin, node_t* dest, edge
         std::vector<edge_t> aux_copy;
         std::vector<edge_t> aux2_copy;
 
-        #pragma omp for schedule(dynamic,4096) nowait
+        #pragma omp for schedule(GM_OMP_SCHEDULE,4096) nowait
         for (node_t i = 0; i < N; i++) {
             index.clear(); dest_copy.clear(); aux_copy.clear(); aux2_copy.clear();
             edge_t sz = begin[i+1] - begin[i];
@@ -413,7 +413,7 @@ void gm_graph::prepare_edge_source() {
     assert(node_idx_src == NULL);
     node_idx_src = new node_t[num_edges()];
 
-#pragma omp parallel for schedule(dynamic,128)
+#pragma omp parallel for schedule(GM_OMP_SCHEDULE,128)
     for (node_t i = 0; i < num_nodes(); i++) {
         for (edge_t j = begin[i]; j < begin[i + 1]; j++) {
             node_idx_src[j] = i;
@@ -427,7 +427,7 @@ void gm_graph::prepare_edge_source_reverse() {
     assert(r_node_idx_src == NULL);
     r_node_idx_src = new node_t[num_edges()];
 
-#pragma omp parallel for schedule(dynamic,128)
+#pragma omp parallel for schedule(GM_OMP_SCHEDULE,128)
     for (node_t i = 0; i < num_nodes(); i++) {
         for (edge_t j = r_begin[i]; j < r_begin[i + 1]; j++) {
             r_node_idx_src[j] = i;
@@ -450,7 +450,8 @@ void gm_graph::do_semi_sort() {
 
     // create map to original index
     e_idx2idx = new edge_t[num_edges()];
-#pragma omp parallel for schedule(dynamic,128)
+
+#pragma omp parallel for schedule(GM_OMP_SCHEDULE,128)
     for (node_t i = 0; i < num_nodes(); i++) {
         for (edge_t j = begin[i]; j < begin[i + 1]; j++) {
             e_idx2idx[j] = j;           /// first touch (NUMA OPT)

@@ -11,7 +11,13 @@ gm_runtime::gm_runtime() :
         is_init(false), num_threads(0), random_seeds(NULL) {
 
     gm_spinlock_table_init();
+#ifndef BARRELFISH
+    /*
+     * we cannot initialize the runtime at this point, because its done before
+     * main() is called
+     */
     initialize();
+#endif
 }
 
 gm_runtime::~gm_runtime() {
@@ -20,13 +26,27 @@ gm_runtime::~gm_runtime() {
 
 // Called at each procedure entry
 void gm_runtime::initialize() {
-
     if ((is_init == false) || (omp_get_max_threads() > num_threads)) {
         set_num_threads (omp_get_max_threads());
         is_init = true;
     }
-
 }
+
+void gm_runtime::initialize_barrelfish(unsigned nthreads) {
+    if (is_init) {
+        printf("ERROR: initialize_barrelfish called but it is already init\n");
+        exit(1);
+    }
+    if (nthreads > (unsigned)omp_get_max_threads()) {
+        printf("Warning: OpenMP supports only %u threads instead of %u",
+               omp_get_max_threads(),nthreads);
+        nthreads = omp_get_max_threads();
+    }
+    bomp_bomp_init(nthreads);
+    set_num_threads (nthreads);
+    is_init = true;
+}
+
 
 bool gm_runtime::is_initialized() {
     return is_init;
@@ -37,11 +57,6 @@ int gm_runtime::get_num_threads() {
 }
 
 void gm_runtime::set_num_threads(int n) {
-#ifdef BARRELFISH
-    printf("Doing Barrelfish Specific setup: num_threads:%d\n", n);
-    bomp_bomp_init(n);
-#endif
-
     if ((is_init == false) || (n > num_threads)) {
         int old = num_threads;
         _GM_MEM.resize(n);
@@ -112,7 +127,9 @@ long gm_runtime::rand_long(long max, int tid) {
 void gm_rt_initialize() {
     _GM_RT.initialize();
 }
-
+void gm_rt_initialize_barrelfish(unsigned nthreads) {
+    _GM_RT.initialize_barrelfish(nthreads);
+}
 bool gm_rt_is_initialized() {
     return _GM_RT.is_initialized();
 }

@@ -53,44 +53,7 @@ public:
     virtual void main(int argc, char** argv) {
         bool b;
 
-#ifdef BARRELFISH
-
-        argvals = argv;
-        argcount = argc;
-
-
-        printf("Barrelfish specific prepare..\n");
-        vfs_init();
-        #if OMP_BACKEND == OMP_USE_XOMP
-        errval_t err;
-
-        xomp_wid_t wid;
-        err = xomp_worker_parse_cmdline(argc, argv, &wid);
-        switch (err_no(err)) {
-            case SYS_ERR_OK:
-                printf("initializing XOMP worker...");
-                err = xomp_worker_init(wid);
-                if (err_is_fail(err)) {
-                    printf("XOMP worker initialization failed.\n");
-                    exit (EXIT_FAILURE);
-                }
-
-                printf("XOMP worker waiting for tasks...\n");
-                while(1) {
-                    messages_wait_and_handle_next();
-                }
-
-                break;
-            case XOMP_ERR_BAD_INVOCATION:
-                /* no op */
-                break;
-            default:
-                printf("Unexpected failure during argument parsing\n");
-                exit (EXIT_FAILURE);
-                break;
-        }
-        #endif
-#endif
+        printf("common_main:main:\n");
 
         // check if node/edge size matches with the library (runtime-check)
         gm_graph_check_node_edge_size_at_link_time();
@@ -117,6 +80,45 @@ public:
 
         int num = atoi(argv[2]);
         printf("running with %d threads\n", num);
+
+#ifdef BARRELFISH
+
+        argvals = argv;
+        argcount = argc;
+
+        printf("Barrelfish specific prepare:\n");
+        printf("  vfs initialization\n");
+        vfs_init();
+
+        errval_t err;
+
+        xomp_wid_t wid;
+        printf("  parsing cmd line for Xomp Worker args\n");
+        err = xomp_worker_parse_cmdline(argc, argv, &wid);
+        switch (err_no(err)) {
+            case SYS_ERR_OK:
+                printf("initializing XOMP worker...");
+                struct xomp_args arg;
+                arg.type = XOMP_ARG_TYPE_WORKER;
+                arg.args.worker.id = wid;
+                if (bomp_xomp_init(&arg)) {
+                    printf("XOMP worker initialization failed.\n");
+                    exit (EXIT_FAILURE);
+                }
+                printf("This point should not be reached...\n");
+                exit (EXIT_FAILURE);
+
+                break;
+            case XOMP_ERR_BAD_INVOCATION:
+                gm_rt_initialize_barrelfish(num);
+                break;
+            default:
+                printf("Unexpected failure during argument parsing\n");
+                exit (EXIT_FAILURE);
+                break;
+        }
+#endif
+
         gm_rt_set_num_threads(num); // gm_runtime.h
 
         //--------------------------------------------
@@ -125,6 +127,7 @@ public:
         struct timeval T1, T2;
         char *fname = argv[1];
         gettimeofday(&T1, NULL);
+        printf("loading graph...%s\n", fname);
         b = G.load_binary(fname);
         if (!b) {
             printf("error reading graph\n");
