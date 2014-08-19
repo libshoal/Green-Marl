@@ -181,8 +181,13 @@ void gm_cpp_gen::do_generate_end() {
         const char* type = a.type.c_str();
         const char* num = a.num.c_str();
 
-        bool is_used = sk_arr_is_read(src) || sk_arr_is_write(src);
-        bool is_ro = !sk_arr_is_write(src) && is_used;
+        // array name after translation
+        const char* s = sk_convert_array_name(std::string(src)).c_str();
+
+        // XXX maybe s == dest ?
+
+        bool is_used = sk_arr_is_read(s) || sk_arr_is_write(s);
+        bool is_ro = !sk_arr_is_write(s) && is_used;
         bool is_buildin = a.buildin && is_used;
         bool is_dynamic = a.dynamic && is_used;
         bool is_indexed = a.is_indexed && is_used;
@@ -226,10 +231,9 @@ void gm_cpp_gen::do_generate_end() {
          i!=sk_array_mapping.end(); i++) {
 
         const char *dest = sk_convert_array_name((*i).second).c_str();
-        //        struct sk_gm_array a = (*sk_gm_arrays.find(std::string(dest))).second;
 
-        bool is_write = sk_arr_is_write((((*i).second).c_str()));
-        bool is_read = sk_arr_is_read(((*i).second).c_str());
+        bool is_write = sk_arr_is_write(dest);
+        bool is_read = sk_arr_is_read(dest);
 
         // Write
         if (is_write) {
@@ -493,8 +497,13 @@ void sk_init_done(gm_code_writer *Body)
     assert (sk_gm_arrays.begin()!=sk_gm_arrays.end());
     std::map<std::string,struct sk_gm_array>::iterator i;
 
-    if (first)
-        Body->pushln("shl__init(gm_rt_get_num_threads());");
+    if (first) {
+        Body->pushln("#ifdef SHL_STATIC");
+        Body->pushln("shl__init(gm_rt_get_num_threads(), 1);");
+        Body->pushln("#else");
+        Body->pushln("shl__init(gm_rt_get_num_threads(), 0);");
+        Body->pushln("#endif");
+    }
 
     first = false;
 
@@ -526,7 +535,7 @@ void sk_init_done(gm_code_writer *Body)
         // Allocate array
         sprintf(tmp, "shl_array<%s>* %s__set = "
                 "shl__malloc<%s>(%s, \"%s\", %s_IS_RO, %s_IS_DYNAMIC, "
-                "%s_IS_USED, %s_IS_GRAPH);",
+                "%s_IS_USED, %s_IS_GRAPH, %s_IS_INDEXED);",
                 type,   // 1) type
                 dest,   // 2) name
                 type,   // 3) type
@@ -535,7 +544,8 @@ void sk_init_done(gm_code_writer *Body)
                 dest,   // 5) read-only property
                 dest,   // 6) dynamic property
                 dest,   // 7) used property
-                dest);  // 8) graph property
+                dest,   // 8) graph property
+                dest);  // 9) indexed property
         Body->pushln(tmp);
 
         // Alloc Green Marl array
@@ -570,9 +580,11 @@ void sk_copy_func(gm_code_writer *Body, gm_code_writer *Header)
         const char* dest = a.dest.c_str();
         const char* src = a.src.c_str();
 
+        const char* s = sk_convert_array_name(std::string(src)).c_str();
+
         // Specify everything that needs to be copied
-        bool is_ro = !sk_arr_is_write(src);
-        bool is_used = sk_arr_is_read(src) || sk_arr_is_write(src);
+        bool is_ro = !sk_arr_is_write(s);
+        bool is_used = sk_arr_is_read(s) || sk_arr_is_write(s);
         bool is_graph = a.buildin;
 
         sprintf(tmp, "#define %s_IS_USED %d", dest, (is_used));
@@ -582,6 +594,8 @@ void sk_copy_func(gm_code_writer *Body, gm_code_writer *Header)
         sprintf(tmp, "#define %s_IS_GRAPH %d", dest, is_graph);
         Header->pushln(tmp);
         sprintf(tmp, "#define %s_IS_DYNAMIC %d", dest, (a.dynamic));
+        Header->pushln(tmp);
+        sprintf(tmp, "#define %s_IS_INDEXED %d", dest, (a.is_indexed));
         Header->pushln(tmp);
     }
 }
@@ -1614,8 +1628,18 @@ void gm_cpp_gen::generate_expr_builtin(ast_expr* ee) {
 bool gm_cpp_gen::prepare_parallel_for(bool need_dynamic) {
     bool res = false;
 
-    if (is_under_parallel_sentblock())
+    if (is_under_parallel_sentblock()) {
+        Body.pushln("#ifdef SHL_STATIC");
+        Body.pushln("#pragma omp for nowait schedule(static,1024)");
+        Body.pushln("#else");
         Body.push("#pragma omp for nowait"); // already under parallel region.
+        if (need_dynamic) {
+            Body.push(" schedule(dynamic,128)");
+
+        }
+        Body.NL();
+        Body.pushln("#endif");
+    }
     else {
         Body.push("#pragma omp parallel ");
 
@@ -1623,18 +1647,17 @@ bool gm_cpp_gen::prepare_parallel_for(bool need_dynamic) {
         res = true;
         Body.pushln("{");
         sk_init_accessors(&Body);
+        Body.pushln("#ifdef SHL_STATIC");
+        Body.pushln("#pragma omp for schedule(static,1024)");
+        Body.pushln("#else");
         Body.push("#pragma omp for");
+        if (need_dynamic) {
+            Body.push(" schedule(dynamic,128)");
+
+        }
+        Body.NL();
+        Body.pushln("#endif");
     }
 
-#if 0
-    if (need_dynamic) {
-        Body.push(" schedule(dynamic,128)");
-
-    }
-#else
-    Body.push(" schedule(static,1024)");
-#endif
-
-    Body.NL();
     return res;
 }
