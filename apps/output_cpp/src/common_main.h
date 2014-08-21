@@ -53,22 +53,20 @@ public:
     virtual void main(int argc, char** argv) {
         bool b;
 
-        printf("common_main:main:\n");
-
         // check if node/edge size matches with the library (runtime-check)
         gm_graph_check_node_edge_size_at_link_time();
 
-        if (argc < 3) {
+        if (argc < 4) {
 
-            printf("%s <graph_name> <num_threads> ", argv[0]);
+            printf("%s <graph_name> <num_threads> <nfspath>", argv[0]);
             print_arg_info();
             printf("\n");
 
             exit (EXIT_FAILURE);
         }
 
-        int new_argc = argc - 3;
-        char** new_argv = &(argv[3]);
+        int new_argc = argc - 4;
+        char** new_argv = &(argv[4]);
         b = check_args(new_argc, new_argv);
         if (!b) {
             printf("error procesing argument\n");
@@ -79,25 +77,18 @@ public:
         }
 
         int num = atoi(argv[2]);
-        printf("running with %d threads\n", num);
-
 #ifdef BARRELFISH
 
         argvals = argv;
         argcount = argc;
 
-        printf("Barrelfish specific prepare:\n");
-        printf("  vfs initialization\n");
-        vfs_init();
-
         errval_t err;
 
         xomp_wid_t wid;
-        printf("  parsing cmd line for Xomp Worker args\n");
+
         err = xomp_worker_parse_cmdline(argc, argv, &wid);
         switch (err_no(err)) {
             case SYS_ERR_OK:
-                printf("initializing XOMP worker...");
                 struct xomp_args arg;
                 arg.type = XOMP_ARG_TYPE_WORKER;
                 arg.args.worker.id = wid;
@@ -110,6 +101,17 @@ public:
 
                 break;
             case XOMP_ERR_BAD_INVOCATION:
+                printf("Barrelfish specific prepare:\n");
+                printf("  vfs initialization\n");
+                vfs_init();
+                char *path = vfs_path_mkabsolute("", "/graphs");
+
+                if (vfs_mount(path, argv[3])) {
+                    printf("NFS mount failed.\n");
+                    exit (EXIT_FAILURE);
+                }
+                free(path);
+                printf("  initialize library for barrelfish\n");
                 gm_rt_initialize_barrelfish(num);
                 break;
             default:
@@ -118,14 +120,16 @@ public:
                 break;
         }
 #endif
-
+        printf("running with %d threads\n", num);
         gm_rt_set_num_threads(num); // gm_runtime.h
 
         //--------------------------------------------
-        // Load graph anc creating reverse edges
+        // Load graph and creating reverse edges
         //--------------------------------------------
         struct timeval T1, T2;
-        char *fname = argv[1];
+        size_t fnamelen = strlen(argv[1]) + 10;
+        char *fname = malloc(fnamelen);
+        snprintf(fname, fnamelen, "/graphs/%s", argv[1]);
         gettimeofday(&T1, NULL);
         printf("loading graph...%s\n", fname);
         b = G.load_binary(fname);

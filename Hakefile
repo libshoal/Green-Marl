@@ -42,7 +42,8 @@
     addIncludes = [
         "apps/output_cpp/gm_graph/inc"
     ],
-    addLibraries = libDeps [ 
+    addLibraries = libDeps [
+        "posixcompat", 
         "bomp"
     ],
     architectures = [ 
