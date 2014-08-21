@@ -8,6 +8,7 @@
 #include "gm_backend_cpp_opt_steps.h"
 #include "gm_backend_cpp_gen_steps.h"
 #include "../backend_cpp/gm_cpplib_words.h"
+#include "shl_extensions.h"
 
 #include <list>
 #include <algorithm>
@@ -55,7 +56,7 @@ public:
     virtual bool need_down_initializer(ast_foreach* fe);
     virtual void generate_up_initializer(ast_foreach* fe, gm_code_writer& Body);
     virtual void generate_down_initializer(ast_foreach* fe, gm_code_writer& Body);
-    virtual void generate_foreach_header(ast_foreach* fe, gm_code_writer& Body);
+    virtual shl__loop_t generate_foreach_header(ast_foreach* fe, gm_code_writer& Body);
 
     const char* get_reduction_function_name(GM_REDUCE_T type);
 

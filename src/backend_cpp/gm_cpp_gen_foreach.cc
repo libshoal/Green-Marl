@@ -11,6 +11,10 @@
 #include "gm_builtin.h"
 #include "gm_cpplib_words.h"
 
+#include "shl_extensions.h"
+
+extern vector<shl__loop_t> shl__loops;
+
 //--------------------------
 // Foreach(...)
 //    S;
@@ -186,7 +190,10 @@ void gm_cpplib::generate_down_initializer(ast_foreach* f, gm_code_writer& Body) 
     }
 }
 
-void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
+shl__loop_t gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
+
+    shl__loop_t r = LOOP_UNKNOWN;
+
     //ast_id* source = fe->get_source();
     ast_id* iter = fe->get_iterator();
     int type = fe->get_iter_type();
@@ -203,12 +210,13 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         char* it_name = iter->get_genname();
         assert(its.insert(string(it_name)).second); // otherwise, the index is already there, which is an error
 
-        sprintf(str_buf, "for (%s %s = 0; %s < %s.%s(); %s ++) /*7 => N*/ ",
+        sprintf(str_buf, "for (%s %s = 0; %s < %s.%s(); %s ++) ",
                 get_type_string(iter->getTypeSummary()),
                 it_name, it_name, graph_name,
                 gm_is_node_iteration(type) ? NUM_NODES : NUM_EDGES, it_name);
 
 #ifdef SHOAL_ACTIVATE
+        r = LOOP_NODES;
         sk_iterator(&Body, iter->get_genname(), get_type_string(iter->getTypeSummary()));
 
         Body.pushln(str_buf);
@@ -278,6 +286,7 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         sprintf(str_buf, "%s < %s.%s[%s+1] ; %s ++) ", alias_name, graph_name, array_name, src_name, alias_name);
         Body.pushln(str_buf);
 #else
+        r = LOOP_NBS;
         assert (its.insert(alias_name).second);
         sprintf(str_buf, "for (%s %s = ", EDGE_T, alias_name);
         Body.push(str_buf);
@@ -290,7 +299,7 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         sprintf(str_buf, "%s+1", src_name);
         sk_m_array_access(&Body, array_name, str_buf, (std::string(graph_name) + "." + array_name));
 
-        sprintf(str_buf, "; %s ++) /*8 => neighbor node*/ ", alias_name);
+        sprintf(str_buf, "; %s ++) ", alias_name);
         Body.push(str_buf);
 #endif
         // SET_TYPE
@@ -307,5 +316,5 @@ void gm_cpplib::generate_foreach_header(ast_foreach* fe, gm_code_writer& Body) {
         assert(false);
     }
 
-    return;
+    return r;
 }

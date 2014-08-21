@@ -823,10 +823,10 @@ void gm_cpp_gen::generate_sent_foreach(ast_foreach* f) {
         sk_needs_init = prepare_parallel_for(gm_cpp_should_be_dynamic_scheduling(f));
     }
 
-    get_lib()->generate_foreach_header(f, Body);
+    shl__loop_t lt = get_lib()->generate_foreach_header(f, Body);
 
     if (get_lib()->need_down_initializer(f)) {
-        Body.pushln("{ /* PUSH */ ");
+        shl__loop_enter(lt);
         get_lib()->generate_down_initializer(f, Body);
 
         if (f->get_body()->get_nodetype() != AST_SENTBLOCK) {
@@ -835,18 +835,18 @@ void gm_cpp_gen::generate_sent_foreach(ast_foreach* f) {
             // '{' '} already handled
             generate_sent_block((ast_sentblock*) f->get_body(), false);
         }
-        Body.pushln("} /* POP */");
+        shl__loop_leave(lt);
 
     } else if (f->get_body()->get_nodetype() == AST_SENTBLOCK) {
-        Body.pushln("{ /* PUSH */ ");
+        shl__loop_enter(lt);
         generate_sent(f->get_body());
-        Body.pushln("} /* POP */");
+        shl__loop_leave(lt);
     } else {
-        Body.pushln("{ /* PUSH */ ");
+        shl__loop_enter(lt);
         Body.push_indent();
         generate_sent(f->get_body());
         Body.pop_indent();
-        Body.pushln("} /* POP */");
+        shl__loop_leave(lt);
         Body.NL();
     }
 

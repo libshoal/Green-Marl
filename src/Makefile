@@ -36,6 +36,7 @@ HEADERS =  \
     gm_ind_opt.h\
     gm_transform_helper.h\
     gm_code_writer.h\
+	shl_extensions.h
 
 SRCS1 = gm_grammer.tab.c gm_lex.c
 
@@ -153,6 +154,7 @@ SRCS2 =\
        gm_giraph_gen_vertex.cc\
        gm_giraph_lib.cc\
        gm_giraph_lib_random_write.cc\
+	   shl_extensions.cc
 
 # where to find source codes
 SRC_DIRS = common parse backend_cpp backend_gps backend_giraph frontend opt
