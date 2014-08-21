@@ -11,6 +11,7 @@
 extern "C" {
 #include <omp.h>
 #include <vfs/vfs.h>
+#include <vfs/vfs_path.h>
 #include <xomp/xomp.h>
 #include <barrelfish/waitset.h>
 extern void messages_wait_and_handle_next(void);
@@ -88,7 +89,7 @@ public:
 
         err = xomp_worker_parse_cmdline(argc, argv, &wid);
         switch (err_no(err)) {
-            case SYS_ERR_OK:
+            case SYS_ERR_OK: {
                 struct xomp_args arg;
                 arg.type = XOMP_ARG_TYPE_WORKER;
                 arg.args.worker.id = wid;
@@ -99,25 +100,36 @@ public:
                 printf("This point should not be reached...\n");
                 exit (EXIT_FAILURE);
 
-                break;
-            case XOMP_ERR_BAD_INVOCATION:
+            } break;
+            case XOMP_ERR_BAD_INVOCATION: {
                 printf("Barrelfish specific prepare:\n");
                 printf("  vfs initialization\n");
                 vfs_init();
-                char *path = vfs_path_mkabsolute("", "/graphs");
-
-                if (vfs_mount(path, argv[3])) {
-                    printf("NFS mount failed.\n");
+                printf("  vfs mkdir /nfs\n");
+                err = vfs_mkdir("/nfs");
+                if (err_is_fail(err)) {
+                    printf("ERROR: failed to create path, %s\n",err_getstring(err));
                     exit (EXIT_FAILURE);
                 }
-                free(path);
+                printf("  vfs mkdir /nfs/graphs\n");
+                err = vfs_mkdir("/nfs/graphs");
+                if (err_is_fail(err)) {
+                    printf("ERROR: failed to create path 2, %s\n",err_getstring(err));
+                    exit (EXIT_FAILURE);
+                }
+                printf("  vfs mount /nfs/graphs %s\n", argv[3]);
+                err = vfs_mount("/nfs/graphs", argv[3]);
+                    if (err_is_fail(err)) {
+                    printf("ERROR: failed to create path, %s\n",err_getstring(err));
+                    exit (EXIT_FAILURE);
+                }
+
                 printf("  initialize library for barrelfish\n");
                 gm_rt_initialize_barrelfish(num);
-                break;
+            } break;
             default:
                 printf("Unexpected failure during argument parsing\n");
                 exit (EXIT_FAILURE);
-                break;
         }
 #endif
         printf("running with %d threads\n", num);
@@ -127,9 +139,9 @@ public:
         // Load graph and creating reverse edges
         //--------------------------------------------
         struct timeval T1, T2;
-        size_t fnamelen = strlen(argv[1]) + 10;
-        char *fname = malloc(fnamelen);
-        snprintf(fname, fnamelen, "/graphs/%s", argv[1]);
+        size_t fnamelen = strlen(argv[1]) + 15;
+        char *fname = (char *)malloc(fnamelen);
+        snprintf(fname, fnamelen, "/nfs/graphs/%s", argv[1]);
         gettimeofday(&T1, NULL);
         printf("loading graph...%s\n", fname);
         b = G.load_binary(fname);
