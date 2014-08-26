@@ -456,6 +456,10 @@ static void sk_record_array_access(const char* array_name, bool is_indexed,
     Body->push(str_buf);
 #endif
 
+    printf("arr access: [%-30s] indexed [%c] write [%c] cost [%s]\n",
+           array_name, is_indexed ? 'X' : ' ', is_write ? 'X' : ' ',
+           shl__print());
+
     if (is_write) {
         sk_write_set.insert(array_name);
     } else {
@@ -476,10 +480,6 @@ static char* sk_m_array_access_gen(const char* array_name, const char* index,
                                 sk_iterators.end(), index)!=sk_iterators.end();
 
     bool is_indexed_2 = sk_m_is_iterator(string(index));
-
-    printf("arr access: [%-30s] idx [%-15s] is for-loop idx [%c] write [%c]\n",
-           array_name, index, is_indexed_2 ? 'X' : ' ',
-           is_write ? 'X' : ' ');
 
     sk_array_mapping.insert(make_pair(array_name, original_array));
     sk_record_array_access(sk_convert_array_name(string(original_array)).c_str(), is_indexed, is_write);
