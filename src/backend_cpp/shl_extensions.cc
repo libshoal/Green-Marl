@@ -23,7 +23,7 @@ vector<shl__loop_t> shl__loops;
 
 void shl__loop_enter(shl__loop_t l)
 {
-    printf("loop_enter: %d\n", l);
+    printf("loop_enter: %d  old[%s] ", l, shl__loop_print());
     switch (l) {
     case LOOP_NODES:
     case LOOP_CONSTANT:
@@ -36,10 +36,13 @@ void shl__loop_enter(shl__loop_t l)
             shl__loops.pop_back();
             shl__loops.push_back(LOOP_EDGES);
             break;
+        } else {
+            assert(!"NYI: got LOOPS_NBS, but tail is not LOOP_NODES");
         }
     default:
         assert(!"Don't know how to determine cost for given loop type");
     }
+    printf("new[%s]\n", shl__loop_print());
 }
 
 void shl__loop_leave(shl__loop_t l)
@@ -61,16 +64,17 @@ void shl__loop_leave(shl__loop_t l)
     printf("loop_leave: %d\n", l);
 }
 
-const char* shl__print(void)
+const char* shl__loop_print(void)
 {
     static char buffer[1024];
+    char *ptr = buffer;
 
-    sprintf(buffer, "stack: ");
+    ptr += sprintf(ptr, "stack: ");
 
     vector<shl__loop_t>::iterator i;
     for (i=shl__loops.begin(); i!=shl__loops.end(); i++) {
 
-        sprintf(buffer, "%d=%s ", (*i), shl__loop_to_string[*i]);
+        ptr += sprintf(ptr, "%d=%s ", (*i), shl__loop_to_string[*i]);
     }
 
     return buffer;

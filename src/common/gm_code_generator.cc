@@ -1,5 +1,6 @@
 #include "gm_code_writer.h"
 #include "gm_ast.h"
+#include "shl_extensions.h"
 
 void gm_code_generator::generate_expr_list(std::list<ast_expr*>& L) {
     std::list<ast_expr*>::iterator I;
@@ -366,6 +367,8 @@ void gm_code_generator::generate_sent_while(ast_while *w) {
     assert(b->get_nodetype() == AST_SENTBLOCK);
 
     if (w->is_do_while()) {
+
+        shl__loop_enter(LOOP_CONSTANT);
         _Body.pushln("do /* => /k*/");
 
         generate_sent(b);
@@ -373,14 +376,20 @@ void gm_code_generator::generate_sent_while(ast_while *w) {
         _Body.push("while (");
         generate_expr(w->get_cond());
         _Body.pushln("); /* => /k*/");
+        shl__loop_leave(LOOP_CONSTANT);
+
         _Body.NL();
     } else {
+
+        shl__loop_enter(LOOP_CONSTANT);
         _Body.push("while (");
         generate_expr(w->get_cond());
         _Body.pushln(")");
         _Body.pushln("{ /*=>k*/ ");
         generate_sent(b);
         _Body.pushln("} /*=>/k*/ ");
+        shl__loop_leave(LOOP_CONSTANT);
+
     }
 
 }

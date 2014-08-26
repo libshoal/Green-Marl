@@ -458,7 +458,7 @@ static void sk_record_array_access(const char* array_name, bool is_indexed,
 
     printf("arr access: [%-30s] indexed [%c] write [%c] cost [%s]\n",
            array_name, is_indexed ? 'X' : ' ', is_write ? 'X' : ' ',
-           shl__print());
+           shl__loop_print());
 
     if (is_write) {
         sk_write_set.insert(array_name);

@@ -12,6 +12,6 @@ typedef enum {
 
 void shl__loop_enter(shl__loop_t);
 void shl__loop_leave(shl__loop_t);
-const char* shl__print(void);
+const char* shl__loop_print(void);
 
 #endif
