@@ -111,17 +111,13 @@ public:
                     printf("ERROR: failed to create path, %s\n",err_getstring(err));
                     exit (EXIT_FAILURE);
                 }
-                printf("  vfs mkdir /nfs/graphs\n");
-                err = vfs_mkdir("/nfs/graphs");
-                if (err_is_fail(err)) {
-                    printf("ERROR: failed to create path 2, %s\n",err_getstring(err));
-                    exit (EXIT_FAILURE);
-                }
-                printf("  vfs mount /nfs/graphs %s\n", argv[3]);
-                err = vfs_mount("/nfs/graphs", argv[3]);
+                if (argv[3][0] != '0') {
+                    printf("  vfs mount /nfs %s\n", argv[3]);
+                    err = vfs_mount("/nfs", argv[3]);
                     if (err_is_fail(err)) {
-                    printf("ERROR: failed to create path, %s\n",err_getstring(err));
-                    exit (EXIT_FAILURE);
+                        printf("ERROR: failed to create path, %s\n",err_getstring(err));
+                        exit(EXIT_FAILURE);
+                    }
                 }
 
                 printf("  initialize library for barrelfish\n");
@@ -139,12 +135,9 @@ public:
         // Load graph and creating reverse edges
         //--------------------------------------------
         struct timeval T1, T2;
-        size_t fnamelen = strlen(argv[1]) + 15;
-        char *fname = (char *)malloc(fnamelen);
-        snprintf(fname, fnamelen, "/nfs/graphs/%s", argv[1]);
         gettimeofday(&T1, NULL);
-        printf("loading graph...%s\n", fname);
-        b = G.load_binary(fname);
+        printf("loading graph...%s\n", argv[1]);
+        b = G.load_binary(argv[1]);
         if (!b) {
             printf("error reading graph\n");
             exit (EXIT_FAILURE);
