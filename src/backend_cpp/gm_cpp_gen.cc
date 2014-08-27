@@ -430,12 +430,16 @@ void gm_cpp_gen::do_generate_end() {
         sprintf(tmp, "%s %s;", (*i).second.c_str(), (*i).first.c_str());
         Header.pushln(tmp);
     }
-
+    Header.pushln("node_t G_num_nodes;");
+    Header.pushln("edge_t G_num_edges;");
     Header.pushln("};");
     Header.NL();
 
-    Header.push("#define FRAME_DEFAULT {");
+    Header.push("#define FRAME_DEFAULT (struct shl_frame *)shl__alloc_struct_shared(sizeof(struct shl_frame))");
+
     int j = 0;
+/*  Header.push("#define FRAME_DEFAULT {");
+
     for (std::map<std::string,std::string>::iterator i=f_global.begin();
          i!=f_global.end(); i++) {
 
@@ -446,6 +450,7 @@ void gm_cpp_gen::do_generate_end() {
         Header.push(get_lhs_default(t));
     }
     Header.pushln("}");
+    */
     Header.NL();
 
     sprintf(tmp, "struct %sper_thread_frame {", SHOAL_PREFIX);
@@ -797,7 +802,7 @@ void sk_copy_func(gm_code_writer *Body, gm_code_writer *Header)
 void gm_cpp_gen::generate_lhs_id(ast_id* id) {
 
     if (f_global.find(id->get_genname()) != f_global.end()) {
-        Body.push("f.");
+        Body.push("f->");
     }
     else if (f_thread.find(id->get_genname()) != f_thread.end()) {
         if (!sk_fr_thread_init) {
@@ -1360,8 +1365,10 @@ void gm_cpp_gen::generate_sent_block_enter(ast_sentblock* sb) {
         sk_init_done(&Body);
 
         char tmp[1024];
-        sprintf(tmp, "struct %sframe f = FRAME_DEFAULT;", SHOAL_PREFIX);
+        sprintf(tmp, "struct %sframe *f = FRAME_DEFAULT;", SHOAL_PREFIX);
         Body.pushln(tmp);
+        Body.pushln("f->G_num_nodes = G.num_nodes();");
+        Body.pushln("f->G_num_edges = G.num_edges();");
 
         Body.NL();
     }
