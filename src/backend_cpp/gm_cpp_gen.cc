@@ -535,7 +535,7 @@ void sk_init_done(gm_code_writer *Body)
         // Allocate array
         sprintf(tmp, "shl_array<%s>* %s__set = "
                 "shl__malloc<%s>(%s, \"%s\", %s_IS_RO, %s_IS_DYNAMIC, "
-                "%s_IS_USED, %s_IS_GRAPH, %s_IS_INDEXED);",
+                "%s_IS_USED, %s_IS_GRAPH, %s_IS_INDEXED, true /*do init*/);",
                 type,   // 1) type
                 dest,   // 2) name
                 type,   // 3) type
