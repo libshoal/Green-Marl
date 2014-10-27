@@ -1,0 +1,4 @@
+[submodule "shoal"]
+	path = shoal
+	url = ssh://vcs-user@code.systems.ethz.ch:8006/diffusion/LIBSHL/shoal-library.git
+	branch = master
