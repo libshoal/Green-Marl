@@ -164,6 +164,59 @@ void gm_cpp_gen::do_generate_end() {
     Header.NL();
 
     Header.pushln("/* w/ SHOAL extensions */");
+    std::map<std::string,struct sk_gm_array>::iterator k;
+
+    size_t num_arrays = sk_gm_arrays.size();
+
+    sprintf(tmp, "#define COST shl__estimate_working_set_size(%d, \\\n",
+            num_arrays);
+    Header.push(tmp);
+
+    int kit = 0;
+    for (k=sk_gm_arrays.begin(); k!=sk_gm_arrays.end(); ++k) {
+
+        kit++;
+        struct sk_gm_array a = k->second;
+
+        const char* dest = a.dest.c_str();
+        const char* src = a.src.c_str();
+        const char* type = a.type.c_str();
+        const char* num = a.num.c_str();
+
+
+        // Due to data layout in adjacency lists, node and edge arrays are +1
+        if (strcmp(src, "G.begin") == 0 ||
+            strcmp(src, "G.r_begin") == 0 ||
+            strcmp(src, "G.node_idx") == 0 ||
+            strcmp(src, "G.r_node_idx") == 0) {
+
+            num = (std::string("(") + a.num + "+1" + ")").c_str();
+        }
+
+        // Header:
+
+        // Allocate array
+        sprintf(tmp, "shl__estimate_size<%s>(%s, \"%s\", %s_IS_RO, "
+                "%s_IS_DYNAMIC, %s_IS_USED, %s_IS_GRAPH, %s_IS_INDEXED)",
+                type,   // 3) type
+                num,    // 4) size
+                src,    // 5) name of source
+                dest,   // 5) read-only property
+                dest,   // 6) dynamic property
+                dest,   // 7) used property
+                dest,   // 8) graph property
+                dest);  // 9) indexed property
+        Header.push(tmp);
+
+        if (kit!=num_arrays)
+            Header.push(",\\\n");
+
+        k->second.init_done = true;
+    }
+
+    Header.push(")");
+    Header.NL();
+
 
     // Dump information about all arrays
     printf("\n");
@@ -504,6 +557,7 @@ void sk_init_done(gm_code_writer *Body)
         Body->pushln("shl__init(gm_rt_get_num_threads(), 0);");
         Body->pushln("#endif");
     }
+    Body->pushln("COST;");
 
     first = false;
 
@@ -826,6 +880,7 @@ void gm_cpp_gen::generate_sent_foreach(ast_foreach* f) {
     shl__loop_t lt = get_lib()->generate_foreach_header(f, Body);
 
     if (get_lib()->need_down_initializer(f)) {
+        Body.push("{");
         shl__loop_enter(lt);
         get_lib()->generate_down_initializer(f, Body);
 
@@ -835,6 +890,7 @@ void gm_cpp_gen::generate_sent_foreach(ast_foreach* f) {
             // '{' '} already handled
             generate_sent_block((ast_sentblock*) f->get_body(), false);
         }
+        Body.push("}");
         shl__loop_leave(lt);
 
     } else if (f->get_body()->get_nodetype() == AST_SENTBLOCK) {
