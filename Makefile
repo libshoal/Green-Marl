@@ -89,7 +89,8 @@ GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always)
 
 sk_pagerank: sk_pr_gm | sk_pr_gcc
 
-BASE := $(HOME)/projects/gm/
+ROOT := $(HOME)/projects/gm/
+BASE := $(ROOT)/shoal/
 SHOAL := $(BASE)/shoal/
 
 INC := \
@@ -120,7 +121,7 @@ FLAGS += -DVERSION=\"$(GIT_VERSION)\" -Wall
 sk_clean:
 	$(MAKE) -C $(SHOAL) clean
 	$(MAKE) -C $(SHOAL)
-	$(MAKE) -C $(BASE)/src clean
+	$(MAKE) -C $(ROOT)/src clean
 	$(MAKE) compiler -j $(shell nproc)
 
 .PHONY: sk_shoal
