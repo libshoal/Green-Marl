@@ -89,7 +89,7 @@ GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always)
 
 sk_pagerank: sk_pr_gm | sk_pr_gcc
 
-ROOT := $(HOME)/projects/gm/
+ROOT := $(HOME)/projects/gm2/
 BASE := $(ROOT)/shoal/
 SHOAL := $(BASE)/shoal/
 
@@ -155,3 +155,7 @@ sk_hd_gm:
 sk_hd_gcc:
 	$(MAKE) -C $(SHOAL)
 	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/hop_dist.cc hop_dist_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/hop_dist
+
+sk_hd_ec_gcc:
+	$(MAKE) -C $(SHOAL)
+	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/hop_dist_ec.cc hop_dist_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/hop_dist
