@@ -6,6 +6,7 @@ typedef enum {
     LOOP_UNKNOWN,
     LOOP_NBS,
     LOOP_EDGES,
+    LOOP_EDGES_NBS,
     LOOP_NODES,
     LOOP_CONSTANT
 } shl__loop_t;
