@@ -1,8 +1,43 @@
-#include "hop_dist.h"
+#include "hop_dist_ec.h"
 #include "shl.h"
 #include "shl_array.hpp"
 #include "shl_array_expandable.hpp"
 #include "omp.h"
+
+// Configure array here
+#define shl__expand(i) {                        \
+        shl__G_dist__set->expand();             \
+}
+
+#define shl__collapse(i) {                      \
+        shl__G_dist__set->collapse();           \
+}
+
+#define SHL_EC_THREAD_INIT(base)                                        \
+    key_buff_ptr_thread_init(shl__G_dist__set, &dist_thread_ptr)
+
+struct arr_thread_ptr {
+    int32_t *rep_ptr;
+    int32_t *ptr;
+    struct array_cache c;
+};
+
+struct arr_thread_ptr dist_thread_ptr;
+#pragma omp threadprivate(dist_thread_ptr)
+
+void key_buff_ptr_thread_init(shl_array<int32_t> *base,
+                              struct arr_thread_ptr *p)
+{
+    //    noprintf("Initializing array pointer on %2d\n", shl__get_tid());
+
+    p->rep_ptr = base->get_array();
+    p->ptr = base->array;
+    p->c = (struct array_cache) {
+        .rid = shl__get_rep_id(),
+        .tid = shl__get_tid()
+    };
+}
+
 
 void hop_dist(gm_graph& G, int32_t* G_dist,
     node_t& root)
@@ -79,6 +114,10 @@ void hop_dist(gm_graph& G, int32_t* G_dist,
         bool* shl__G_updated __attribute__ ((unused)) = shl__G_updated__set->get_array();
         bool* shl__G_updated_nxt __attribute__ ((unused)) = shl__G_updated_nxt__set->get_array();
         shl_graph shl_G(shl__G_begin, shl__G_r_begin, shl__G_node_idx, shl__G_r_node_idx);
+
+
+        SHL_EC_THREAD_INIT();
+
         #ifdef SHL_STATIC
         #pragma omp for schedule(static,1024)
         #else
@@ -91,6 +130,7 @@ void hop_dist(gm_graph& G, int32_t* G_dist,
             shl__G_dist_nxt__wr(t0, shl__G_dist__rd(t0)) ;
             shl__G_updated_nxt__wr(t0, shl__G_updated__rd(t0)) ;
         }
+
     } // opened in prepare_parallel_for
 
     while ( !f.fin)
@@ -152,6 +192,9 @@ void hop_dist(gm_graph& G, int32_t* G_dist,
                     struct shl_per_thread_frame ft = FRAME_THREAD_DEFAULT;
                     ft.__E8_prv = false ;
 
+                    shl__expand();
+                    SHL_EC_THREAD_INIT();
+
                     #ifdef SHL_STATIC
                     #pragma omp for nowait schedule(static,1024)
                     #else
@@ -165,6 +208,9 @@ void hop_dist(gm_graph& G, int32_t* G_dist,
                         ft.__E8_prv = ft.__E8_prv || shl__G_updated__rd(t4) ;
                     }
                     ATOMIC_OR(&f.__E8, ft.__E8_prv);
+
+                    shl__collapse();
+                    SHL_EC_THREAD_INIT();
                 }
                 f.fin =  !f.__E8 ;
             }
