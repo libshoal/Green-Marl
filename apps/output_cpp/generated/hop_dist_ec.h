@@ -66,9 +66,10 @@ void hop_dist(gm_graph& G, int32_t* G_dist,
     shl__estimate_size<node_t>((G.num_edges()+1), "G.r_node_idx", shl__G_r_node_idx_IS_RO, shl__G_r_node_idx_IS_DYNAMIC, shl__G_r_node_idx_IS_USED, shl__G_r_node_idx_IS_GRAPH, shl__G_r_node_idx_IS_INDEXED),\
     shl__estimate_size<bool>(G.num_nodes(), "G_updated", shl__G_updated_IS_RO, shl__G_updated_IS_DYNAMIC, shl__G_updated_IS_USED, shl__G_updated_IS_GRAPH, shl__G_updated_IS_INDEXED),\
     shl__estimate_size<bool>(G.num_nodes(), "G_updated_nxt", shl__G_updated_nxt_IS_RO, shl__G_updated_nxt_IS_DYNAMIC, shl__G_updated_nxt_IS_USED, shl__G_updated_nxt_IS_GRAPH, shl__G_updated_nxt_IS_INDEXED))
+// update BOTH replicas
 #define shl__G_dist__wr(i, v) {\
-    dist_thread_ptr.rep_ptr[i] = v; \
-    dist_thread_ptr.ptr[i] = v; \
+    dist_thread_ptr.ptr1[i] = v; \
+    dist_thread_ptr.ptr2[i] = v; \
     }
 #define shl__G_dist__rd(i) dist_thread_ptr.rep_ptr[i]
 //#define shl__G_dist__rd(i) shl__G_dist__set->get(i)
