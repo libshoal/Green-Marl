@@ -59,7 +59,7 @@ done
 
 
 #WORKLOAD_BASE=/run/shm/
-BASE=/home/skaestle/projects/gm
+BASE=/home/skaestle/projects/gm2
 WORKLOAD_BASE=$BASE/../graphs/
 
 #WORKLOAD=$BASE/../graphs/huge.bin
@@ -76,10 +76,12 @@ NUM=$2
 
 if [[ "$3" == "ours" ]]; then
 	INPUT=$BASE/apps/output_cpp/bin/$1
+	INPUTARGS=""
 fi
 
 if [[ "$3" == "theirs" ]]; then
 	INPUT=$BASE/../org_gm/apps/output_cpp/bin/$1
+	INPUTARGS=" 100 0.001 0.85 -GMMeasureTime=1"
 fi
 
 [[ -f ${INPUT} ]] || error "Cannot find program [$INPUT]"
@@ -102,19 +104,39 @@ shift
 echo "Executing program [${INPUT}] with [$NUM] threads"
 echo "Loading workload from [${WORKLOAD}]"
 
-if [[ $NUM -gt 32 ]]
-then
-    COREMAX=$(($NUM-1))
-    AFF="0-64"
-else
-	if [[ $(hostname) == "sgs-r815-03" ]]; then
-		COREMAX=$(($NUM*2-1))
-		AFF="0-${COREMAX}:2"
-	else
-		COREMAX=$(($NUM-1))
-		AFF="0-${COREMAX}"
-	fi
+
+AFF=""
+
+# --------------------------------------------------
+# sgs-r815-03
+#
+# use lscpu to find out how core IDs are mapped to virtual threads. If
+# we use only n threads, where n is the number of physical CPUs, we do
+# NOT want to use hyperthreads.
+# --------------------------------------------------
+if [[ $(hostname) == "sgs-r815-03" ]]; then
+
+    echo "Running on sgs-r815-03"
+    if [[ $NUM -gt 32 ]]
+    then
+	COREMAX=$(($NUM-1))
+	AFF="0-64"
+    else
+	COREMAX=$(($NUM*2-1))
+	AFF="0-${COREMAX}:2"
+    fi
 fi
+# --------------------------------------------------
+# bach
+# --------------------------------------------------
+if [[ $(hostname) == bach* ]]; then
+
+    echo "Running on bach"
+    COREMAX=$(($NUM-1))
+    AFF="0-${COREMAX}"
+fi
+
+[[ -n "$AFF" ]] || error "Affinity not set for machine"
 
 # --------------------------------------------------
 # CONFIGURATION
@@ -130,7 +152,7 @@ if [[ $DEBUG -eq 0 ]]; then
 	. $BASE/env.sh
 	set -x
 	GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
-		stdbuf -o0 -e0 -i0 ${INPUT} ${WORKLOAD} ${NUM} $@ | $BASE/scripts/extract_result.py -workload ${WORKLOAD}
+		stdbuf -o0 -e0 -i0 ${INPUT} ${WORKLOAD} ${NUM} ${INPUTARGS} $@ | $BASE/scripts/extract_result.py -workload ${WORKLOAD}
 
 	GM_RC=${PIPESTATUS[0]}
 
@@ -146,7 +168,6 @@ if [[ $DEBUG -eq 0 ]]; then
 	    echo "Execution was successful"
 	    exit 0
 	fi
-
 else
 	. $BASE/env.sh
 	set -x

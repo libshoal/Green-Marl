@@ -4,7 +4,8 @@
 
 PROG=pagerank
 OPTS=
-WORKLOAD=twitter_rv
+#WORKLOAD=twitter_rv
+WORKLOAD="soc-LiveJournal1"
 
 txtred='\e[0;31m' # Red
 txtgrn='\e[0;32m' # Green
@@ -19,37 +20,62 @@ function error() {
 # File to remeber log files
 LOGFILES=$(mktemp /tmp/run_all-overview-XXXXXX)
 
+# --------------------------------------------------
+# Set the number of cores for the benchmark according to the machine
+# --------------------------------------------------
+CORELIST=""
+[[ $(hostname) == bach* ]] && CORELIST="16 12 8 4 2"
+[[ $(hostname) == "sgs-r815-03" ]] && CORELIST="64 32 16 8"
+# Check --------------------------------------------
+[[ -n "$CORELIST" ]] || error "Don't know this machine"
+# --------------------------------------------------
+
 (
-	for PROG in "pagerank" "triangle_counting" "hop_dist"; do
-		for OPTS in "" "-d" "-d -r" "-d -r -p" "-d -r -p -h" "-d -r -h"; do
+    # Programs
+    # --------------------------------------------------
+	for PROG in "triangle_counting"; do
+
+	    # Configurations
+	    # --------------------------------------------------
+	    for OPTS in "" "-d" "-d -r" "-d -r -p"; do
+
+                    # Build (one for configuration)
+		    if [[ $OPTS == *-p* ]]; then
+		    	echo -n "Building sk_$PROG (static) .. "
+		    	(CXXFLAGS=-DSHL_STATIC make "sk_$PROG" > /dev/null) || error "Build failed"
+		    else
+		    	echo -n "Building sk_$PROG .. "
+		    	(make "sk_$PROG" > /dev/null) || error "Build failed"
+		    fi
+		    echo "done"
+
+		    # Cores
+		    # --------------------------------------------------
+		    for CORES in $CORELIST; do
+
 			# Create and remember log files
 			TMP=`mktemp /tmp/tmp-run_all-XXXXXX`
-			echo $TMP " " $PROG " " $OPTS >> $LOGFILES
+			echo $TMP " " $PROG " " $OPTS " " $CORES >> $LOGFILES
+			echo "Running: $TMP $PROG $OPTS $CORES"
 
-			# Build
-			echo "Building sk_$PROG"
-			if [[ $OPTS == *-p* ]]; then
-			    (CXXFLAGS=-DSHL_STATIC make "sk_$PROG" > /dev/null) || error "Build failed"
-			else
-			    (make "sk_$PROG" > /dev/null) || error "Build failed"
-			fi
 			# Run
 			export NUM=3
-			exec_avg scripts/run.sh $OPTS $PROG 32 ours $WORKLOAD &> $TMP
-			RC=$?
+			exec_avg scripts/run.sh $OPTS $PROG $CORES ours $WORKLOAD &> $TMP; RC=$?
+
+			# Evaluate return code
 			if [[ $RC -eq 0 ]]; then
 				RCS=$txtgrn"ok  "$txtrst
 			else
 				RCS=$txtred"fail"$txtrst
 			fi
-			echo -e "Return code [$RCS] for [$PROG] with [$OPTS] was [$RC] ... log at [$TMP]"
+
+			# Print result
+			echo -e " .. return code [$RCS] for [$PROG] with [$CORES] [$OPTS] was [$RC] ... log at [$TMP]"
 			if [[ $RC -eq 0 ]]; then
-			    # total:    3538.68300
-			    # copy:     1857.26100
-			    # comp:     1681.42200
 			    echo -n "  total: "; cat $TMP | awk '/^total:/ { print $2 }' | skstat.py
 			    echo -n "  comp : "; cat $TMP | awk '/^comp:/ { print $2 }' | skstat.py
 			fi
+		    done
 		done
 	done
 )
