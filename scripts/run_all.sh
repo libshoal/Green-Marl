@@ -4,8 +4,8 @@
 
 PROG=pagerank
 OPTS=
-#WORKLOAD=twitter_rv
-WORKLOAD="soc-LiveJournal1"
+WORKLOAD=twitter_rv
+#WORKLOAD="soc-LiveJournal1"
 
 txtred='\e[0;31m' # Red
 txtgrn='\e[0;32m' # Green
@@ -26,6 +26,7 @@ LOGFILES=$(mktemp /tmp/run_all-overview-XXXXXX)
 CORELIST=""
 [[ $(hostname) == bach* ]] && CORELIST="16 12 8 4 2"
 [[ $(hostname) == "sgs-r815-03" ]] && CORELIST="64 32 16 8"
+[[ $(hostname) == "sgs-r820-01" ]] && CORELIST="64 32 16 8"
 # Check --------------------------------------------
 [[ -n "$CORELIST" ]] || error "Don't know this machine"
 # --------------------------------------------------
@@ -33,7 +34,7 @@ CORELIST=""
 (
     # Programs
     # --------------------------------------------------
-	for PROG in "triangle_counting"; do
+	for PROG in "pagerank" "hop_dist"; do
 
 	    # Configurations
 	    # --------------------------------------------------

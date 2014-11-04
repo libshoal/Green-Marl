@@ -59,7 +59,7 @@ done
 
 
 #WORKLOAD_BASE=/run/shm/
-BASE=/home/skaestle/projects/gm2
+BASE=/home/skaestle/projects/gm/
 WORKLOAD_BASE=$BASE/../graphs/
 
 #WORKLOAD=$BASE/../graphs/huge.bin
@@ -129,7 +129,8 @@ fi
 # --------------------------------------------------
 # bach
 # --------------------------------------------------
-if [[ $(hostname) == bach* ]]; then
+if [ \( $(hostname) == bach* \) -o \
+    \( $(hostname) == "sgs-r820-01" \) ]; then
 
     echo "Running on bach"
     COREMAX=$(($NUM-1))

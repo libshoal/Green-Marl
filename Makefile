@@ -89,7 +89,7 @@ GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always)
 
 sk_pagerank: sk_pr_gm | sk_pr_gcc
 
-ROOT := $(HOME)/projects/gm2/
+ROOT := $(HOME)/projects/gm/
 BASE := $(ROOT)/shoal/
 SHOAL := $(BASE)/shoal/
 
