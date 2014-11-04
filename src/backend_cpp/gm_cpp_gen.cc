@@ -256,6 +256,43 @@ void gm_cpp_gen::do_generate_end() {
     }
     printf("+--------------------------------------------------------------------+\n");
 
+    // Dump information about all arrays (for ORG)
+    printf("\n");
+    printf("|-\n");
+    printf("| array | node | edge | used | ro | std | dyn | idx |\n");
+    printf("|-\n");
+    for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
+
+        struct sk_gm_array a = i->second;
+
+        const char* dest = a.dest.c_str();
+        const char* src = a.src.c_str();
+        const char* type = a.type.c_str();
+        const char* num = a.num.c_str();
+
+        // array name after translation
+        const char* s = sk_convert_array_name(std::string(src)).c_str();
+
+        // XXX maybe s == dest ?
+
+        bool is_used = sk_arr_is_read(s) || sk_arr_is_write(s);
+        bool is_ro = !sk_arr_is_write(s) && is_used;
+        bool is_buildin = a.buildin && is_used;
+        bool is_dynamic = a.dynamic && is_used;
+        bool is_indexed = a.is_indexed && is_used;
+
+        printf("| =%s= | %c  | %c  | %c  | %c  | %c  | %c | %c |\n",
+               dest, a.is_node_property ? 'X' : ' ',
+               a.is_edge_property ? 'X' : ' ',
+               is_used ? 'X' : ' ',
+               is_ro ? 'X' : ' ',
+               is_buildin ? 'X' : ' ',
+               is_dynamic ? 'X' : ' ',
+               is_indexed ? 'X' : ' ');
+    }
+    printf("|-\n");
+
+
     // Print write and read set
     // --------------------------------------------------
     printf("\n");
