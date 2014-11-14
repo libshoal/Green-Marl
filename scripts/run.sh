@@ -101,8 +101,10 @@ shift
 shift
 shift
 
-echo "Executing program [${INPUT}] with [$NUM] threads"
-echo "Loading workload from [${WORKLOAD}]"
+if [[ $DEBUG -ne 1 ]]; then
+	echo "Executing program [${INPUT}] with [$NUM] threads"
+	echo "Loading workload from [${WORKLOAD}]"
+fi
 
 
 AFF=""
@@ -116,7 +118,6 @@ AFF=""
 # --------------------------------------------------
 if [[ $(hostname) == "sgs-r815-03" ]]; then
 
-    echo "Running on sgs-r815-03"
     if [[ $NUM -gt 32 ]]
     then
 	COREMAX=$(($NUM-1))
@@ -127,17 +128,17 @@ if [[ $(hostname) == "sgs-r815-03" ]]; then
     fi
 fi
 # --------------------------------------------------
-# bach
+# bach / sgs-r820-01 / ETH laptop
 # --------------------------------------------------
 if [ \( $(hostname) == bach* \) -o \
+    \( $(hostname) == "skaestle-ThinkPad-X230" \) -o \
     \( $(hostname) == "sgs-r820-01" \) ]; then
 
-    echo "Running on bach"
     COREMAX=$(($NUM-1))
     AFF="0-${COREMAX}"
 fi
 
-[[ -n "$AFF" ]] || error "Affinity not set for machine"
+[[ -n "$AFF" ]] || error "Affinity not set for machine [$(hostname)]"
 
 # --------------------------------------------------
 # CONFIGURATION
@@ -171,7 +172,6 @@ if [[ $DEBUG -eq 0 ]]; then
 	fi
 else
 	. $BASE/env.sh
-	set -x
 	GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
-		gdb --args ${INPUT} ${WORKLOAD} ${NUM} $@
+		gdb $SK_GDBARGS --args ${INPUT} ${WORKLOAD} ${NUM} $@
 fi

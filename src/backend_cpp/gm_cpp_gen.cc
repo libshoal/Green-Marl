@@ -8,6 +8,8 @@
 #include "gm_cpplib_words.h"
 #include "gm_argopts.h"
 
+#include "shl_extensions.h"
+
 std::map<std::string,std::string> f_global;
 std::map<std::string,std::string> f_thread;
 
@@ -22,6 +24,13 @@ std::vector<struct sk_prop> sk_props;
 std::map<std::string,std::string> sk_array_mapping;
 std::set<std::string> sk_write_set;
 std::set<std::string> sk_read_set;
+
+/**
+ * \brief
+ *
+ * Key is the name of the array as returned by sk_convert_array_name,
+ * which I t hink is the full shoal name. shl__G_ .. bla
+ */
 std::map<std::string,struct sk_gm_array> sk_gm_arrays;
 
 using namespace std;
@@ -144,6 +153,7 @@ void gm_cpp_gen::do_generate_begin() {
     add_include("omp.h", Header);
     add_include("shl.h", Header);
     add_include("shl_graph.h", Header);
+    add_include("shl_arrays.hpp", Header);
     //add_include(get_lib()->get_header_info(), Header, false);
     add_include(RT_INCLUDE, Header, false);
     Header.NL();
@@ -154,7 +164,7 @@ void gm_cpp_gen::do_generate_begin() {
     sprintf(temp, "%s.h", fname);
     add_include(temp, Body, false);
     add_include("shl.h", Body, false);
-    add_include("shl_array.hpp", Body, false);
+    add_include("shl_arrays.hpp", Body, false);
     add_include("omp.h", Body, false);
     Body.NL();
 }
@@ -317,6 +327,14 @@ void gm_cpp_gen::do_generate_end() {
     // Access functions
     // --------------------------------------------------
 
+    printf("what's in sk_array_mapping: \n");
+    for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
+         i!=sk_array_mapping.end(); i++) {
+
+        printf("[%s] --> [%s]\n", (*i).first.c_str(), (*i).second.c_str());
+    }
+    printf("end of map\n");
+
     for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
          i!=sk_array_mapping.end(); i++) {
 
@@ -324,6 +342,50 @@ void gm_cpp_gen::do_generate_end() {
 
         bool is_write = sk_arr_is_write(dest);
         bool is_read = sk_arr_is_read(dest);
+
+        // We need to generate two accessor functions:
+        // 1) direct
+        // 2) direct with double write (for wr-rep)
+
+        // wr-rep
+        // --------------------------------------------------
+
+        // Accessor to arrays! ALWAYS generate that, for simplicity
+        sprintf(tmp, "static class arr_thread_ptr<%s> %s_thread_ptr;", shl__get_array_type(dest), dest);
+        Header.pushln(tmp);
+
+        sprintf(tmp, "#pragma omp threadprivate(%s_thread_ptr)\n", dest);
+
+        Header.pushln(tmp);
+
+        sprintf(tmp, "#ifdef %s_%s_WR_REP\n", SHOAL_PREFIX, (*i).first.c_str());
+        Header.pushln(tmp);
+
+        // Write
+        if (is_write) {
+
+            sprintf(tmp, ("#define %s_%s_%s(i, v) { "
+                          "%s_%s_thread_ptr.ptr1[i] = v; "
+                          "%s_%s_thread_ptr.ptr2[i] = v;  "
+                          "}"),
+                    SHOAL_PREFIX, (*i).first.c_str(), SHOAL_SUFFIX_WR,
+                    SHOAL_PREFIX, (*i).first.c_str(),
+                    SHOAL_PREFIX, (*i).first.c_str());
+            Header.pushln(tmp);
+        }
+
+        // Read
+        if (is_read) {
+            sprintf(tmp, "#define %s_%s_%s(i) %s_%s_thread_ptr.rep_ptr[i]",
+                    SHOAL_PREFIX, (*i).first.c_str(), SHOAL_SUFFIX_RD,
+                    SHOAL_PREFIX, (*i).first.c_str());
+            Header.pushln(tmp);
+        }
+
+        Header.pushln("#else\n");
+
+        // normal
+        // --------------------------------------------------
 
         // Write
         if (is_write) {
@@ -338,7 +400,25 @@ void gm_cpp_gen::do_generate_end() {
                     (*i).first.c_str(), SHOAL_SUFFIX_RD, dest);
             Header.pushln(tmp);
         }
+
+        Header.pushln("#endif\n");
     }
+
+
+    // Generate init function for per-thread wr-rep accessors
+    Header.pushln("// Generate per-thread wr-rep accessors");
+    Header.pushln("#define SHL__THREAD_INIT(foo) \\");
+    for (std::map<std::string,std::string>::iterator i=sk_array_mapping.begin();
+         i!=sk_array_mapping.end(); i++) {
+
+        const char *dest = sk_convert_array_name((*i).second).c_str();
+
+        sprintf(tmp, "shl__wr_rep_ptr_thread_init<%s>(%s__set, &%s_thread_ptr); \\",
+                shl__get_array_type(dest), dest, dest);
+
+        Header.pushln(tmp);
+    }
+    Header.NL();
 
     Header.NL();
     sprintf(tmp, "struct %sframe {", SHOAL_PREFIX);
@@ -607,12 +687,10 @@ void sk_init_done(gm_code_writer *Body)
             continue;
         }
 
-
         const char* dest = a.dest.c_str();
         const char* src = a.src.c_str();
         const char* type = a.type.c_str();
         const char* num = a.num.c_str();
-
 
         // Due to data layout in adjacency lists, node and edge arrays are +1
         if (strcmp(src, "G.begin") == 0 ||
@@ -624,6 +702,29 @@ void sk_init_done(gm_code_writer *Body)
         }
 
         // Allocate array
+        // --------------------------------------------------
+
+        sprintf(tmp, "\n#ifdef %s_WR_REP", dest);
+        Body->pushln(tmp);
+
+        sprintf(tmp, "shl_array<%s>* %s__set = new "
+                "shl_array_expandable<%s>(%s, \"%s\", shl__get_rep_id);",
+                type,   // 1) type
+                dest,   // 2) name
+                type,   // 3) type
+                num,    // 4) size
+                src);   // 5) name of source
+        Body->pushln(tmp);
+
+        sprintf(tmp, "%s__set->set_dynamic(false);", dest);
+        Body->pushln(tmp);
+
+        sprintf(tmp, "%s__set->set_used(true);", dest);
+        Body->pushln(tmp);
+
+        sprintf(tmp, "#else /* %s_WR_REP */", dest);
+        Body->pushln(tmp);
+
         sprintf(tmp, "shl_array<%s>* %s__set = "
                 "shl__malloc<%s>(%s, \"%s\", %s_IS_RO, %s_IS_DYNAMIC, "
                 "%s_IS_USED, %s_IS_GRAPH, %s_IS_INDEXED, true /*do init*/);",
@@ -639,9 +740,16 @@ void sk_init_done(gm_code_writer *Body)
                 dest);  // 9) indexed property
         Body->pushln(tmp);
 
+        sprintf(tmp, "#endif /* %s_WR_REP */\n", dest);
+        Body->pushln(tmp);
+
         // Alloc Green Marl array
         sprintf(tmp, "%s__set->alloc();",
                 dest);   // 1) name
+        Body->pushln(tmp);
+
+        sprintf(tmp, "shl__wr_rep_ptr_thread_init<%s>(%s__set, &%s_thread_ptr);",
+                type, dest, dest);
         Body->pushln(tmp);
 
         // Copy Green Marl array

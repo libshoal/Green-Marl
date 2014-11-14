@@ -378,19 +378,6 @@ struct sk_prop {
     std::string type;
 };
 
-struct sk_gm_array {
-    std::string dest;
-    std::string src;
-    std::string type;
-    std::string num;
-    bool dynamic;
-    bool buildin;
-    bool init_done;
-    bool is_edge_property;
-    bool is_node_property;
-    bool is_indexed;
-};
-
 extern bool sk_lhs;
 extern bool sk_lhs_open;
 extern char sk_buf[];
@@ -480,6 +467,9 @@ static char* sk_m_array_access_gen(const char* array_name, const char* index,
                                 sk_iterators.end(), index)!=sk_iterators.end();
 
     bool is_indexed_2 = sk_m_is_iterator(string(index));
+
+    printf("Adding [%s] ->[%s] to sk_gm_arrays\n",
+           array_name, original_array.c_str());
 
     sk_array_mapping.insert(make_pair(array_name, original_array));
     sk_record_array_access(sk_convert_array_name(string(original_array)).c_str(), is_indexed, is_write);
@@ -659,6 +649,23 @@ static void sk_add_default_arrays(void)
                 false,
                 true, false, true, false, true
                 }));
+
+    const char* default_arrays[4] = {
+        "begin",
+        "r_begin",
+        "node_idx",
+        "r_node_idx"
+    };
+
+    for (int i=0; i<4; i++) {
+        char buf[1024];
+        sprintf(buf, "G.%s", default_arrays[i]);
+
+        printf("Adding [%s] --> [%s]\n", default_arrays[i], buf);
+
+        sk_array_mapping.insert(make_pair(std::string(default_arrays[i]), std::string(buf)));
+    }
+
 }
 
 static void sk_init_accessors(gm_code_writer *Body)
@@ -691,6 +698,8 @@ static void sk_init_accessors(gm_code_writer *Body)
     Body->push(sk_convert_array_name("G.node_idx").c_str()); Body->push(", ");
     Body->push(sk_convert_array_name("G.r_node_idx").c_str());
     Body->pushln(");");
+
+    Body->pushln("SHL__THREAD_INIT();");
 }
 
 #endif

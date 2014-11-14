@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <vector>
 #include <cassert>
+#include <iostream>
 
 using namespace std;
 
@@ -91,4 +92,11 @@ const char* shl__loop_print(void)
     }
 
     return buffer;
+}
+
+extern map<string,struct sk_gm_array> sk_gm_arrays;
+
+const char* shl__get_array_type(const char* s)
+{
+    return sk_gm_arrays.find(s)->second.type.c_str();
 }

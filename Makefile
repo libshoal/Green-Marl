@@ -108,7 +108,7 @@ OBJS :=
 
 # Switch buildtype: supported are "debug" and "release"
 BUILDTYPE := release
-FLAGS=$(CXXFLAGS)
+FLAGS=$(CXXFLAGS) -Wno-unused-variable
 
 ifeq ($(BUILDTYPE),debug)
 	FLAGS += -O0  -pg -g -DSHL_DEBUG
