@@ -1,7 +1,6 @@
 #include "hop_dist_ec.h"
 #include "shl.h"
-#include "shl_array.hpp"
-#include "shl_array_expandable.hpp"
+#include "shl_arrays.hpp"
 #include "omp.h"
 
 // Configure array here
@@ -9,23 +8,16 @@
 #define SHL_EC_THREAD_INIT(base)                                        \
     key_buff_ptr_thread_init(shl__G_dist__set, &dist_thread_ptr)
 
-struct arr_thread_ptr {
-    int32_t *rep_ptr;
-    int32_t *ptr1;
-    int32_t *ptr2;
-    struct array_cache c;
-};
-
-struct arr_thread_ptr dist_thread_ptr;
+class arr_thread_ptr<int32_t> dist_thread_ptr;
 #pragma omp threadprivate(dist_thread_ptr)
 
 void key_buff_ptr_thread_init(shl_array<int32_t> *base,
-                              struct arr_thread_ptr *p)
+                              class arr_thread_ptr<int32_t> *p)
 {
     shl_array_replicated<int32_t> *btc =
         (shl_array_replicated<int32_t>*) base;
 
-    p->rep_ptr = base->get_array();
+    p->rep_ptr = btc->rep_array[shl__get_wr_rep_rid()];
     p->ptr1 = btc->rep_array[0];
     p->ptr2 = btc->rep_array[1];
 
@@ -54,6 +46,7 @@ void hop_dist(gm_graph& G, int32_t* G_dist,
     shl__G_begin__set->copy_from(G.begin);
     //    shl_array<int32_t>* shl__G_dist__set = shl__malloc<int32_t>(G.num_nodes(), "G_dist", shl__G_dist_IS_RO, shl__G_dist_IS_DYNAMIC, shl__G_dist_IS_USED, shl__G_dist_IS_GRAPH, shl__G_dist_IS_INDEXED, true /*do init*/);
     shl_array<int32_t> *shl__G_dist__set;
+    //shl__G_dist__set = new shl_array_wr_rep<int32_t>(G.num_nodes(), "G_dist", shl__get_rep_id);
     shl__G_dist__set = new shl_array_expandable<int32_t>(G.num_nodes(), "G_dist", shl__get_rep_id);
     shl__G_dist__set->set_dynamic(false);
     shl__G_dist__set->set_used(true);
@@ -100,7 +93,6 @@ void hop_dist(gm_graph& G, int32_t* G_dist,
     f.fin = false ;
 
     shl__G_dist__set->expand();
-
 
     #pragma omp parallel
     {
@@ -224,15 +216,9 @@ void hop_dist(gm_graph& G, int32_t* G_dist,
         shl__G_updated_nxt__set->copy_back(G_updated_nxt);
         shl__end_timer();
 
+        printf("CRC dist is: 0x%lx\n", shl__G_dist__set->get_crc());
+
         shl__end();
-        for (int t=0; t<shl__num_threads(); t++) {
-
-            if (shl__is_rep_coordinator(t) || true) {
-
-                printf("Expand on tid=%d is %lf\n", t,
-                       shl__G_dist__set->t_expand[t].timer_secs);
-            }
-        }
 
         gm_rt_cleanup();
     }
