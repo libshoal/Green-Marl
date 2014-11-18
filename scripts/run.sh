@@ -154,7 +154,7 @@ if [[ $DEBUG -eq 0 ]]; then
 	. $BASE/env.sh
 	set -x
 	GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
-		stdbuf -o0 -e0 -i0 ${INPUT} ${WORKLOAD} ${NUM} ${INPUTARGS} $@ | $BASE/scripts/extract_result.py -workload ${WORKLOAD}
+		stdbuf -o0 -e0 -i0 ${INPUT} ${WORKLOAD} ${NUM} ${INPUTARGS} $@ | $BASE/scripts/extract_result.py -workload ${WORKLOAD} -program ${INPUT}
 
 	GM_RC=${PIPESTATUS[0]}
 

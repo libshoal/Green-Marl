@@ -29,8 +29,9 @@ def print_warning(s):
     print 'Warning:', s
 
 verified = False
+verifiedCRC = False
 
-# Correct output for hop_dist
+# Correct output for hop_dist (DEPRECATED)
 # --------------------------------------------------
 hd_res = {
     '?': {
@@ -55,7 +56,7 @@ hd_res = {
         6:  1,
         7:  1,
         8:  1,
-        9:  1
+        9:  1,
     },
     'twitter_rv.bin': {
         0:  0,
@@ -67,9 +68,52 @@ hd_res = {
         6:  1,
         7:  1,
         8:  1,
-        9:  1
+        9:  1,
+        'CRC': '0x5564'
     }
 }
+
+# New array to hold correct output
+# --------------------------------------------------
+validate = {
+
+    'hop_dist': {
+
+        'soc-LiveJournal1': {
+            'CRC' : '0xe68c',
+            },
+
+        'twitter_rv': {
+
+            'CRC' : '0x5564'
+            }
+        }
+    }
+
+
+class LineChecker:
+
+    def __init__(self, workload, program):
+        self.workload = workload.replace('.bin', '')
+        self.program = program.replace('_ec', '')
+        self.checked = False
+        self.correct = True
+
+    def check_line(self, line):
+        pass
+
+class CRCChecker(LineChecker):
+
+    KEY = 'CRC'
+    def check_line(self, line):
+        l = re.match('^CRC dist is: ([0-9xa-fA-F]*)', line)
+        if l:
+            print 'Found CRC output', line, l.group(1)
+            correct_output = validate[self.program][self.workload][self.KEY]
+            self.checked = True
+            self.correct &= correct_output == l.group(1)
+
+
 
 # Correct output for triangle_counting
 # --------------------------------------------------
@@ -78,7 +122,7 @@ tc_res = {
     'tiny.bin': 179
 }
 
-# Correct output for pagernak
+# Correct output for pagernak (DEPRECATED)
 # --------------------------------------------------
 pr_res = {
     'huge.bin': {
@@ -113,9 +157,11 @@ pr_res = {
         }
 }
 workload = None
+program = None
 
 def verify_triangle_counting(line):
     global verified
+    global verifiedCRC
     if not args.workload:
         return True
     l = re.match('^number of triangles: ([0-9]+)', line)
@@ -128,17 +174,26 @@ def verify_triangle_counting(line):
 
 def verify_hop_dist(line):
     global verified
+    global verifiedCRC
     if not args.workload:
         return True
     if not workload in hd_res:
         return True
     l = re.match('^dist\[([0-9]*)\] = ([0-9]*)', line)
+    # CRC dist is: 0x5564
+    l2 = re.match('^CRC dist is: ([0-9x]*)', line)
     if l:
         res = hd_res[workload].get(int(l.group(1)), None)
         if not res == int(l.group(2)):
             print 'Result for', int(l.group(1)), 'is', int(l.group(2)), 'expecting', res
         verified = True
         return res == int(l.group(2))
+    elif l2:
+        if not 'CRC' in hd_res[workload]:
+            return True
+
+        verifiedCRC = True
+        return hd_res[workload].get('CRC')
     else:
         return True
 
@@ -155,6 +210,7 @@ def verify_pagerank(line):
         res = pr_res[workload].get(int(l.group(1)), None)
         print 'Result for', int(l.group(1)), 'is', float(l.group(2)), 'expecting', res
         global verified
+        global verifiedCRC
         verified = True
         return res == float(l.group(2))
     else:
@@ -162,13 +218,20 @@ def verify_pagerank(line):
 
 parser = argparse.ArgumentParser(description='Extract results')
 parser.add_argument('-workload', help="Workload that is running. This is used to check the result")
+parser.add_argument('-program', help="Program that is running. This is used to check the result")
 args = parser.parse_args()
 
 if args.workload:
     workload = os.path.basename(args.workload)
     print 'Workload is:', args.workload, workload
 
+if args.program:
+    program = os.path.basename(args.program)
+    print 'Program is:', args.program, program
+
 result = True
+
+crc_checker = CRCChecker(workload, program)
 
 while 1:
     line = sys.stdin.readline()
@@ -191,6 +254,10 @@ while 1:
         verify_pagerank(line) and \
         verify_triangle_counting(line)
 
+    # Check CRC
+    # --------------------------------------------------
+    crc_checker.check_line(line)
+
 if total and copy:
     print 'total:    %10.5f' % total
     print 'copy:     %10.5f' % copy
@@ -203,6 +270,15 @@ elif result:
     result_out = bcolors.OKGREEN + "correct" + bcolors.ENDC
 else:
     result_out = bcolors.FAIL + "incorrect" + bcolors.ENDC
+
+result_out += ' CRC '
+
+if not crc_checker.checked:
+    result_out += bcolors.WARNING + "could not verify result" + bcolors.ENDC
+elif crc_checker.correct:
+    result_out += bcolors.OKGREEN + "correct" + bcolors.ENDC
+else:
+    result_out += bcolors.FAIL + "incorrect" + bcolors.ENDC
 
 print 'lines processed:', lines, '- result' , result_out
 

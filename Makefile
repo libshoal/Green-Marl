@@ -96,7 +96,8 @@ SHOAL := $(BASE)/shoal/
 INC := \
 	-I$(BASE)contrib/numactl-2.0.9 \
 	-I$(SHOAL)/inc \
-	-I$(BASE)contrib/papi-5.3.0/src
+	-I$(BASE)contrib/papi-5.3.0/src \
+	-I$(BASE)contrib/pycrc
 
 LIB := \
 	-L$(BASE)contrib/numactl-2.0.9 -lnuma \
