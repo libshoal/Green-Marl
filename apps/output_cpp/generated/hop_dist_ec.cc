@@ -44,12 +44,12 @@ void hop_dist(gm_graph& G, int32_t* G_dist,
     shl_array<edge_t>* shl__G_begin__set = shl__malloc<edge_t>((G.num_nodes()+1), "G.begin", shl__G_begin_IS_RO, shl__G_begin_IS_DYNAMIC, shl__G_begin_IS_USED, shl__G_begin_IS_GRAPH, shl__G_begin_IS_INDEXED, true /*do init*/);
     shl__G_begin__set->alloc();
     shl__G_begin__set->copy_from(G.begin);
-    //    shl_array<int32_t>* shl__G_dist__set = shl__malloc<int32_t>(G.num_nodes(), "G_dist", shl__G_dist_IS_RO, shl__G_dist_IS_DYNAMIC, shl__G_dist_IS_USED, shl__G_dist_IS_GRAPH, shl__G_dist_IS_INDEXED, true /*do init*/);
-    shl_array<int32_t> *shl__G_dist__set;
+    shl_array<int32_t>* shl__G_dist__set = shl__malloc<int32_t>(G.num_nodes(), "G_dist", shl__G_dist_IS_RO, shl__G_dist_IS_DYNAMIC, shl__G_dist_IS_USED, shl__G_dist_IS_GRAPH, shl__G_dist_IS_INDEXED, true /*do init*/);
+    //shl_array<int32_t> *shl__G_dist__set;
     //shl__G_dist__set = new shl_array_wr_rep<int32_t>(G.num_nodes(), "G_dist", shl__get_rep_id);
-    shl__G_dist__set = new shl_array_expandable<int32_t>(G.num_nodes(), "G_dist", shl__get_rep_id);
-    shl__G_dist__set->set_dynamic(false);
-    shl__G_dist__set->set_used(true);
+    //    shl__G_dist__set = new shl_array_expandable<int32_t>(G.num_nodes(), "G_dist", shl__get_rep_id);
+    //    shl__G_dist__set->set_dynamic(false);
+    //    shl__G_dist__set->set_used(true);
 
     shl__G_dist__set->alloc();
     shl__G_dist__set->copy_from(G_dist);
