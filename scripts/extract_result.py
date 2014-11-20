@@ -79,6 +79,8 @@ validate = {
 
     'hop_dist': {
 
+        'CRCARR': 'G_dist',
+
         'soc-LiveJournal1': {
             'CRC' : '0xe68c',
             },
@@ -105,8 +107,10 @@ class LineChecker:
 class CRCChecker(LineChecker):
 
     KEY = 'CRC'
+    ARRNAME = 'CRCARR'
+
     def check_line(self, line):
-        l = re.match('^CRC dist is: ([0-9xa-fA-F]*)', line)
+        l = re.match('^CRC %s ([0-9xa-fA-F]*)' % validate[self.program][self.ARRNAME], line)
         if l:
             print 'Found CRC output', line, l.group(1)
             correct_output = validate[self.program][self.workload][self.KEY]
