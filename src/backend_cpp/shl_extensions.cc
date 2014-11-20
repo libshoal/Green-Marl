@@ -24,6 +24,21 @@ const char *shl__loop_to_string[6] = {
 // Keep track of which loops current code is executed in
 vector<shl__loop_t> shl__loops;
 
+// Used to find first non-array defining assignment
+static int sk_first = 0;
+
+void shl__found_instruction(gm_code_writer *w)
+{
+    if (sk_first==1) {
+
+        // Do this after first assignment
+        w->pushln("// --------------------------------------------------");
+        w->pushln("shl__start();\n");
+    }
+
+    sk_first++;
+}
+
 void shl__loop_enter(shl__loop_t l)
 {
     printf("loop_enter: %d=%s  old[%s] ", l, shl__loop_to_string[l], shl__loop_print());

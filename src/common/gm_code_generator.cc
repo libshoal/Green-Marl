@@ -241,24 +241,30 @@ void gm_code_generator::generate_expr_comp(ast_expr * e) {
 void gm_code_generator::generate_sent(ast_sent* s) {
     switch (s->get_nodetype()) {
         case AST_SENTBLOCK:
+            shl__found_instruction(&_Body);
             generate_sent_block((ast_sentblock*) s);
             break;
         case AST_VARDECL:
             generate_sent_vardecl((ast_vardecl*) s);
             break;
         case AST_IF:
+            shl__found_instruction(&_Body);
             generate_sent_if((ast_if*) s);
             break;
         case AST_WHILE:
+            shl__found_instruction(&_Body);
             generate_sent_while((ast_while*) s);
             break;
         case AST_RETURN:
+            shl__found_instruction(&_Body);
             generate_sent_return((ast_return*) s);
             break;
         case AST_FOREACH:
+            shl__found_instruction(&_Body);
             generate_sent_foreach((ast_foreach*) s);
             break;
         case AST_BFS:
+            shl__found_instruction(&_Body);
             generate_sent_bfs((ast_bfs*) s);
             break;
         case AST_ASSIGN: {
@@ -276,12 +282,15 @@ void gm_code_generator::generate_sent(ast_sent* s) {
             generate_sent_nop((ast_nop*) s);
             break;
         case AST_CALL:
+            shl__found_instruction(&_Body);
             generate_sent_call((ast_call*) s);
             break;
         case AST_FOREIGN:
+            shl__found_instruction(&_Body);
             generate_sent_foreign((ast_foreign*) s);
             break;
         default:
+            shl__found_instruction(&_Body);
             assert(false);
             break;
     }

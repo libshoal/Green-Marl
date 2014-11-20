@@ -4,6 +4,8 @@
 #include <string>
 #include <map>
 
+#include "gm_code_writer.h" // For _Body
+
 using namespace std;
 
 struct sk_gm_array {
@@ -35,5 +37,7 @@ void shl__loop_leave(shl__loop_t);
 const char* shl__loop_print(void);
 
 const char* shl__get_array_type(const char* s);
+
+void shl__found_instruction(gm_code_writer *w);
 
 #endif
