@@ -1,6 +1,7 @@
 #include "common_main.h"
 #include "hop_dist.h"
 #include "gm_rand.h"
+#include "shl.h"
 
 class my_main: public main_t
 {
@@ -40,6 +41,13 @@ public:
 };
 
 int main(int argc, char** argv) {
+
+    #ifdef SHL_STATIC
+    shl__init(gm_rt_get_num_threads(), 1);
+    #else
+    shl__init(gm_rt_get_num_threads(), 0);
+    #endif
+
     my_main M;
     M.main(argc, argv);
 }

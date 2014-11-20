@@ -668,13 +668,8 @@ void sk_init_done(gm_code_writer *Body)
     std::map<std::string,struct sk_gm_array>::iterator i;
 
     if (first) {
-        Body->pushln("#ifdef SHL_STATIC");
-        Body->pushln("shl__init(gm_rt_get_num_threads(), 1);");
-        Body->pushln("#else");
-        Body->pushln("shl__init(gm_rt_get_num_threads(), 0);");
-        Body->pushln("#endif");
+        Body->pushln("COST;");
     }
-    Body->pushln("COST;");
 
     first = false;
 
@@ -708,7 +703,7 @@ void sk_init_done(gm_code_writer *Body)
         Body->pushln(tmp);
 
         sprintf(tmp, "shl_array<%s>* %s__set = new "
-                "shl_array_expandable<%s>(%s, \"%s\", shl__get_rep_id);",
+                "shl_array_wr_rep<%s>(%s, \"%s\", shl__get_rep_id);",
                 type,   // 1) type
                 dest,   // 2) name
                 type,   // 3) type
@@ -899,6 +894,7 @@ void gm_cpp_gen::generate_lhs_field(ast_field* f) {
 }
 
 void gm_cpp_gen::generate_rhs_field(ast_field* f) {
+
     generate_lhs_field(f);
 }
 
@@ -1455,6 +1451,8 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
 
                 // Copy Green Marl array back
                 sprintf(tmp, "%s__set->copy_back(%s);", dest, src);   // 1) name
+                Body.pushln(tmp);
+                sprintf(tmp, "%s__set->print_crc();", dest, src);   // 1) name
                 Body.pushln(tmp);
 
             }
