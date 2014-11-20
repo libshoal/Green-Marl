@@ -83,14 +83,31 @@ validate = {
 
         'soc-LiveJournal1': {
             'CRC' : '0xe68c',
-            },
+        },
 
         'twitter_rv': {
 
             'CRC' : '0x5564'
-            }
         }
+    },
+    'pagerank': {
+
+        'CRCARR': 'G_pg_rank',
+
+        'soc-LiveJournal1': {
+            'CRC' : '0x28b5',
+        },
+
+        'twitter_rv': {
+
+            'CRC' : '0x5564'
+        }
+    },
+    'triangle_counting': {
+
     }
+
+}
 
 
 class LineChecker:
@@ -110,6 +127,10 @@ class CRCChecker(LineChecker):
     ARRNAME = 'CRCARR'
 
     def check_line(self, line):
+
+        if not self.ARRNAME in validate[self.program]:
+            return
+
         l = re.match('^CRC %s ([0-9xa-fA-F]*)' % validate[self.program][self.ARRNAME], line)
         if l:
             print 'Found CRC output', line, l.group(1)
@@ -286,7 +307,7 @@ else:
 
 print 'lines processed:', lines, '- result' , result_out
 
-if result:
+if result and (crc_checker.correct or not crc_checker.checked):
     exit(0)
 
 exit(1)

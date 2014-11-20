@@ -156,11 +156,18 @@ if [[ $DEBUG -eq 0 ]]; then
 	GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
 		stdbuf -o0 -e0 -i0 ${INPUT} ${WORKLOAD} ${NUM} ${INPUTARGS} $@ | $BASE/scripts/extract_result.py -workload ${WORKLOAD} -program ${INPUT}
 
-	GM_RC=${PIPESTATUS[0]}
+	# bash is sooo fragile!
+	R=( "${PIPESTATUS[@]}" )
 
-	if [[ $? -ne 0 ]]; then
+	GM_RC="${R[0]}"
+	ER_RC="${R[1]}"
+
+	# extract result return code
+	if [[ $ER_RC -ne 0 ]]; then
 	    error "Execution was unsuccessful"
+		exit 1
 	else
+		# GM return code
 
 		# Since we use a Pipe, we need to check the return code of the first program as well
 		if [[ $GM_RC -ne 0 ]]; then
@@ -175,3 +182,5 @@ else
 	GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
 		gdb $SK_GDBARGS --args ${INPUT} ${WORKLOAD} ${NUM} $@
 fi
+
+exit 1
