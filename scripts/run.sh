@@ -76,7 +76,7 @@ NUM=$2
 
 if [[ "$3" == "ours" ]]; then
 	INPUT=$BASE/apps/output_cpp/bin/$1
-	INPUTARGS=""
+	INPUTARGS=" /dev/null"
 fi
 
 if [[ "$3" == "theirs" ]]; then
