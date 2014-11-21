@@ -435,22 +435,25 @@ void gm_cpp_gen::do_generate_end() {
     Header.pushln("};");
     Header.NL();
 
-    Header.push("#define FRAME_DEFAULT (struct shl_frame *)shl__alloc_struct_shared(sizeof(struct shl_frame))");
-
+#ifdef BARRELFISH
+    Header.push("#define FRAME_DEFAULT(f) f = (struct shl_frame *)shl__alloc_struct_shared(sizeof(struct shl_frame))");
+#else
     int j = 0;
-/*  Header.push("#define FRAME_DEFAULT {");
+    Header.push("#define FRAME_DEFAULT(f) struct shl_frame sfr = { ");
 
     for (std::map<std::string,std::string>::iterator i=f_global.begin();
          i!=f_global.end(); i++) {
 
-        if (j++>0)
-            Header.push(", ");
-
         int t = get_type_id((*i).second.c_str());
         Header.push(get_lhs_default(t));
+        Header.push(", ");
     }
-    Header.pushln("}");
-    */
+    // sprintf(tmp, "%s, %s}", get_lhs_default(get_type_id("node_t")),
+    //         get_lhs_default(get_type_id("edge_t")));
+    sprintf(tmp, "0, 0}");
+    Header.push(tmp);
+    Header.pushln("; f = &sfr; ");
+#endif
     Header.NL();
 
     sprintf(tmp, "struct %sper_thread_frame {", SHOAL_PREFIX);
@@ -1365,8 +1368,9 @@ void gm_cpp_gen::generate_sent_block_enter(ast_sentblock* sb) {
         sk_init_done(&Body);
 
         char tmp[1024];
-        sprintf(tmp, "struct %sframe *f = FRAME_DEFAULT;", SHOAL_PREFIX);
+        sprintf(tmp, "struct %sframe *f;", SHOAL_PREFIX);
         Body.pushln(tmp);
+        Body.pushln("FRAME_DEFAULT(f);");
         Body.pushln("f->G_num_nodes = G.num_nodes();");
         Body.pushln("f->G_num_edges = G.num_edges();");
 
