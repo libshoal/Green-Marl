@@ -12,3 +12,25 @@ The original Green Marl README is stored in README.GM.md
 6.  Compile pagerank `make sk_pagerank`
 7.  Run ``scripts/run.sh pagerank `nproc` ours soc-LiveJournal1``
     - This requires the  graph to be in `../graphs` relative to the Green Marl directory. From within ETH, copy from `~/skaestle/projects/graphs` on any NFS mounted machine
+
+= 4M-pages =
+
+Shoal supports 4M pages. See the shoal documentation on how to setup
+machines to use these.
+
+= Testing =
+
+We have scripts to test a wide variety of Green Marl programs with
+different configurations on Linux. The only thing we really do not
+vary is the number of threads used.
+
+Make sure that the master branch is *always* green for all of these
+tests.
+
+The tests can be execute like this:
+
+```scripts/test_all.sh```
+
+The scripts takes *only 5 minutes* to execute. Be aware, that some of
+the tests might fail depending on the machine, for example, support
+for 4M pages must be available.
