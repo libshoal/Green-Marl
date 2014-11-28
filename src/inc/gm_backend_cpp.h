@@ -700,6 +700,7 @@ static void sk_init_accessors(gm_code_writer *Body)
     Body->pushln(");");
 
     Body->pushln("SHL__THREAD_INIT();");
+    Body->pushln("shl__thread_init();");
 }
 
 #endif
