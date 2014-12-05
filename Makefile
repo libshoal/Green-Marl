@@ -107,6 +107,11 @@ LIB := \
 
 OBJS :=
 
+# LUA
+LUA := $(BASE)/contrib/lua-5.2.3/src/
+INC += -I$(LUA)
+LIB += $(LUA)/liblua.a -lm -ldl
+
 # Switch buildtype: supported are "debug" and "release"
 BUILDTYPE := release
 FLAGS=$(CXXFLAGS) -Wno-unused-variable
@@ -136,6 +141,10 @@ sk_pr_gm:
 sk_pr_gcc: sk_shoal
 	$(MAKE) -C $(SHOAL)
 	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/pagerank.cc pagerank_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a $(LIB) -o ../bin/pagerank
+
+sk_pr_team_gcc: sk_shoal
+	$(MAKE) -C $(SHOAL)
+	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO pagerank.team.cc pagerank_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a $(LIB) -o ../bin/pagerank.team
 
 sk_triangle_counting: sk_tc_gm | sk_tc_gcc
 

@@ -735,7 +735,7 @@ void sk_init_done(gm_code_writer *Body)
                 dest,   // 2) name
                 type,   // 3) type
                 num,    // 4) size
-                src,    // 5) name of source
+                dest,   // 5) name of source
                 dest,   // 5) read-only property
                 dest,   // 6) dynamic property
                 dest,   // 7) used property

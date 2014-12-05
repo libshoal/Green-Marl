@@ -114,7 +114,14 @@ class LineChecker:
 
     def __init__(self, workload, program):
         self.workload = workload.replace('.bin', '')
-        self.program = program.replace('_ec', '')
+
+        # Allows working copies of programs to still be sanity checked, e.g.:
+        # - hop_dist.ec
+        # - pagerank.team
+        self.program = program.split('.')[0]
+
+        self.program = self.program.replace('_ec', '')
+
         self.checked = False
         self.correct = True
 
@@ -131,7 +138,7 @@ class CRCChecker(LineChecker):
         if not self.ARRNAME in validate[self.program]:
             return
 
-        l = re.match('^CRC %s ([0-9xa-fA-F]*)' % validate[self.program][self.ARRNAME], line)
+        l = re.match('^CRC shl__%s ([0-9xa-fA-F]*)' % validate[self.program][self.ARRNAME], line)
         if l:
             print 'Found CRC output', line, l.group(1)
             correct_output = validate[self.program][self.workload][self.KEY]
