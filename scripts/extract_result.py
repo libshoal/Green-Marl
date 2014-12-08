@@ -100,7 +100,7 @@ validate = {
 
         'twitter_rv': {
 
-            'CRC' : '0x5564'
+            'CRC' : '0x82ed' # '0x5564'
         }
     },
     'triangle_counting': {

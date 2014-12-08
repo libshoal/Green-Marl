@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include "gm.h"
 
+#include "shl.h"
 #ifdef BARRELFISH
 extern "C" {
 #include <omp.h>
@@ -78,6 +79,13 @@ public:
         }
 
         int num = atoi(argv[2]);
+
+#ifdef SHL_STATIC
+        shl__init(num, 1);
+#else
+        shl__init(num, 0);
+#endif
+
 #ifdef BARRELFISH
 
         argvals = argv;
