@@ -123,7 +123,7 @@ public:
                     printf("  vfs mount /nfs %s\n", argv[3]);
                     err = vfs_mount("/nfs", argv[3]);
                     if (err_is_fail(err)) {
-                        printf("ERROR: failed to create path, %s\n",err_getstring(err));
+                        printf("ERROR: failed to mount path, %s\n",err_getstring(err));
                         exit(EXIT_FAILURE);
                     }
                 }

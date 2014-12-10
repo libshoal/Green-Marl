@@ -38,7 +38,7 @@
         "/lib/shoal/inc"
     ],
     addGeneratedIncludes = [
-        "include/green-marl"
+        "/include/green-marl"
     ]
   },
   
