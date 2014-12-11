@@ -36,7 +36,9 @@ CORELIST=$(nproc)
 	    for OPTS in "" "-d" "-d -r" "-d -r -p" "-d -r -p -h"; do
 
 		# Activate PAPI
-		export SHL_PAPI="PAPI_TLB_TL,PAPI_L2_DCM,PAPI_L1_DCM"
+#		export SHL_PAPI="PAPI_TLB_TL,PAPI_L2_DCM,PAPI_L1_DCM"
+
+		export SHL_PAPI="PAPI_RES_STL,PAPI_TOT_CYC"
 
 		# Force re-build of shoal
 		(cd shoal/shoal && make clean) &>/dev/null

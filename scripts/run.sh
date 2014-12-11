@@ -12,8 +12,11 @@ function error() {
 }
 
 function usage() {
-    echo "Usage: $0 <options> {pagerank,hop_dist,triangle_counting} <num_threads> {ours,theirs} {huge,soc-LiveJournal1,twitter_rv,big}"
+    echo "Usage: $0 <options> {pagerank,hop_dist,triangle_counting} <num_threads> {ours,theirs} {huge,soc-LiveJournal1,twitter_rv,big} [-n] [-d]"
 	echo ""
+	echo "options: supported are: -h for hugepages, -d for distribution, -r for replication, -p for partitioning"
+	echo "-d: run in GDB"
+	echo "-n: do NOT run sanity checks"
 	echo <<EOF
 Options are:
 -h Huge page support
@@ -96,6 +99,12 @@ if [[ "$5" == "-d" ]]; then
 	shift
 fi
 
+CHECK=1
+if [[ "$5" == "-n" ]]; then
+	CHECK=0
+	shift
+fi
+
 shift
 shift
 shift
@@ -126,8 +135,9 @@ fi
 # bach / sgs-r820-01 / ETH laptop
 # --------------------------------------------------
 if [ \( $(hostname) == bach* \) -o \
-    \( $(hostname) == "skaestle-ThinkPad-X230" \) -o \
-    \( $(hostname) == "sgs-r820-01" \) ]; then
+     \( $(hostname) == babybell \) -o \
+     \( $(hostname) == "skaestle-ThinkPad-X230" \) -o \
+     \( $(hostname) == "sgs-r820-01" \) ]; then
 
     COREMAX=$(($NUM-1))
     AFF="0-${COREMAX}"
@@ -146,10 +156,20 @@ export SHL_PARTITION
 
 res=0
 if [[ $DEBUG -eq 0 ]]; then
+
+	echo "Sourcing $BASE/env.sh"
 	. $BASE/env.sh
 	set -x
+
+	echo $LD_LIBRARY_PATH
+
+	# Checks enabled?
+	CHECKS="$BASE/scripts/extract_result.py -workload ${WORKLOAD} -program ${INPUT}"
+	if [[ $CHECK -ne 1 ]]; then CHECKS="cat"; fi
+
+	# Start benchmark
 	GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
-		stdbuf -o0 -e0 -i0 ${INPUT} ${WORKLOAD} ${NUM} ${INPUTARGS} $@ | $BASE/scripts/extract_result.py -workload ${WORKLOAD} -program ${INPUT}
+		stdbuf -o0 -e0 -i0 ${INPUT} ${WORKLOAD} ${NUM} ${INPUTARGS} $@ | $CHECKS
 
 	# bash is sooo fragile!
 	R=( "${PIPESTATUS[@]}" )
@@ -175,7 +195,7 @@ if [[ $DEBUG -eq 0 ]]; then
 else
 	. $BASE/env.sh
 	GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
-		gdb $SK_GDBARGS --args ${INPUT} ${WORKLOAD} ${NUM} $@
+		gdb $SK_GDBARGS --args ${INPUT} ${WORKLOAD} ${NUM} ${INPUTARGS} $@
 fi
 
 exit 1
