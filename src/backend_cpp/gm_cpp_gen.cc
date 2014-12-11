@@ -681,7 +681,9 @@ void sk_init_done(gm_code_writer *Body)
 
     first = false;
 
-    Body->pushln("shl__start_timer();");
+    char timerlabel[512];
+    snprintf(timerlabel, 512, "shl__start_timer(2*%u);", sk_gm_arrays.size());
+    Body->pushln(timerlabel);
     for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
 
         struct sk_gm_array a = i->second;
@@ -755,15 +757,22 @@ void sk_init_done(gm_code_writer *Body)
                 type, dest, dest);
         Body->pushln(tmp);
 
+        snprintf(timerlabel, 512, "shl__step_timer(\"%s: allocate\");", dest);
+        Body->pushln(timerlabel);
+
         // Copy Green Marl array
         sprintf(tmp, "%s__set->copy_from(%s);",
                 dest,   // 1) name
                 src);   // 2) Green Marl source
         Body->pushln(tmp);
 
+        snprintf(timerlabel, 512, "shl__step_timer(\"%s: copy_from\");", dest);
+        Body->pushln(timerlabel);
+
         i->second.init_done = true;
     }
-    Body->pushln("shl__end_timer();");
+
+    Body->pushln("shl__end_timer(\"Array Init \");");
 
     Body->NL();
 }
@@ -1440,6 +1449,9 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
     assert(sb->get_nodetype() == AST_SENTBLOCK);
     bool has_return_ahead = gm_check_if_end_with_return(sb);
 
+    char timerlabel[512];
+
+
     if (has_prop_decl && !has_return_ahead) {
         if (is_proc_entry) {
             // SK: copy back arrays into original arrays! Otherwise,
@@ -1450,7 +1462,9 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
             assert (sk_gm_arrays.begin()!=sk_gm_arrays.end());
             std::map<std::string,struct sk_gm_array>::iterator i;
 
-            Body.pushln("shl__start_timer();");
+            char timerlabel[512];
+            snprintf(timerlabel, 512, "shl__start_timer(%u);", sk_gm_arrays.size());
+            Body.pushln(timerlabel);
             for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
 
                 struct sk_gm_array a = i->second;
@@ -1466,8 +1480,11 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
                 sprintf(tmp, "%s__set->print_crc();", dest, src);   // 1) name
                 Body.pushln(tmp);
 
+                snprintf(timerlabel, 512, "shl__step_timer(\"%s\");", dest);
+                Body.pushln(timerlabel);
             }
-            Body.pushln("shl__end_timer();");
+
+            Body.pushln("shl__end_timer(\"Copying Back\");");
             Body.NL();
 
             Body.pushln("shl__end();\n");
