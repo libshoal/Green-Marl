@@ -89,7 +89,7 @@ GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always)
 
 sk_pagerank: sk_pr_gm | sk_pr_gcc
 
-ROOT := $(HOME)/projects/gm/
+ROOT := $(shell pwd)
 BASE := $(ROOT)/shoal/
 SHOAL := $(BASE)/shoal/
 
@@ -123,6 +123,7 @@ else
 endif
 
 FLAGS += -DVERSION=\"$(GIT_VERSION)\" -Wall
+GMDIR = $(ROOT)
 
 sk_clean:
 	$(MAKE) -C $(SHOAL) clean
@@ -140,11 +141,11 @@ sk_pr_gm:
 
 sk_pr_gcc: sk_shoal
 	$(MAKE) -C $(SHOAL)
-	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/pagerank.cc pagerank_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a $(LIB) -o ../bin/pagerank
+	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"$GMDIR\"" -std=gnu++0x -DAVRO ../generated/pagerank.cc pagerank_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a $(LIB) -o ../bin/pagerank
 
 sk_pr_team_gcc: sk_shoal
 	$(MAKE) -C $(SHOAL)
-	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO pagerank.team.cc pagerank_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a $(LIB) -o ../bin/pagerank.team
+	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"$GMDIR\"" -std=gnu++0x -DAVRO pagerank.team.cc pagerank_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a $(LIB) -o ../bin/pagerank.team
 
 sk_triangle_counting: sk_tc_gm | sk_tc_gcc
 
@@ -154,7 +155,7 @@ sk_tc_gm:
 
 sk_tc_gcc:
 	$(MAKE) -C $(SHOAL)
-	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/triangle_counting.cc triangle_counting_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/triangle_counting
+	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"$GMDIR\"" -std=gnu++0x -DAVRO ../generated/triangle_counting.cc triangle_counting_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/triangle_counting
 
 sk_hop_dist: sk_hd_gm | sk_hd_gcc
 
@@ -164,8 +165,8 @@ sk_hd_gm:
 
 sk_hd_gcc:
 	$(MAKE) -C $(SHOAL)
-	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/hop_dist.cc hop_dist_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/hop_dist
+	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"$GMDIR\"" -std=gnu++0x -DAVRO ../generated/hop_dist.cc hop_dist_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/hop_dist
 
 sk_hd_ec_gcc:
 	$(MAKE) -C $(SHOAL)
-	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"/home/skaestle/projects/gm\"" -std=gnu++0x -DAVRO ../generated/hop_dist_ec.cc hop_dist_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/hop_dist
+	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"$GMDIR\"" -std=gnu++0x -DAVRO ../generated/hop_dist_ec.cc hop_dist_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/hop_dist

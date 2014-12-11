@@ -61,8 +61,7 @@ while [[ parse_opts -eq 1 ]]; do
 done
 
 
-#WORKLOAD_BASE=/run/shm/
-BASE=/home/skaestle/projects/gm/
+BASE=$(dirname $0)/../
 WORKLOAD_BASE=$BASE/../graphs/
 
 #WORKLOAD=$BASE/../graphs/huge.bin
