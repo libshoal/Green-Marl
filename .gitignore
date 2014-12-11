@@ -63,3 +63,9 @@ cscope.out
 *.o
 *.so
 gmon.out
+test_all_2014*
+run_all_2014*
+papi_all_2014*
+*.tgz
+/r*memacc/
+*~

@@ -21,6 +21,20 @@ PROG='pagerank'
 OUTPUT='%s/papers/oracle/measurements/' % os.getenv('HOME')
 
 def generate_combinations(depth):
+
+    # Testing
+    # ------------------------------
+    # return [[ 0 for i in range(depth) ]]
+
+    # Test two configurations
+    # assert depth>2
+    # return [
+    #       [0] + [ 0 for i in range(depth-1) ],
+    #       [1] + [ 0 for i in range(depth-1) ],
+    #     ]
+
+    # Real
+    # ------------------------------
     assert depth > 0
     if (depth==1):
         return [ [0], [1] ]
@@ -52,6 +66,8 @@ def generate_conf_combinations(arrays, setting):
 
         conf_string = ''.join([ '1' if hp else '0' for hp in conf ])
 
+        print 'Enabling configuration', ''.join(map(str, conf))
+
         for i in range(len(arrays)):
             arr = arrays[i]
             hp = conf[i]
@@ -61,11 +77,14 @@ def generate_conf_combinations(arrays, setting):
 
         out.write("}\n")
         out.write("}\n")
+        out.close()
+
+        subprocess.check_call(['cat', 'settings.lua'])
 
         res = execute('scripts/run.sh %s %s `nproc` ours %s' %
-                      ('-d -r -h', PROG , WORKLOAD), 3, f_run_name)
+                      ('-h -d -r', PROG , WORKLOAD), 3, f_run_name)
 
-        f_overview.write('%s x x x x %s\n' % (conf_string, f_run_name))
+        f_overview.write('%s   x   x   x   x   %s\n' % (f_run_name, conf_string))
 
     f_overview.close()
     subprocess.check_call(['tar', '-czf', 'output.tgz'] + file_list)
@@ -106,7 +125,7 @@ def execute(cmd, num=1, fName=None):
                 if line != '':
                     if fName:
                         fOut.write(line)
-                    print '[BENCH%d] %s' % (not not fName, line.rstrip())
+                    print '[BENCH] %s' % (line.rstrip())
                     m = re.match('^Files are: (\S+) (\S+) (\S+)', line)
                     if m:
                         print 'Output files are: %s %s %s' % (m.group(1), m.group(2), m.group(3))

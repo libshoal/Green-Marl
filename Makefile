@@ -117,7 +117,7 @@ BUILDTYPE := release
 FLAGS=$(CXXFLAGS) -Wno-unused-variable
 
 ifeq ($(BUILDTYPE),debug)
-	FLAGS += -O0  -pg -g -DSHL_DEBUG
+	FLAGS += -O0  -pg -ggdb -DSHL_DEBUG
 else
 	FLAGS +=  -O3 -g
 endif

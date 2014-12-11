@@ -101,6 +101,11 @@ validate = {
         'twitter_rv': {
 
             'CRC' : '0x82ed' # '0x5564'
+        },
+
+        'test': {
+
+            'CRC': '0xe544'
         }
     },
     'triangle_counting': {
@@ -109,8 +114,14 @@ validate = {
 
 }
 
+# Line checkers
+# --------------------------------------------------
 
 class LineChecker:
+    """
+    Check shoal output line-by-line
+
+    """
 
     def __init__(self, workload, program):
         self.workload = workload.replace('.bin', '')
@@ -128,7 +139,16 @@ class LineChecker:
     def check_line(self, line):
         pass
 
+    def summarize(self):
+        pass
+
+# --------------------------------------------------
+
 class CRCChecker(LineChecker):
+    """
+    Check if CRC checksum of arrays match
+
+    """
 
     KEY = 'CRC'
     ARRNAME = 'CRCARR'
@@ -144,6 +164,45 @@ class CRCChecker(LineChecker):
             correct_output = validate[self.program][self.workload][self.KEY]
             self.checked = True
             self.correct &= correct_output == l.group(1)
+
+# --------------------------------------------------
+
+class ArrayConfChecker(LineChecker):
+    """
+    Check array configuration
+
+    """
+
+    arrays = []
+
+    def check_line(self, line):
+
+        # Array[   shl__G_r_node_idx]: elements=  68993774-68.99 M size= 275975096-275.98 M -- hugepage=[ ]  -- used=[X] replication=[X]
+        l = re.match('^Array\[([^\]]*)\].*size=\s*(\d+)', line)
+        if l:
+            print 'Found array configuration', l.group(1), l.group(2)
+
+            self.arrays.append({
+                'name': l.group(1),
+                'size': l.group(2),
+                'distribution': ('distribution=[X]' in line),
+                'hugepage':     ('hugepage=[X]' in line),
+                'replication':  ('replication=[X]' in line),
+                'single-node':  ('single-node=[X]' in line),
+                'partition':    ('partition=[X]' in line),
+            })
+
+    def summarize(self):
+
+        for s in [ 'hugepage' ]:
+            print s,
+            for arr in self.arrays:
+                print ("%s=%d" % (arr['name'], arr[s])),
+
+            print
+
+        for a in self.arrays:
+            print str(a)
 
 
 
@@ -264,6 +323,9 @@ if args.program:
 result = True
 
 crc_checker = CRCChecker(workload, program)
+array_checker = ArrayConfChecker(workload, program)
+
+checkers = [ crc_checker, array_checker ]
 
 while 1:
     line = sys.stdin.readline()
@@ -288,12 +350,16 @@ while 1:
 
     # Check CRC
     # --------------------------------------------------
-    crc_checker.check_line(line)
+    for checker in checkers:
+        checker.check_line(line)
 
 if total and copy:
     print 'total:    %10.5f' % total
     print 'copy:     %10.5f' % copy
     print 'comp:     %10.5f' % (total-copy)
+
+for checker in checkers:
+    checker.summarize()
 
 
 if not verified:
