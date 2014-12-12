@@ -20,9 +20,9 @@ function error() {
 LOGFILES=$(mktemp /tmp/test_all-overview-XXXXXX)
 
 # --------------------------------------------------
-# Set the number of cores for the benchmark according to the machine
+# Number of cores
 # --------------------------------------------------
-CORELIST=$(nproc)
+CORELIST=$(nproc) 1
 
 (
     # Programs
@@ -53,8 +53,8 @@ CORELIST=$(nproc)
 			echo "Running: $TMP $PROG $OPTS $CORES"
 
 			# Run
-			export NUM=1
-			exec_avg scripts/run.sh $OPTS $PROG $CORES ours $WORKLOAD &> $TMP; RC=$?
+			scripts/run.sh $OPTS $PROG $CORES ours $WORKLOAD &> $TMP
+			RC=$?
 
 			# Evaluate return code
 			if [[ $RC -eq 0 ]]; then

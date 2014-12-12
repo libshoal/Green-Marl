@@ -4,8 +4,8 @@
 
 PROG=pagerank
 OPTS=
-WORKLOAD=twitter_rv
-#WORKLOAD="soc-LiveJournal1"
+#WORKLOAD=twitter_rv
+WORKLOAD="soc-LiveJournal1"
 
 txtred='\e[0;31m' # Red
 txtgrn='\e[0;32m' # Green
@@ -29,6 +29,7 @@ CORELIST=""
 [[ $(hostname) == bach* ]] && CORELIST="16 12 8 4 2"
 [[ $(hostname) == "sgs-r815-03" ]] && CORELIST="64 32 16 8"
 [[ $(hostname) == "sgs-r820-01" ]] && CORELIST="64 32 16 8"
+[[ $(hostname) == "babybel" ]] && CORELIST="4 10 20"
 # Check --------------------------------------------
 [[ -n "$CORELIST" ]] || error "Don't know this machine"
 # --------------------------------------------------
@@ -77,6 +78,13 @@ CORELIST=""
 			if [[ $RC -eq 0 ]]; then
 			    echo -n "  total: "; cat $TMP | awk '/^total:/ { print $2 }' | skstat.py
 			    echo -n "  comp : "; cat $TMP | awk '/^comp:/ { print $2 }' | skstat.py
+
+				R=( "${PIPESTATUS[@]}" )
+
+				START_RC="${R[2]}"
+				if [[ $START_RC -ne 0 ]]; then
+					echo "WARNING: skstat.py did not exit properly"
+				fi
 			fi
 		    done
 		done

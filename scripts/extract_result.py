@@ -380,7 +380,9 @@ else:
 
 print 'lines processed:', lines, '- result' , result_out
 
-if result and (crc_checker.correct or not crc_checker.checked):
+if result and (
+        (crc_checker.correct and crc_checker.checked) or
+        program == "triangle_counting"):  # triangle_counting does not have checksums
     exit(0)
 
 exit(1)

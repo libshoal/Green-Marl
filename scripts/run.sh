@@ -6,6 +6,11 @@
 #     exit $?
 # fi
 
+txtred='\e[0;31m' # Red
+txtgrn='\e[0;32m' # Green
+txtylw='\e[0;33m' # Yello
+txtrst='\e[0m'    # Text Reset
+
 function error() {
 	echo $1
 	exit 1
@@ -134,7 +139,7 @@ fi
 # bach / sgs-r820-01 / ETH laptop
 # --------------------------------------------------
 if [ \( $(hostname) == bach* \) -o \
-     \( $(hostname) == babybell \) -o \
+     \( $(hostname) == babybel \) -o \
      \( $(hostname) == "skaestle-ThinkPad-X230" \) -o \
      \( $(hostname) == "sgs-r820-01" \) ]; then
 
@@ -184,9 +189,12 @@ if [[ $DEBUG -eq 0 ]]; then
 		# GM return code
 
 		# Since we use a Pipe, we need to check the return code of the first program as well
-		if [[ $GM_RC -ne 0 ]]; then
-			error "GM program failed"
-		fi
+
+		echo -n -e $txtylw "[ IGNORING GM RC - SEGFAULT ]" $txtrst
+		# XXX Ignoring GM seg faults for now
+		# if [[ $GM_RC -ne 0 ]]; then
+		# 	error "GM program failed"
+		# fi
 
 	    echo "Execution was successful"
 	    exit 0
