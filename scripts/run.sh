@@ -140,6 +140,7 @@ fi
 # --------------------------------------------------
 if [ \( $(hostname) == bach* \) -o \
      \( $(hostname) == babybel \) -o \
+     \( $(hostname) == emmentaler2 \) -o \
      \( $(hostname) == "skaestle-ThinkPad-X230" \) -o \
      \( $(hostname) == "sgs-r820-01" \) ]; then
 
@@ -157,6 +158,12 @@ export SHL_REPLICATION
 export SHL_DISTRIBUTION
 export SHL_PARTITION
 # --------------------------------------------------
+
+LUAFILE="settings.lua"
+
+if [[ ! -f $LUAFILE ]]; then
+	touch $LUAFILE
+fi
 
 res=0
 if [[ $DEBUG -eq 0 ]]; then
