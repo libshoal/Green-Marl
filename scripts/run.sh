@@ -42,7 +42,7 @@ WORKLOAD_BASE=$BASE/../graphs/
 #WORKLOAD=/mnt/scratch/skaestle/graphs/twitter_rv-in-order-rename.bin
 #WORKLOAD=/mnt/scratch/skaestle/graphs/soc-Live
 
-# 
+#
 # Run on Barrelfish
 # -------------------------------------------------
 RUN_ON_BARRELFISH=0
@@ -77,10 +77,6 @@ while [[ parse_opts -eq 1 ]]; do
 			SHL_PARTITION=1
 			shift
 			;;
-		-p)
-			RUN_ON_BARRELFISH=1
-			shift
-			;;			
 		*)
 			parse_opts=0
 	esac
@@ -128,21 +124,28 @@ BARRELFISH_PROGRAM=""
 	esac
 
 
-	
+
 
 [[ -f "${WORKLOAD}" ]] || error "Cannot find workload [$WORKLOAD]"
 
 DEBUG=0
 if [[ "$5" == "-d" ]]; then
-	DEBUG=1
-	shift
+    DEBUG=1
+    shift
 fi
 
 CHECK=1
 if [[ "$5" == "-n" ]]; then
-	CHECK=0
-	shift
+    CHECK=0
+    shift
 fi
+
+
+if [[ "$5" == "-b" ]]; then
+    RUN_ON_BARRELFISH=1
+    shift
+fi
+
 
 shift
 shift
@@ -221,28 +224,40 @@ if [[ $DEBUG -eq 0 ]]; then
 
     	# TODO: find machine name
 
-    	tools/harness/scalebench.py -v -t $BARRELFISH_WORKLOAD -m nos5 -e /mnt/local/acreto/barrelfish/build . $BARRELFISH_BASE/results
+    	tools/harness/scalebench.py -v -t $BARRELFISH_WORKLOAD -m nos5 -e /mnt/local/acreto/barrelfish/build . $BARRELFISH_BASE/results; SC_RC=$?
+
+	if [[ $SC_RC -ne 0 ]]; then
+	    echo "scalebench failed"
+    	    rm -rf $BARRELFISH_BASE/results
+
+	    exit 1
+	fi
 
     	# TODO: results directory
     	mv $BARRELFISH_RESULTS_DIR/raw.txt TODO_RESULT_LOCATION
 
-    	$BASE/scripts/extract_result.py -workload ${WORKLOAD} -program ${INPUT} -barrelfish 1 -rawfile ${barrelfish}/raw.txt
+    	$BASE/scripts/extract_result.py -workload ${WORKLOAD} -program ${INPUT} -barrelfish 1 -rawfile ${barrelfish}/raw.txt; RC=$?
 
     	# cleanup test results
     	rm -rf $BARRELFISH_BASE/results
+
+	if [[ $SC_RC -ne 0 ]]; then
+	    echo "result wrong"
+	    exit 1
+	fi
 
     	popd
 
     else
     	# Start benchmark
-		GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
-			stdbuf -o0 -e0 -i0 ${INPUT} ${WORKLOAD} ${NUM} ${INPUTARGS} $@ | $CHECKS
+	GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
+			 stdbuf -o0 -e0 -i0 ${INPUT} ${WORKLOAD} ${NUM} ${INPUTARGS} $@ | $CHECKS
 
-		# bash is sooo fragile!
-		R=( "${PIPESTATUS[@]}" )
+	# bash is sooo fragile!
+	R=( "${PIPESTATUS[@]}" )
 
-		GM_RC="${R[0]}"
-		ER_RC="${R[1]}"
+	GM_RC="${R[0]}"
+	ER_RC="${R[1]}"
     fi
 
 	# extract result return code
