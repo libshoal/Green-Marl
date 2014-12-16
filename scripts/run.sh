@@ -33,8 +33,8 @@ EOF
 }
 
 
-BASE=$(dirname $0)/../
-WORKLOAD_BASE=$BASE/../graphs/
+BASE=$(readlink -e $(dirname $0)/../)
+WORKLOAD_BASE=$(readlink -e $BASE/../graphs/)
 
 #WORKLOAD=$BASE/../graphs/huge.bin
 #WORKLOAD=$BASE/../graphs/soc-LiveJournal1.bin
@@ -46,7 +46,7 @@ WORKLOAD_BASE=$BASE/../graphs/
 # Run on Barrelfish
 # -------------------------------------------------
 RUN_ON_BARRELFISH=0
-BARRELFISH_BASE=$BASE
+BARRELFISH_BASE=$(readlink -e $BASE/../../)
 
 
 # Parse options
@@ -101,7 +101,6 @@ if [[ "$3" == "theirs" ]]; then
 	INPUTARGS=" 100 0.001 0.85 -GMMeasureTime=1"
 fi
 
-[[ -f ${INPUT} ]] || error "Cannot find program [$INPUT]"
 
 WORKLOAD=$WORKLOAD_BASE/$4.bin
 
@@ -123,10 +122,7 @@ BARRELFISH_PROGRAM=""
 			error "Cannot find barrelfish program [$1]"
 	esac
 
-
-
-
-[[ -f "${WORKLOAD}" ]] || error "Cannot find workload [$WORKLOAD]"
+echo $5
 
 DEBUG=0
 if [[ "$5" == "-d" ]]; then
@@ -142,10 +138,15 @@ fi
 
 
 if [[ "$5" == "-b" ]]; then
+    echo "Running on Barrelfish"
     RUN_ON_BARRELFISH=1
     shift
 fi
 
+if [[ $RUN_ON_BARRELFISH -eq 0 ]]; then
+    [[ -f "${WORKLOAD}" ]] || error "Cannot find workload [$WORKLOAD]"
+    [[ -f ${INPUT} ]] || error "Cannot find program [$INPUT]"
+fi
 
 shift
 shift
@@ -186,7 +187,9 @@ if [ \( $(hostname) == bach* \) -o \
     AFF="0-${COREMAX}"
 fi
 
-[[ -n "$AFF" ]] || error "Affinity not set for machine [$(hostname)]"
+if [[ $RUN_ON_BARRELFISH -eq 0 ]]; then
+   [[ -n "$AFF" ]] || error "Affinity not set for machine [$(hostname)]"i
+fi
 
 # --------------------------------------------------
 # CONFIGURATION
@@ -217,14 +220,11 @@ if [[ $DEBUG -eq 0 ]]; then
 	if [[ $CHECK -ne 1 ]]; then CHECKS="cat"; fi
 
     if [[ $RUN_ON_BARRELFISH -eq 1 ]]; then
+        echo $BARRELFISH_BASE
     	pushd $BARRELFISH_BASE
     	mkdir -p $BARRELFISH_BASE/results
-    	BARRELFISH_RESULTS_DIR=$BARRELFISH_BASE/results/$(ls $BARRELFISH_BASE/results) # get the $results/year directory
-    	BARRELFISH_RESULTS_DIR=$BARRELFISH_RESULTS_DIR/$(ls $BARRELFISH_RESULTS_DIR) # get the benchmark results directory
-
-    	# TODO: find machine name
-
-    	tools/harness/scalebench.py -v -t $BARRELFISH_WORKLOAD -m nos5 -e /mnt/local/acreto/barrelfish/build . $BARRELFISH_BASE/results; SC_RC=$?
+	
+    	tools/harness/scalebench.py -v -t $BARRELFISH_WORKLOAD -m nos5 -e $BARRELFISH_BASE/build $BARRELFISH_BASE $BARRELFISH_BASE/results; SC_RC=$?
 
 	if [[ $SC_RC -ne 0 ]]; then
 	    echo "scalebench failed"
@@ -232,11 +232,17 @@ if [[ $DEBUG -eq 0 ]]; then
 
 	    exit 1
 	fi
+        
+        popd
 
-    	# TODO: results directory
-    	mv $BARRELFISH_RESULTS_DIR/raw.txt TODO_RESULT_LOCATION
+        BARRELFISH_RESULTS_DIR=$BARRELFISH_BASE/results/$(ls $BARRELFISH_BASE/results) # get the $results/year directory
+        BARRELFISH_RESULTS_DIR=$BARRELFISH_RESULTS_DIR/$(ls $BARRELFISH_RESULTS_DIR) # get the benchmark results directory
+        echo $BARRELFISH_RESULTS_DIR
 
-    	$BASE/scripts/extract_result.py -workload ${WORKLOAD} -program ${INPUT} -barrelfish 1 -rawfile ${barrelfish}/raw.txt; RC=$?
+        echo "extracting results..."
+        echo ${BARRELFISH_RESULTS_DIR}/raw.txt
+
+    	$BASE/scripts/extract_result.py -workload ${WORKLOAD} -program ${INPUT} -barrelfish 1 -rawfile ${BARRELFISH_RESULTS_DIR}/raw.txt; RC=$?
 
     	# cleanup test results
     	rm -rf $BARRELFISH_BASE/results
@@ -245,9 +251,8 @@ if [[ $DEBUG -eq 0 ]]; then
 	    echo "result wrong"
 	    exit 1
 	fi
-
-    	popd
-
+        
+        exit 0
     else
     	# Start benchmark
 	GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
@@ -260,24 +265,23 @@ if [[ $DEBUG -eq 0 ]]; then
 	ER_RC="${R[1]}"
     fi
 
-	# extract result return code
-	if [[ $ER_RC -ne 0 ]]; then
-	    error "Execution was unsuccessful"
-		exit 1
-	else
-		# GM return code
+    # extract result return code
+    if [[ $ER_RC -ne 0 ]]; then
+        error "Execution was unsuccessful"
+        exit 1
+    else
+        # GM return code
+        
+        # Since we use a Pipe, we need to check the return code of the first program as well
 
-		# Since we use a Pipe, we need to check the return code of the first program as well
-
-		echo -n -e $txtylw "[ IGNORING GM RC - SEGFAULT ]" $txtrst
-		# XXX Ignoring GM seg faults for now
-		# if [[ $GM_RC -ne 0 ]]; then
-		# 	error "GM program failed"
-		# fi
-
-	    echo "Execution was successful"
-	    exit 0
-	fi
+        echo -n -e $txtylw "[ IGNORING GM RC - SEGFAULT ]" $txtrst
+        # XXX Ignoring GM seg faults for now
+        # if [[ $GM_RC -ne 0 ]]; then
+        # 	error "GM program failed"
+        # fi
+        echo "Execution was successful"
+        exit 0
+    fi
 else
 	. $BASE/env.sh
 	GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
