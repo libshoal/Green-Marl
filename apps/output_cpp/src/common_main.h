@@ -191,6 +191,12 @@ public:
         // Clean up routine
         //----------------------------------------------
         b = cleanup();
+
+        /*
+         * XXX This line signals the termination of the execution for scalebench
+         */
+        printf("XXXXXXXXXX GM DONE XXXXXXXXXXXXXX\n");
+
         if (!b) exit (EXIT_FAILURE);
     }
 
