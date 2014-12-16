@@ -17,9 +17,9 @@ function error() {
 }
 
 function usage() {
-    echo "Usage: $0 <options> {pagerank,hop_dist,triangle_counting} <num_threads> {ours,theirs} {huge,soc-LiveJournal1,twitter_rv,big} [-n] [-d]"
+    echo "Usage: $0 <options> {pagerank,hop_dist,triangle_counting} <num_threads> {ours,theirs} {huge,soc-LiveJournal1,twitter_rv,big} [-n] [-d] [-b]"
 	echo ""
-	echo "options: supported are: -h for hugepages, -d for distribution, -r for replication, -p for partitioning"
+	echo "options: supported are: -h for hugepages, -d for distribution, -r for replication, -p for partitioning, -b for Barrelfish"
 	echo "-d: run in GDB"
 	echo "-n: do NOT run sanity checks"
 	echo <<EOF
@@ -31,6 +31,23 @@ Options are:
 EOF
     exit 1
 }
+
+
+BASE=$(dirname $0)/../
+WORKLOAD_BASE=$BASE/../graphs/
+
+#WORKLOAD=$BASE/../graphs/huge.bin
+#WORKLOAD=$BASE/../graphs/soc-LiveJournal1.bin
+#WORKLOAD=$BASE/../graphs/big.bin
+#WORKLOAD=/mnt/scratch/skaestle/graphs/twitter_rv-in-order-rename.bin
+#WORKLOAD=/mnt/scratch/skaestle/graphs/soc-Live
+
+# 
+# Run on Barrelfish
+# -------------------------------------------------
+RUN_ON_BARRELFISH=0
+BARRELFISH_BASE=$BASE
+
 
 # Parse options
 # --------------------------------------------------
@@ -60,20 +77,17 @@ while [[ parse_opts -eq 1 ]]; do
 			SHL_PARTITION=1
 			shift
 			;;
+		-p)
+			RUN_ON_BARRELFISH=1
+			shift
+			;;			
 		*)
 			parse_opts=0
 	esac
 done
 
 
-BASE=$(dirname $0)/../
-WORKLOAD_BASE=$BASE/../graphs/
 
-#WORKLOAD=$BASE/../graphs/huge.bin
-#WORKLOAD=$BASE/../graphs/soc-LiveJournal1.bin
-#WORKLOAD=$BASE/../graphs/big.bin
-#WORKLOAD=/mnt/scratch/skaestle/graphs/twitter_rv-in-order-rename.bin
-#WORKLOAD=/mnt/scratch/skaestle/graphs/soc-Live
 
 [[ -n "$3" ]] || usage
 
@@ -94,6 +108,27 @@ fi
 [[ -f ${INPUT} ]] || error "Cannot find program [$INPUT]"
 
 WORKLOAD=$WORKLOAD_BASE/$4.bin
+
+BARRELFISH_PROGRAM=""
+	case $1 in
+		pagerank)
+			BARRELFISH_WORKLOAD=GreenMarl_PageRank
+			shift
+			;;
+#		hop_dist)
+#			SHL_DISTRIBUTION=1
+#			shift
+#			;;
+#		triangle_counting)
+#			SHL_REPLICATION=1
+#			shift
+#			;;
+		*)
+			error "Cannot find barrelfish program [$1]"
+	esac
+
+
+	
 
 [[ -f "${WORKLOAD}" ]] || error "Cannot find workload [$WORKLOAD]"
 
@@ -178,15 +213,37 @@ if [[ $DEBUG -eq 0 ]]; then
 	CHECKS="$BASE/scripts/extract_result.py -workload ${WORKLOAD} -program ${INPUT}"
 	if [[ $CHECK -ne 1 ]]; then CHECKS="cat"; fi
 
-	# Start benchmark
-	GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
-		stdbuf -o0 -e0 -i0 ${INPUT} ${WORKLOAD} ${NUM} ${INPUTARGS} $@ | $CHECKS
+    if [[ $RUN_ON_BARRELFISH -eq 1 ]]; then
+    	pushd $BARRELFISH_BASE
+    	mkdir -p $BARRELFISH_BASE/results
+    	BARRELFISH_RESULTS_DIR=$BARRELFISH_BASE/results/$(ls $BARRELFISH_BASE/results) # get the $results/year directory
+    	BARRELFISH_RESULTS_DIR=$BARRELFISH_RESULTS_DIR/$(ls $BARRELFISH_RESULTS_DIR) # get the benchmark results directory
 
-	# bash is sooo fragile!
-	R=( "${PIPESTATUS[@]}" )
+    	# TODO: find machine name
 
-	GM_RC="${R[0]}"
-	ER_RC="${R[1]}"
+    	tools/harness/scalebench.py -v -t $BARRELFISH_WORKLOAD -m nos5 -e /mnt/local/acreto/barrelfish/build . $BARRELFISH_BASE/results
+
+    	# TODO: results directory
+    	mv $BARRELFISH_RESULTS_DIR/raw.txt TODO_RESULT_LOCATION
+
+    	$BASE/scripts/extract_result.py -workload ${WORKLOAD} -program ${INPUT} -barrelfish 1 -rawfile ${barrelfish}/raw.txt
+
+    	# cleanup test results
+    	rm -rf $BARRELFISH_BASE/results
+
+    	popd
+
+    else
+    	# Start benchmark
+		GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
+			stdbuf -o0 -e0 -i0 ${INPUT} ${WORKLOAD} ${NUM} ${INPUTARGS} $@ | $CHECKS
+
+		# bash is sooo fragile!
+		R=( "${PIPESTATUS[@]}" )
+
+		GM_RC="${R[0]}"
+		ER_RC="${R[1]}"
+    fi
 
 	# extract result return code
 	if [[ $ER_RC -ne 0 ]]; then

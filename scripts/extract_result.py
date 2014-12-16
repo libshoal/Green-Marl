@@ -310,6 +310,8 @@ def verify_pagerank(line):
 parser = argparse.ArgumentParser(description='Extract results')
 parser.add_argument('-workload', help="Workload that is running. This is used to check the result")
 parser.add_argument('-program', help="Program that is running. This is used to check the result")
+parser.add_argument('-rawfile', help="Tells the script that the result file should be taken instead of stdin")
+parser.add_argument('-barrelfish', help="Barrelfish OS")
 args = parser.parse_args()
 
 if args.workload:
@@ -320,6 +322,19 @@ if args.program:
     program = os.path.basename(args.program)
     print 'Program is:', args.program, program
 
+use_file_input=False
+if args.rawfile :
+    rawfile=args.rawfile
+    print 'rawfile is:', args.rawfile, rawfile
+    use_file_input=True
+
+if args.barrelfish :
+    barrelfish=args.barrelfish
+    print 'Barrelfish Results from file'
+else :
+    print 'Linux Result from STDIN'
+
+
 result = True
 
 crc_checker = CRCChecker(workload, program)
@@ -327,8 +342,18 @@ array_checker = ArrayConfChecker(workload, program)
 
 checkers = [ crc_checker, array_checker ]
 
+if use_file_input :
+    try:
+        inFile = open(rawfile, 'r')
+    except IOError as e:
+        print rawfile,": I/O error({0}): {1}".format(e.errno, e.strerror)
+        exit (1);
+
 while 1:
-    line = sys.stdin.readline()
+    if use_file_input :
+        line = inFile.readline()
+    else :
+        line = sys.stdin.readline()
     if not line: break
     print '[OUT]', line.rstrip()
     lines += 1
