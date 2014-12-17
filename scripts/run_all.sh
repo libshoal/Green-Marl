@@ -18,10 +18,11 @@ function error() {
 }
 
 RUN_ON_BARRELFISH=0
-
+BARRELFISH=
 if [[ "$1" == "-b" ]]; then
 	echo "Running on Barrelfish"
 	RUN_ON_BARRELFISH=1
+	BARRELFISH="-b"
 	PROGRAMS="pagerank"
 else
 	PROGRAMS="pagerank hop_dist"
@@ -43,6 +44,8 @@ CORELIST=""
 # Check --------------------------------------------
 if [[ RUN_ON_BARRELFISH -eq 0 ]]; then
 	[[ -n "$CORELIST" ]] || error "Don't know this machine"
+else
+	CORELIST="20"
 fi
 # --------------------------------------------------
 
@@ -78,7 +81,7 @@ fi
 
 			# Run
 			export NUM=3
-			exec_avg scripts/run.sh $OPTS $PROG $CORES ours $WORKLOAD -b &> $TMP; RC=$?
+			exec_avg scripts/run.sh $OPTS $PROG $CORES ours $WORKLOAD $BARRELFISH &> $TMP; RC=$?
 
 			# Evaluate return code
 			if [[ $RC -eq 0 ]]; then
