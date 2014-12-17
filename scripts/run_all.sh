@@ -34,14 +34,16 @@ LOGFILES=$(mktemp /tmp/run_all-overview-XXXXXX)
 
 # --------------------------------------------------
 # Set the number of cores for the benchmark according to the machine
-# --------------------------------------------------
+# --------------------------------------------------cd
 CORELIST=""
 [[ $(hostname) == bach* ]] && CORELIST="16 12 8 4 2"
 [[ $(hostname) == "sgs-r815-03" ]] && CORELIST="64 32 16 8"
 [[ $(hostname) == "sgs-r820-01" ]] && CORELIST="64 32 16 8"
 [[ $(hostname) == "babybel" ]] && CORELIST="4 10 20"
 # Check --------------------------------------------
-[[ -n "$CORELIST" ]] || error "Don't know this machine"
+if [[ RUN_ON_BARRELFISH -eq 0 ]]; then
+	[[ -n "$CORELIST" ]] || error "Don't know this machine"
+fi
 # --------------------------------------------------
 
 (
