@@ -19,9 +19,10 @@ function error() {
 function usage() {
     echo "Usage: $0 <options> {pagerank,hop_dist,triangle_counting} <num_threads> {ours,theirs} {huge,soc-LiveJournal1,twitter_rv,big} [-n] [-d] [-b]"
     echo ""
-    echo "options: supported are: -h for hugepages, -d for distribution, -r for replication, -p for partitioning, -b for Barrelfish"
+    echo "options: supported are: -h for hugepages, -d for distribution, -r for replication, -p for partitioning"
     echo "-d: run in GDB"
     echo "-n: do NOT run sanity checks"
+    echo "-b for Barrelfish"
     echo <<EOF
 Options are:
 -h Huge page support
@@ -224,6 +225,7 @@ $BASE/scripts/generate_settings.py -D $SHL_DISTRIBUTION -R $SHL_REPLICATION -P $
 
 if [[ $CONCAT_SETTINGS -eq 1 ]]; then
     if [[ -f $ARRAY_SETTINGS_FILE ]]; then
+        echo "Concatenating Local settings to global settings"
         cat $ARRAY_SETTINGS_FILE >> $SETTINGS_FILE
     else
         echo -n -e $txtylw "No settings file present" $txtrst
@@ -252,7 +254,7 @@ if [[ $DEBUG -eq 0 ]]; then
         # move the settings file into the build directory
         mv $SETTINGS_FILE $BARRELFISH_BASE/build
 
-        tools/harness/scalebench.py -v -t $BARRELFISH_WORKLOAD -m nos5 -e $BARRELFISH_BASE/build $BARRELFISH_BASE $BARRELFISH_BASE/results; SC_RC=$?
+        tools/harness/scalebench.py -v -t $BARRELFISH_WORKLOAD -m babybel1 -e $BARRELFISH_BASE/build $BARRELFISH_BASE $BARRELFISH_BASE/results; SC_RC=$?
 
         if [[ $SC_RC -ne 0 ]]; then
             echo "scalebench failed"
