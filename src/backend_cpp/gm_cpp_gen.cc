@@ -772,7 +772,7 @@ void sk_init_done(gm_code_writer *Body)
         i->second.init_done = true;
     }
 
-    Body->pushln("shl__end_timer(\"Array Init \");");
+    Body->pushln("shl__end_timer(\"SHOAL_Copyin\");");
 
     Body->NL();
 }
@@ -1454,6 +1454,8 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
 
     if (has_prop_decl && !has_return_ahead) {
         if (is_proc_entry) {
+            Body.pushln("shl__end();\n");
+
             // SK: copy back arrays into original arrays! Otherwise,
             // accesses from the main file (or any other calling file
             // for that matter) might be returning the wrong result.
@@ -1477,17 +1479,28 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
                 // Copy Green Marl array back
                 sprintf(tmp, "%s__set->copy_back(%s);", dest, src);   // 1) name
                 Body.pushln(tmp);
-                sprintf(tmp, "%s__set->print_crc();", dest, src);   // 1) name
-                Body.pushln(tmp);
-
                 snprintf(timerlabel, 512, "shl__step_timer(\"%s\");", dest);
                 Body.pushln(timerlabel);
             }
 
-            Body.pushln("shl__end_timer(\"Copying Back\");");
-            Body.NL();
+            Body.pushln("shl__end_timer(\"SHOAL_Copyback\");\n");
 
-            Body.pushln("shl__end();\n");
+            for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
+
+                 struct sk_gm_array a = i->second;
+
+                 const char* dest = a.dest.c_str();
+                 const char* src = a.src.c_str();
+                 const char* type = a.type.c_str();
+                 const char* num = a.num.c_str();
+
+                 // Copy Green Marl array back
+                 sprintf(tmp, "%s__set->print_crc();", dest, src);   // 1) name
+                 Body.pushln(tmp);
+             }
+
+
+
             sprintf(temp, "%s();", CLEANUP_PTR);
             Body.pushln(temp);
 
