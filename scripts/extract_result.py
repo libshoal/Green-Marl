@@ -349,6 +349,9 @@ if use_file_input :
         print rawfile,": I/O error({0}): {1}".format(e.errno, e.strerror)
         exit (1);
 
+copy = 0.0
+computation=0.0
+
 while 1:
     if use_file_input :
         line = inFile.readline()
@@ -358,9 +361,15 @@ while 1:
     print '[OUT]', line.rstrip()
     lines += 1
     # Extract time for copy
-    l = re.match('Time for copy: ([0-9.]*)', line)
+    l = re.match('SHOAL_Copyin ([ ]*)([0-9.]*)', line)
     if l:
-        copy = float(l.group(1))
+        copy += float(l.group(2))
+    l = re.match('SHOAL_Copyback ([ ]*)([0-9.]*)', line)
+    if l:
+        copy += float(l.group(2))
+    l = re.match('SOAL_Computation ([ ]*)([0-9.]*)', line)
+    if l:
+        computation += float(l.group(2))
     # Extract runtime
     l = re.match('running time=([0-9.]*)', line)
     if l:
@@ -378,10 +387,11 @@ while 1:
     for checker in checkers:
         checker.check_line(line)
 
-if total and copy:
-    print 'total:    %10.5f' % total
+if total and copy and computation:
     print 'copy:     %10.5f' % copy
-    print 'comp:     %10.5f' % (total-copy)
+    print 'comp:     %10.5f' % computation
+    print 'total:    %10.5f' % (copy + computation)
+    print 'gmtotal:    %10.5f' % total    
 
 for checker in checkers:
     checker.summarize()

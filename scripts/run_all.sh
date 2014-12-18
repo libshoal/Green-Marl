@@ -52,7 +52,7 @@ fi
 (
     # Programs
     # --------------------------------------------------
-	for PROG in PROGRAMS; do
+	for PROG in $PROGRAMS; do
 
 	    # Configurations
 	    # --------------------------------------------------
@@ -81,7 +81,7 @@ fi
 
 			# Run
 			export NUM=3
-			exec_avg scripts/run.sh $OPTS $PROG $CORES ours $WORKLOAD $BARRELFISH &> $TMP; RC=$?
+			exec_avg scripts/run.sh $OPTS $PROG $CORES ours $WORKLOAD $BARRELFISH $BARRELFISH &> $TMP; RC=$?
 
 			# Evaluate return code
 			if [[ $RC -eq 0 ]]; then
@@ -91,10 +91,11 @@ fi
 			fi
 
 			# Print result
-			echo -e " .. return code [$RCS] for [$PROG] with [$CORES] [$OPTS] was [$RC] ... log at [$TMP]"
+			echo -e " .. return code [$RCS] for [$PROG] with [$CORES] [$OPTS] [$BARRELFISH] was [$RC] ... log at [$TMP]"
 			if [[ $RC -eq 0 ]]; then
 			    echo -n "  total: "; cat $TMP | awk '/^total:/ { print $2 }' | skstat.py
 			    echo -n "  comp : "; cat $TMP | awk '/^comp:/ { print $2 }' | skstat.py
+			    echo -n "  copy : "; cat $TMP | awk '/^copy:/ { print $2 }' | skstat.py
 
 				R=( "${PIPESTATUS[@]}" )
 
