@@ -48,7 +48,7 @@ CORELIST=""
 if [[ RUN_ON_BARRELFISH -eq 0 ]]; then
 	[[ -n "$CORELIST" ]] || error "Don't know this machine"
 else
-	CORELIST="20"
+	CORELIST="4 10 20"
 fi
 # --------------------------------------------------
 
@@ -81,7 +81,8 @@ fi
 			TMP=`mktemp /tmp/tmp-run_all-XXXXXX`
 			echo $TMP " " $PROG " " $OPTS " " $CORES >> $LOGFILES
 			echo "Running: $TMP $PROG $OPTS $CORES"
-
+            
+                        export SHL__NUM_CORES=$CORES
 			# Run
 			export NUM=3
 			exec_avg scripts/run.sh $OPTS $PROG $CORES ours $WORKLOAD $BARRELFISH $BARRELFISH &> $TMP; RC=$?
