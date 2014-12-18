@@ -33,6 +33,9 @@ fi
 # File to remeber log files
 LOGFILES=$(mktemp /tmp/run_all-overview-XXXXXX)
 
+BASE=$(readlink -e $(dirname $0)/../)
+. $BASE/env.sh
+
 # --------------------------------------------------
 # Set the number of cores for the benchmark according to the machine
 # --------------------------------------------------cd

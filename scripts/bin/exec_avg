@@ -1,0 +1,30 @@
+#!/bin/bash
+
+if [[ -z "$NUM" ]]; then
+    echo "No number of repetitions given, setting 5"
+    export NUM=5
+else
+    export NUM=$NUM
+fi
+OUT=`mktemp`
+echo "Running $NUM iterations of [$@]"
+(
+    for i in `seq 1 $NUM`
+    do
+	echo "Running $i out of $NUM" 1>&2
+
+	# I am a bit suprised that this works :-D
+	$@
+	    RC=$?
+	    if [[ "$RC" -ne 0 ]]; then
+		    exit 1 # kill subshell
+	    fi
+	sleep 3
+    done
+) | tee $OUT
+
+# check if subshell failed
+if [[ ${PIPESTATUS[0]} -ne 0 ]]; then exit 1; fi
+
+cat $OUT | skstat.py
+rm $OUT
