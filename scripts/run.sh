@@ -60,6 +60,7 @@ SHL_HUGEPAGE=0
 SHL_REPLICATION=0
 SHL_PARTITION=0
 SHL_DISTRIBUTION=0
+SHL_DMACOPY=0
 
 parse_opts=1
 
@@ -79,6 +80,10 @@ while [[ parse_opts -eq 1 ]]; do
             ;;
         -p)
             SHL_PARTITION=1
+            shift
+            ;;
+        -a) 
+            SHL_DMACOPY=1
             shift
             ;;
         *)
@@ -221,7 +226,7 @@ SHL_STRIDE=4096
 echo "Generating Global settings file..."
 $BASE/scripts/generate_settings.py -D $SHL_DISTRIBUTION -R $SHL_REPLICATION -P $SHL_PARTITION \
                                    -H $SHL_HUGEPAGE     -T $SHL_TRIM        -T $SHL_STATIC \
-                                   -W $SHL_STRIDE       -o $SETTINGS_FILE
+                                   -W $SHL_STRIDE       -A $SHL_DMACOPY     -o $SETTINGS_FILE
 
 if [[ $CONCAT_SETTINGS -eq 1 ]]; then
     if [[ -f $ARRAY_SETTINGS_FILE ]]; then

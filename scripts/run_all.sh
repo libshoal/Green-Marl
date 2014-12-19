@@ -59,7 +59,7 @@ fi
 
 	    # Configurations
 	    # --------------------------------------------------
-	    for OPTS in "" "-d" "-d -r" "-d -r -p"; do
+	    for OPTS in "" "-d" "-d -r" "-d -r -p" "-d -r -a" "-d -r -p -a"; do
 
 	    	if [[ $RUN_ON_BARRELFISH -eq 0 ]]; then
 	            # Build (one for configuration)

@@ -26,6 +26,7 @@ parser.add_argument('-H', help="Global Huge Pages enable")
 parser.add_argument('-T', help="Global NUMA TRIM enable")
 parser.add_argument('-S', help="Global OpenMP Static Schedule")
 parser.add_argument('-W', help="Global Distribution Stride Size")
+parser.add_argument('-A', help="Enabling asynchronous memcopy using DMA")
 parser.add_argument('-o', help="Output File")
 args = parser.parse_args()
 
@@ -51,8 +52,24 @@ write_setting(outfile, "replication", 1 if args.R else 0)
 write_setting(outfile, "partitioning", 1 if args.P else 0)
 write_setting(outfile, "hugepage", 1 if args.H else 0)
 write_setting(outfile, "trim", 1 if args.T else 0)
-write_setting(outfile, "stride", args.W if args.W else DEFAULT_PAGE_SIZE)
+write_setting(outfile, "stride", args.W if args.W else 4096)
 write_settinglast(outfile, "static", 1 if args.T else 0)
+outfile.write('}\n') 
+
+outfile.write('-- dma configuration\n') 
+outfile.write('dma = {\n') 
+write_setting(outfile, "enable",  1 if args.A else 0)
+if args.A :
+	write_setting(outfile, "vendor", 0x8086)
+	# Sandy Bridve / Ivy Bridge IOAT DMA Device
+	write_setting(outfile, "device", 0x0e20)
+	# Haswell IOAT Device
+	# write_setting(outfile, "device", 0x2f20)
+	# the number of DMA device (consecutive device IDs)
+	write_setting(outfile, "count", 8)
+	write_setting(outfile, "pcibus", 0)
+	write_setting(outfile, "pcidev", 4)
+	write_settinglast(outfile, "pcifun", 0)
 
 outfile.write('}\n') 
 
