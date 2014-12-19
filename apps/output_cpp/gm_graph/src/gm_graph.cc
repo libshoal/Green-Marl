@@ -15,6 +15,11 @@
 #include "gm_lock.h"
 #include "gm_file_handling.h"
 
+
+extern "C" {
+#include "gm_barrelfish.h"
+}
+
 #define GM_OMP_SCHEDULE static
 
 // The following option uses parallel prefix sum during reverse edge computation.
@@ -67,9 +72,13 @@ void gm_graph::freeze() {
     edge_t n_edges = num_edges();
 
     allocate_memory_for_frozen_graph(n_nodes, n_edges);
-
+#ifdef BARRELFISH
+    e_idx2id = (edge_t *)shl__alloc_memory(sizeof(edge_t) * n_edges);
+    e_id2idx = (edge_t *)shl__alloc_memory(sizeof(edge_t) * n_edges);
+#else
     e_idx2id = new edge_t[n_edges];
     e_id2idx = new edge_t[n_edges];
+#endif
 
     // iterate over graph and make new structure
     edge_t next_edge = 0;
@@ -207,10 +216,15 @@ void gm_graph::make_reverse_edges() {
 
     node_t n_nodes = num_nodes();
 
+#ifdef BARRELFISH
+    r_begin = (edge_t *)shl__alloc_memory(sizeof(edge_t) * num_nodes() + 1);
+    r_node_idx = (edge_t *)shl__alloc_memory(sizeof(edge_t) * num_edges());
+    e_rev2idx = (edge_t *)shl__alloc_memory(sizeof(edge_t) * num_edges());
+#else
     r_begin = new edge_t[num_nodes() + 1];
     r_node_idx = new node_t[num_edges()];
     e_rev2idx = new node_t[num_edges()];
-
+#endif
     edge_t* loc = new edge_t[num_edges()];
 
     //-------------------------------------------
@@ -411,7 +425,12 @@ static void semi_sort_main(node_t N, edge_t M, edge_t* begin, node_t* dest, edge
 
 void gm_graph::prepare_edge_source() {
     assert(node_idx_src == NULL);
+#ifdef BARRELFISH
+    node_idx_src = (node_t *)shl__alloc_memory(sizeof(node_t) * num_edges());
+#else
     node_idx_src = new node_t[num_edges()];
+#endif
+
 
 #pragma omp parallel for schedule(GM_OMP_SCHEDULE,128)
     for (node_t i = 0; i < num_nodes(); i++) {
@@ -425,7 +444,11 @@ void gm_graph::prepare_edge_source() {
 
 void gm_graph::prepare_edge_source_reverse() {
     assert(r_node_idx_src == NULL);
+#ifdef BARRELFISH
+    r_node_idx_src = (node_t *)shl__alloc_memory(sizeof(node_t) * num_edges());
+#else
     r_node_idx_src = new node_t[num_edges()];
+#endif
 
 #pragma omp parallel for schedule(GM_OMP_SCHEDULE,128)
     for (node_t i = 0; i < num_nodes(); i++) {
@@ -449,7 +472,11 @@ void gm_graph::do_semi_sort() {
     if (_semi_sorted) return;
 
     // create map to original index
+#ifdef BARRELFISH
+    e_idx2idx = (edge_t *)shl__alloc_memory(sizeof(edge_t) * num_edges());
+#else
     e_idx2idx = new edge_t[num_edges()];
+#endif
 
 #pragma omp parallel for schedule(GM_OMP_SCHEDULE,128)
     for (node_t i = 0; i < num_nodes(); i++) {
@@ -487,6 +514,9 @@ void gm_graph::prepare_external_creation(node_t n, edge_t m, bool clean_key_id_m
 }
 
 void gm_graph::delete_frozen_graph() {
+#ifdef BARRELFISH
+    /// TODO: propper cleanup
+#else
     delete[] node_idx; node_idx = NULL;
     delete[] begin; begin = NULL;
     delete[] node_idx_src; node_idx_src = NULL;
@@ -499,12 +529,17 @@ void gm_graph::delete_frozen_graph() {
     delete[] e_idx2idx; e_idx2idx = NULL;
     delete[] e_id2idx; e_id2idx = NULL;
     delete[] e_idx2id; e_idx2id = NULL;
-
+#endif
 }
 
 void gm_graph::allocate_memory_for_frozen_graph(node_t n, edge_t m) {
+#ifdef BARRELFISH
+    begin = (edge_t *)shl__alloc_memory(sizeof(edge_t) * n + 1);
+    node_idx = (node_t *)shl__alloc_memory(sizeof(node_t) * m);
+#else
     begin = new edge_t[n + 1];
     node_idx = new node_t[m];
+#endif
 
     _numNodes = n;
     _numEdges = m;

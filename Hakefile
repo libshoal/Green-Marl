@@ -10,6 +10,9 @@
 
 [ build library { 
     target = "gmgraph",
+    cFiles = [
+        "apps/output_cpp/gm_graph/src/barrelfish.c"
+    ],
     cxxFiles = [
         "apps/output_cpp/gm_graph/src/gm_bitmap.cc",
         "apps/output_cpp/gm_graph/src/gm_graph_adj_loader.cc",
