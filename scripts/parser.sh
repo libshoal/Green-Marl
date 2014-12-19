@@ -7,7 +7,13 @@ function error() {
 
 function usage() {
 
-    echo "Usage: $0 <measurement-file>"
+    cat <<EOF
+$0 [-mode] <measurement-file>
+
+Where mode is:
+ -w : determine working-set size
+ -c : array configuration
+EOF
     exit 1
 }
 
@@ -23,6 +29,18 @@ while [[ -n "$1" ]]; do
 			break
 			;;
 
+		"-c")
+			shift
+			MODE=CONF
+			break
+			;;
+
+		"-p")
+			shift
+			MODE=PERFORMANCE
+			break
+			;;
+
 		*)
 			break
 			;;
@@ -35,7 +53,7 @@ IN=$1
 TMP=`mktemp -d`
 
 tar -xf $IN -C $TMP
-OVERVIEW=$(find $TMP -name 'papi_all-overview-*')
+OVERVIEW=$(find $TMP -name '*_all-overview-*')
 
 # --------------------------------------------------
 # CONFIGURATION
@@ -103,7 +121,7 @@ do
 	CONF=""
     fi
 
-	#    echo $FILE "-" $APP "-" $CONF "-" $NUM
+	echo $FILE "-" $APP "-" $CONF "-" $NUM
 	echo $TMP/$FILE >> $TMPFILE
 
 done < $OVERVIEW
@@ -114,8 +132,14 @@ case $MODE in
 	PAPI)
 		cat $TMPFILE | xargs ${SCRIPTDIR}/parse_papi.py
 		;;
+	PERFORMANCE)
+		cat $TMPFILE | xargs ${SCRIPTDIR}/parse_performance.py
+		;;
 	WORKINGSETSIZE)
 		cat $TMPFILE | xargs ${SCRIPTDIR}/parse_workingsetsize.py
+		;;
+	CONF)
+		cat $TMPFILE | xargs ${SCRIPTDIR}/parse_array_conf.py
 		;;
 	*)
 		echo "Don't know what to do"
