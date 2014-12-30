@@ -9,6 +9,7 @@
 
 #include "shl.h"
 #ifdef BARRELFISH
+#include "gm_barrelfish.h"
 extern "C" {
 #include <omp.h>
 #include <vfs/vfs.h>
@@ -196,6 +197,12 @@ public:
          * XXX This line signals the termination of the execution for scalebench
          */
         printf("XXXXXXXXXX GM DONE XXXXXXXXXXXXXX\n");
+
+#ifdef BARRELFISH
+        // XXX avoid page faults
+       while(1)
+           ;
+#endif
 
         if (!b) exit (EXIT_FAILURE);
     }
