@@ -16,7 +16,11 @@ public:
     }
 
     virtual bool prepare() {
+#ifdef BARRELFISH
+        rank = (double *)shl__alloc_memory(G.num_nodes() * sizeof(double));
+#else
         rank = new double[G.num_nodes()];
+#endif
         return true;
     }
 
@@ -32,7 +36,11 @@ public:
         for (int i = 0; i < 4; i++) {
             printf("rank[%d] = %0.9lf\n", i, rank[i]);
         }
+#ifdef BARRELFISH
+        /* TODO: reclaim memory */
+#else
         delete[] rank;
+#endif
         return true;
     }
 
