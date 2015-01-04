@@ -58,8 +58,8 @@ outfile.write('}\n')
 
 outfile.write('-- dma configuration\n') 
 outfile.write('dma = {\n') 
-write_setting(outfile, "enable",  1 if args.A else 0)
-if args.A :
+write_setting(outfile, "enable",  int(args.A) if args.A else 0)
+if int(args.A) == 1 :
 	write_setting(outfile, "vendor", 0x8086)
 	# Sandy Bridve / Ivy Bridge IOAT DMA Device
 	write_setting(outfile, "device", 0x0e20)
