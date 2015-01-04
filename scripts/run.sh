@@ -19,7 +19,7 @@ function error() {
 function usage() {
     echo "Usage: $0 <options> {pagerank,hop_dist,triangle_counting} <num_threads> {ours,theirs} {huge,soc-LiveJournal1,twitter_rv,big} [-n] [-d] [-b]"
     echo ""
-    echo "options: supported are: -h for hugepages, -d for distribution, -r for replication, -p for partitioning"
+    echo "options: supported are: -h for hugepages, -d for distribution, -r for replication, -p for partitioning, -a for DMA copy"
     echo "-d: run in GDB"
     echo "-n: do NOT run sanity checks"
     echo "-b for Barrelfish"

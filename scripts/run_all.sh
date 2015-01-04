@@ -59,7 +59,7 @@ fi
 
 	    # Configurations
 	    # --------------------------------------------------
-	    for OPTS in "" "-d" "-d -r" "-d -r -p" "-d -r -a" "-d -r -p -a"; do
+	    for OPTS in "" "-a" "-d" "-d -r" "-d -r -p" "-p -r -a" "-r -p -a"; do
 
 	    	if [[ $RUN_ON_BARRELFISH -eq 0 ]]; then
 	            # Build (one for configuration)
@@ -82,7 +82,7 @@ fi
 			echo $TMP " " $PROG " " $OPTS " " $CORES >> $LOGFILES
 			echo "Running: $TMP $PROG $OPTS $CORES"
             
-                        export SHL__NUM_CORES=$CORES
+            export SHL__NUM_CORES=$CORES
 			# Run
 			export NUM=3
 			exec_avg scripts/run.sh $OPTS $PROG $CORES ours $WORKLOAD $BARRELFISH $BARRELFISH &> $TMP; RC=$?
