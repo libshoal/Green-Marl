@@ -225,7 +225,7 @@ SHL_STRIDE=4096
 
 echo "Generating Global settings file..."
 $BASE/scripts/generate_settings.py -D $SHL_DISTRIBUTION -R $SHL_REPLICATION -P $SHL_PARTITION \
-                                   -H $SHL_HUGEPAGE     -T $SHL_TRIM        -T $SHL_STATIC \
+                                   -H $SHL_HUGEPAGE     -T $SHL_TRIM        -S $SHL_STATIC \
                                    -W $SHL_STRIDE       -A $SHL_DMACOPY     -o $SETTINGS_FILE
 
 if [[ $CONCAT_SETTINGS -eq 1 ]]; then
