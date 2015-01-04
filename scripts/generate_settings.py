@@ -52,7 +52,7 @@ write_setting(outfile, "replication", 1 if args.R else 0)
 write_setting(outfile, "partitioning", 1 if args.P else 0)
 write_setting(outfile, "hugepage", 1 if args.H else 0)
 write_setting(outfile, "trim", 1 if args.T else 0)
-write_setting(outfile, "stride", args.W if args.W else 4096)
+write_setting(outfile, "stride", int(args.W) if args.W else 4096)
 write_settinglast(outfile, "static", 1 if args.T else 0)
 outfile.write('}\n') 
 
