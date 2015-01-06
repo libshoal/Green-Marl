@@ -18,7 +18,7 @@ def write_settinglast(f, label, value) :
 
 def write_dmadevice(f, label, count, bus, dev, fun) :
 	f.write('%s = {\n' % label)
-	f.write('    count=%u, \n    bus=%u, \n    dev=%u, \n    fun=%u }\n' % (count, bus, dev, fun))
+	f.write('    count=%u, \n    bus=%u, \n    dev=%u, \n    fun=%u\n' % (count, bus, dev, fun))
 	f.write('}\n') 
 
 
@@ -77,7 +77,7 @@ if int(args.A) == 1 :
 outfile.write('}\n') 
 if int(args.A) == 1 :
 	write_dmadevice(outfile, "dma_device_0", 8, 0, 4, 0)
-	write_dmadevice(outfile, "dma_device_1", 0, 0x80, 4, 0)
+	write_dmadevice(outfile, "dma_device_1", 8, 0x80, 4, 0)
 
 
 outfile.close() 
