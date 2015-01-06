@@ -76,7 +76,7 @@ if int(args.A) == 1 :
 	# Sandy Bridve / Ivy Bridge IOAT DMA Device
 	write_setting(outfile, "device", 0x0e20)
 	write_settinglast(outfile, "device_count", 2)
-outfile.write('}\n') 
+        outfile.write('}\n') 
 	write_dmadevice(outfile, "dma_device_0", 8, 0, 4, 0)
 	write_dmadevice(outfile, "dma_device_1", 0, 0x80, 4, 0)
 
