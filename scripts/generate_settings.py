@@ -16,6 +16,14 @@ def write_setting(f, label, value) :
 def write_settinglast(f, label, value) :
 	f.write('    %s = %u\n' % (label, value))
 
+def write_dmadevice(f, label, count, bus, dev, fun) :
+	f.write('    %s = {count=%u, bus=%u, dev=%u, fun=%u },\n' % (label, count, bus, dev, fun))
+
+def write_dmadevicelast(f, label, count, bus, dev, fun) :
+	f.write('%s = {\n') % (label)
+	f.write('    count=%u, \nbus=%u, \ndev=%u, \nfun=%u }\n' % (count, bus, dev, fun))
+	f.write('}\n') 
+
 
 
 parser = argparse.ArgumentParser(description='Generating a settings.lua file for the benchmark')
@@ -60,17 +68,18 @@ outfile.write('-- dma configuration\n')
 outfile.write('dma = {\n') 
 write_setting(outfile, "enable",  int(args.A) if args.A else 0)
 if int(args.A) == 1 :
-	write_setting(outfile, "vendor", 0x8086)
-	# Sandy Bridve / Ivy Bridge IOAT DMA Device
-	write_setting(outfile, "device", 0x0e20)
 	# Haswell IOAT Device
 	# write_setting(outfile, "device", 0x2f20)
 	# the number of DMA device (consecutive device IDs)
-	write_setting(outfile, "count", 8)
-	write_setting(outfile, "pcibus", 0)
-	write_setting(outfile, "pcidev", 4)
-	write_settinglast(outfile, "pcifun", 0)
 
+	write_setting(outfile, "vendor", 0x8086)
+	# Sandy Bridve / Ivy Bridge IOAT DMA Device
+	write_setting(outfile, "device", 0x0e20)
+	write_settinglast(outfile, "device_count", 2)
 outfile.write('}\n') 
+	write_dmadevice(outfile, "dma_device_0", 8, 0, 4, 0)
+	write_dmadevice(outfile, "dma_device_1", 0, 0x80, 4, 0)
+
 
 outfile.close() 
+
