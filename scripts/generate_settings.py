@@ -17,11 +17,8 @@ def write_settinglast(f, label, value) :
 	f.write('    %s = %u\n' % (label, value))
 
 def write_dmadevice(f, label, count, bus, dev, fun) :
-	f.write('    %s = {count=%u, bus=%u, dev=%u, fun=%u },\n' % (label, count, bus, dev, fun))
-
-def write_dmadevicelast(f, label, count, bus, dev, fun) :
-	f.write('%s = {\n') % (label)
-	f.write('    count=%u, \nbus=%u, \ndev=%u, \nfun=%u }\n' % (count, bus, dev, fun))
+	f.write('%s = {\n' % label)
+	f.write('    count=%u, \n    bus=%u, \n    dev=%u, \n    fun=%u }\n' % (count, bus, dev, fun))
 	f.write('}\n') 
 
 
@@ -76,7 +73,9 @@ if int(args.A) == 1 :
 	# Sandy Bridve / Ivy Bridge IOAT DMA Device
 	write_setting(outfile, "device", 0x0e20)
 	write_settinglast(outfile, "device_count", 2)
-        outfile.write('}\n') 
+
+outfile.write('}\n') 
+if int(args.A) == 1 :
 	write_dmadevice(outfile, "dma_device_0", 8, 0, 4, 0)
 	write_dmadevice(outfile, "dma_device_1", 0, 0x80, 4, 0)
 
