@@ -74,5 +74,38 @@
     addGeneratedIncludes = [
         "/include/green-marl"
     ]
-  }     
+  },
+    build application { 
+    target = "gm_hd",
+    architectures = [ 
+       "x86_64",
+       "k1om"
+    ],
+    cxxFiles = [ 
+        "src/hop_dist_main.cc"
+    ],
+    generatedCxxFiles = [
+        "/usr/green-marl/hop_dist.cc"
+    ],
+    addGeneratedDependencies = [
+        "/usr/green-marl/hop_dist.cc"
+    ],
+    addLibraries = libDeps [  
+        "gmgraph",
+        "shl"
+    ],
+    addCxxFlags = [
+         "-fopenmp",
+         "-fpermissive",
+         "-Wno-unused-variable"
+    ],
+    addIncludes = [
+        "/lib/bomp",
+        "gm_graph/inc",
+        "/lib/shoal/inc"
+    ],
+    addGeneratedIncludes = [
+        "/include/green-marl"
+    ]
+  }       
 ]
