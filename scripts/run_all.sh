@@ -4,8 +4,9 @@
 
 PROG=pagerank
 OPTS=
-#WORKLOAD=twitter_rv
-WORKLOAD="soc-LiveJournal1"
+
+WORKLOAD=twitter_rv
+#WORKLOAD="soc-LiveJournal1"
 
 txtred='\e[0;31m' # Red
 txtgrn='\e[0;32m' # Green
@@ -63,6 +64,12 @@ fi
     # --------------------------------------------------
     for PROG in $PROGRAMS; do
 
+		# Twitter does not work on triangle_counting
+	    if [[ "$PROG" == "triangle_counting" ]]; then
+			echo "Encountered triangle_counting, using soc-LiveJournal1"
+			WORKLOAD="soc-LiveJournal1"
+	    fi
+
         # Configurations
         # --------------------------------------------------
         for optidx in ${!OPTIONS[*]}; do
@@ -89,8 +96,8 @@ fi
                 TMP=`mktemp /tmp/tmp-run_all-XXXXXX`
                 echo $TMP " " $PROG " " $OPTS " " $CORES >> $LOGFILES
                 echo "Running: $TMP $PROG $OPTS $CORES"
-                
-                
+
+
                 export SHL__NUM_CORES=$CORES
                 export SHL__WORKLOAD=$BARRELFISH_WORKLOAD
                 # Run
@@ -118,10 +125,11 @@ fi
                         echo "WARNING: skstat.py did not exit properly"
                     fi
                 fi
-                
+
             done
         done
     done
+
 )
 
 # Create archive from log file and cleanup

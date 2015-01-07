@@ -3,8 +3,15 @@
 #set -x
 
 OPTS=
-#WORKLOAD=twitter_rv
-WORKLOAD="soc-LiveJournal1"
+
+# Configure the workload to be used
+# --------------------------------------------------
+#
+# Twitter is much bigger and runs much longer. It does not work with
+# triangle_counting, so we just fall back to soc-LiveJournal1 in that
+# case.
+WORKLOAD=twitter_rv
+#WORKLOAD="soc-LiveJournal1"
 
 txtred='\e[0;31m' # Red
 txtgrn='\e[0;32m' # Green
@@ -22,12 +29,16 @@ LOGFILES=$(mktemp /tmp/test_all-overview-XXXXXX)
 # --------------------------------------------------
 # Number of cores
 # --------------------------------------------------
-CORELIST=$(nproc) 1
+CORELIST="$(nproc) 1"
 
 (
     # Programs
     # --------------------------------------------------
 	for PROG in "pagerank" "hop_dist" "triangle_counting"; do
+
+	    if [[ $PROG == "triangle_counting" ]]; then
+		WORKLOAD="soc-LiveJournal1"
+	    fi
 
 	    # Configurations
 	    # --------------------------------------------------

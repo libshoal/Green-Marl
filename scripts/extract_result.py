@@ -334,7 +334,9 @@ if args.barrelfish :
 else :
     print 'Linux Result from STDIN'
 
-
+baseline = False
+if 'org_gm' in args.program:
+    baseline = True
 result = True
 
 crc_checker = CRCChecker(workload, program)
@@ -419,7 +421,8 @@ print 'lines processed:', lines, '- result' , result_out
 
 if result and (
         (crc_checker.correct and crc_checker.checked) or
-        program == "triangle_counting"):  # triangle_counting does not have checksums
+        program == "triangle_counting" or
+        baseline):  # triangle_counting does not have checksums
     exit(0)
 
 exit(1)

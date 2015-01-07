@@ -82,7 +82,7 @@ while [[ parse_opts -eq 1 ]]; do
             SHL_PARTITION=1
             shift
             ;;
-        -a) 
+        -a)
             SHL_DMACOPY=1
             shift
             ;;
@@ -106,14 +106,13 @@ if [[ "$3" == "ours" ]]; then
 fi
 
 if [[ "$3" == "theirs" ]]; then
-    INPUT=$BASE/../org_gm/apps/output_cpp/bin/$1
-    INPUTARGS=" 100 0.001 0.85 -GMMeasureTime=1"
+	INPUT=$BASE/../org_gm/apps/output_cpp/bin/$1
+	INPUTARGS=" -GMMeasureTime=1"
 fi
 
 WORKLOAD=$WORKLOAD_BASE/$4.bin
 
 SHL__PROGRAM=""
-
 BARRELFISH_PROGRAM=""
     case $1 in
         pagerank)
@@ -272,7 +271,7 @@ if [[ $DEBUG -eq 0 ]]; then
             rm -rf $SETTINGS_FILE
             exit 1
         fi
-            
+
         popd
 
         # producing the output directory folder
@@ -293,7 +292,7 @@ if [[ $DEBUG -eq 0 ]]; then
             echo "result wrong"
             exit 1
         fi
-        
+
         exit 0
     else
         # Start benchmark
