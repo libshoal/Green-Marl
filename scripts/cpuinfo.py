@@ -9,6 +9,7 @@ import fileinput
 sys.path.append(os.getenv('HOME') + '/bin/')
 
 import tools
+import subprocess
 
 class CPUInfo:
 
@@ -32,8 +33,11 @@ class CPUInfo:
         # ID of core on that socket
         m = re.match('^core id\s*:\s(\d+)', line)
         if m:
-            self.proc2phy[self.proc] = (self.socket, int(m.group(1)))
-            print "Adding", self.proc, (self.socket, int(m.group(1)))
+
+            node = int(subprocess.check_output(['scripts/core2node', '%d' % self.proc]))
+
+            self.proc2phy[self.proc] = (node, int(m.group(1)))
+            print "Adding", self.proc, (self.socket, node, int(m.group(1)))
             self.socket = None
             self.proc = None
 
@@ -53,7 +57,7 @@ class CPUInfo:
         for (ss,sc) in self.get_cores():
 
             threads = [ t for (t, (s,c)) in self.proc2phy.items() if (s,c) == (ss,sc) ]
-            assert len(threads)==2
+            assert len(threads)>0
 
             res.append(sorted(threads)[0])
 
@@ -83,10 +87,12 @@ class CPUInfo:
 
         # Add the first core on each socket
         for ss in range(self.get_num_sockets()):
-            for sc in range(self.get_num_cores_per_socket()):
+            for sc in range(self.get_num_cores_per_socket()/2): # Add half of the threads (e.g. no hyperthreads), not sure if that is correct
+
+                print 'Searching  core', ss, sc
 
                 threads = [ t for (t, (s,c)) in self.proc2phy.items() if (s,c) == (ss,sc) ]
-                assert len(threads)==2
+                assert len(threads)>0
 
                 res.append(sorted(threads)[0])
 

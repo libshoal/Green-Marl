@@ -160,7 +160,11 @@ public:
         gettimeofday(&T1, NULL);
         if (generate_graph) {
             printf("generating graph...\n");
+#ifdef BARRELFISH
             create_uniform_random_graph_new(G, N,M, 0xcafebabe, false);
+#else
+            assert(!"Not needed on Linux");
+#endif
         } else {
             printf("loading graph... %s\n", argv[1]);
             b = G.load_binary(argv[1]);
