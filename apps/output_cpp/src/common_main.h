@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include "gm.h"
+#include "graph_gen.h"
 
 #include "shl.h"
 #ifdef BARRELFISH
@@ -60,7 +61,6 @@ public:
         gm_graph_check_node_edge_size_at_link_time();
 
         if (argc < 4) {
-
             printf("%s <graph_name> <num_threads> <nfspath>", argv[0]);
             print_arg_info();
             printf("\n");
@@ -79,12 +79,23 @@ public:
             exit (EXIT_FAILURE);
         }
 
-        int num = atoi(argv[2]);
+        int generate_graph = 0;
+        int nthreads = 0;
+        long N=0, M=0;
+        if (strncmp("GENERATE", argv[1], 8) == 0) {
+            N = atol(argv[2]);
+            M = atoi(argv[3]);
+            printf("GENERATING GRAPH: %lu, %lu", N, M);
+            nthreads = atoi(argv[4]);
+            generate_graph = 1;
+        } else {
+            nthreads = atoi(argv[2]);
+        }
 
 #ifdef SHL_STATIC
-        shl__init(num, 1);
+        shl__init(nthreads, 1);
 #else
-        shl__init(num, 0);
+        shl__init(nthreads, 0);
 #endif
 
 #ifdef BARRELFISH
@@ -112,33 +123,35 @@ public:
             } break;
             case XOMP_ERR_BAD_INVOCATION: {
                 printf("Barrelfish specific prepare:\n");
-                printf("  vfs initialization\n");
-                vfs_init();
-                printf("  vfs mkdir /nfs\n");
-                err = vfs_mkdir("/nfs");
-                if (err_is_fail(err)) {
-                    printf("ERROR: failed to create path, %s\n",err_getstring(err));
-                    exit (EXIT_FAILURE);
-                }
-                if (argv[3][0] != '0') {
-                    printf("  vfs mount /nfs %s\n", argv[3]);
-                    err = vfs_mount("/nfs", argv[3]);
+                if (!generate_graph) {
+                    printf("  vfs initialization\n");
+                    vfs_init();
+                    printf("  vfs mkdir /nfs\n");
+                    err = vfs_mkdir("/nfs");
                     if (err_is_fail(err)) {
-                        printf("ERROR: failed to mount path, %s\n",err_getstring(err));
-                        exit(EXIT_FAILURE);
+                        printf("ERROR: failed to create path, %s\n",err_getstring(err));
+                        exit (EXIT_FAILURE);
+                    }
+                    if (argv[3][0] != '0') {
+                        printf("  vfs mount /nfs %s\n", argv[3]);
+                        err = vfs_mount("/nfs", argv[3]);
+                        if (err_is_fail(err)) {
+                            printf("ERROR: failed to mount path, %s\n",err_getstring(err));
+                            exit(EXIT_FAILURE);
+                        }
                     }
                 }
 
                 printf("  initialize library for barrelfish\n");
-                gm_rt_initialize_barrelfish(num);
+                gm_rt_initialize_barrelfish(nthreads);
             } break;
             default:
                 printf("Unexpected failure during argument parsing\n");
                 exit (EXIT_FAILURE);
         }
 #endif
-        printf("running with %d threads\n", num);
-        gm_rt_set_num_threads(num); // gm_runtime.h
+        printf("running with %d threads\n", nthreads);
+        gm_rt_set_num_threads(nthreads); // gm_runtime.h
 
         //--------------------------------------------
         // Load graph and creating reverse edges
@@ -146,19 +159,23 @@ public:
         struct timeval T1, T2;
         gettimeofday(&T1, NULL);
         printf("loading graph...%s\n", argv[1]);
-        b = G.load_binary(argv[1]);
-        if (!b) {
-            printf("error reading graph\n");
-            exit (EXIT_FAILURE);
+        if (generate_graph) {
+            create_uniform_random_graph_new(G, N,M, 0xcafebabe, false);
+        } else {
+            b = G.load_binary(argv[1]);
+            if (!b) {
+                printf("error reading graph\n");
+                exit (EXIT_FAILURE);
+            }
+            gettimeofday(&T2, NULL);
+            printf("graph loading time=%lf\n", (T2.tv_sec - T1.tv_sec) * 1000 + (T2.tv_usec - T1.tv_usec) * 0.001);
+
+            gettimeofday(&T1, NULL);
+            G.make_reverse_edges();
+            gettimeofday(&T2, NULL);
+            printf("reverse edge creation time=%lf\n", (T2.tv_sec - T1.tv_sec) * 1000 + (T2.tv_usec - T1.tv_usec) * 0.001);
+
         }
-        gettimeofday(&T2, NULL);
-        printf("graph loading time=%lf\n", (T2.tv_sec - T1.tv_sec) * 1000 + (T2.tv_usec - T1.tv_usec) * 0.001);
-
-        gettimeofday(&T1, NULL);
-        G.make_reverse_edges();
-        gettimeofday(&T2, NULL);
-        printf("reverse edge creation time=%lf\n", (T2.tv_sec - T1.tv_sec) * 1000 + (T2.tv_usec - T1.tv_usec) * 0.001);
-
         //gettimeofday(&T1, NULL);
         //G.do_semi_sort();
         //gettimeofday(&T2, NULL);
