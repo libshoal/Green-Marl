@@ -27,9 +27,10 @@ if [[ "$1" == "-b" ]]; then
     BARRELFISH="-b"
     PROGRAMS="pagerank hop_dist triangle_counting"
     OPTIONS=("" "-p" "-r" "-r -p" "-a" "-p -a" "-r -a " "-r -p -a")
-    export SHL__WORKLOAD="/nfs/soc-LiveJournal1.bin"
+    BARRELFISH_WORKLOAD="/nfs/soc-LiveJournal1.bin"
 else
     PROGRAMS="pagerank hop_dist"
+    BARRELFISH_WORKLOAD="null"
     OPTIONS=("" "-a" "-d" "-d -r" "-d -r -p" "-p -r -a" "-r -p -a")
 fi
 
@@ -91,7 +92,7 @@ fi
                 
                 
                 export SHL__NUM_CORES=$CORES
-
+                export SHL__WORKLOAD=$BARRELFISH_WORKLOAD
                 # Run
                 export NUM=$NUM_RUNS
                 exec_avg scripts/run.sh $OPTS $PROG $CORES ours $WORKLOAD $BARRELFISH $BARRELFISH &> $TMP; RC=$?
