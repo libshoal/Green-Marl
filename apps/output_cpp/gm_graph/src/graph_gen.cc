@@ -9,8 +9,54 @@
 #include "graph_gen.h"
 #include "gm_rand.h"
 
+void create_uniform_random_graph_new(gm_graph &G, node_t N, edge_t M, long seed, bool use_xorshift_rng) {
+
+    gm_rand xorshift_rng(seed);
+    if (!use_xorshift_rng) {
+        srand(seed);
+    }
+
+    G.prepare_external_creation(N, M);
+
+    node_t* src = new node_t[M];
+    node_t* dest = new node_t[M];
+    edge_t* degree = new edge_t[N];
+    memset(degree, 0, sizeof(edge_t) * N);
+
+    for (edge_t i = 0; i < M; i++) {
+        node_t r;
+        if (use_xorshift_rng) r = (edge_t)xorshift_rng.rand();
+        else r = rand(); //TODO 64-bit ?
+        src[i] = r % N;
+        if (use_xorshift_rng) r = (edge_t)xorshift_rng.rand();
+        else r = rand(); //TODO 64-bit ?
+        dest[i] = r % N;
+
+        degree[src[i]]++;
+    }
+
+    G.begin[0] = 0;
+    for (node_t i = 1; i <= N; i++) {
+        G.begin[i] = G.begin[i - 1] + degree[i - 1];
+    }
+
+    for (edge_t i = 0; i < M; i++) {
+        node_t u = src[i];
+        node_t v = dest[i];
+
+        edge_t pos = degree[u]--;
+        assert(pos > 0);
+        G.node_idx[G.begin[u] + pos - 1] = v;  // set end node of this edge
+    }
+
+    delete[] src;
+    delete[] dest;
+    delete[] degree;
+}
+
+
 gm_graph* create_uniform_random_graph(node_t N, edge_t M, long seed, bool use_xorshift_rng) {
-    
+
     gm_rand xorshift_rng(seed);
     if (!use_xorshift_rng) {
         srand(seed);
@@ -28,10 +74,10 @@ gm_graph* create_uniform_random_graph(node_t N, edge_t M, long seed, bool use_xo
         node_t r;
         if (use_xorshift_rng) r = (edge_t)xorshift_rng.rand();
         else r = rand(); //TODO 64-bit ?
-        src[i] = r % N;  
+        src[i] = r % N;
         if (use_xorshift_rng) r = (edge_t)xorshift_rng.rand();
         else r = rand(); //TODO 64-bit ?
-        dest[i] = r % N; 
+        dest[i] = r % N;
 
         degree[src[i]]++;
     }
@@ -106,7 +152,7 @@ gm_graph* create_uniform_random_nonmulti_graph(node_t N, edge_t M, long seed) {
     return G;
 }
 
-/** 
+/**
  Create RMAT graph
  a, b, c : params
  */
