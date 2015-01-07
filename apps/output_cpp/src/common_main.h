@@ -85,7 +85,7 @@ public:
         if (strncmp("GENERATE", argv[1], 8) == 0) {
             N = atol(argv[2]);
             M = atoi(argv[3]);
-            printf("GENERATING GRAPH: %lu, %lu", N, M);
+            printf("GENERATING GRAPH: node=%lu, edges=%lu", N, M);
             nthreads = atoi(argv[4]);
             generate_graph = 1;
         } else {
@@ -93,9 +93,9 @@ public:
         }
 
 #ifdef SHL_STATIC
-        shl__init(nthreads, 1);
+        nthreads = shl__init(nthreads, 1);
 #else
-        shl__init(nthreads, 0);
+        nthreads = shl__init(nthreads, 0);
 #endif
 
 #ifdef BARRELFISH
@@ -158,10 +158,11 @@ public:
         //--------------------------------------------
         struct timeval T1, T2;
         gettimeofday(&T1, NULL);
-        printf("loading graph...%s\n", argv[1]);
         if (generate_graph) {
+            printf("generating graph...\n");
             create_uniform_random_graph_new(G, N,M, 0xcafebabe, false);
         } else {
+            printf("loading graph... %s\n", argv[1]);
             b = G.load_binary(argv[1]);
             if (!b) {
                 printf("error reading graph\n");
