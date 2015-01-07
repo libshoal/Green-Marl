@@ -112,20 +112,26 @@ fi
 
 WORKLOAD=$WORKLOAD_BASE/$4.bin
 
+SHL__PROGRAM=""
+SHL__WORKLOAD=""
+
 BARRELFISH_PROGRAM=""
     case $1 in
         pagerank)
-            BARRELFISH_WORKLOAD=GreenMarl_PageRank
+            BARRELFISH_WORKLOAD=GreenMarl
+            export SHL__PROGRAM="gm_pr"
             shift
             ;;
-#       hop_dist)
-#           SHL_DISTRIBUTION=1
-#           shift
-#           ;;
-#       triangle_counting)
-#           SHL_REPLICATION=1
-#           shift
-#           ;;
+       hop_dist)
+           BARRELFISH_WORKLOAD=GreenMarl
+           export SHL__PROGRAM="gm_hd"
+           shift
+           ;;
+       triangle_counting)
+           BARRELFISH_WORKLOAD=GreenMarl
+           export SHL__PROGRAM="gm_tc"
+           shift
+           ;;
         *)
             error "Cannot find barrelfish program [$1]"
     esac
