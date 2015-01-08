@@ -59,6 +59,9 @@ else
 fi
 # --------------------------------------------------
 
+git describe >> $LOGFILES
+(cd shoal && git describe) >> $LOGFILES
+
 (
     # Programs
     # --------------------------------------------------
