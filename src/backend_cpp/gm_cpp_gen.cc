@@ -1485,6 +1485,8 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
 
             Body.pushln("shl__end_timer(\"SHOAL_Copyback\");\n");
 
+            Body.pushln("Timer t_crc;");
+            Body.pushln("t_crc.start();");
             for (i=sk_gm_arrays.begin(); i!=sk_gm_arrays.end(); ++i) {
 
                  struct sk_gm_array a = i->second;
@@ -1498,8 +1500,8 @@ void gm_cpp_gen::generate_sent_block_exit(ast_sentblock* sb) {
                  sprintf(tmp, "%s__set->print_crc();", dest, src);   // 1) name
                  Body.pushln(tmp);
              }
-
-
+            Body.pushln("printf(\"t_crc: %lf\\n\", t_crc.stop());");
+            Body.pushln("");
 
             sprintf(temp, "%s();", CLEANUP_PTR);
             Body.pushln(temp);

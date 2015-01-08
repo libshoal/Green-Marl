@@ -22,6 +22,7 @@ function usage() {
     echo "options: supported are: -h for hugepages, -d for distribution, -r for replication, -p for partitioning, -a for DMA copy"
     echo "-d: run in GDB"
 	echo "-v: run in valgrind"
+	echo "-c: disable CRC check"
     echo "-n: do NOT run sanity checks"
     echo "-b for Barrelfish"
     echo <<EOF
@@ -39,6 +40,7 @@ BASE=$(readlink -e $(dirname $0)/../)
 WORKLOAD_BASE=$(readlink -e $BASE/../graphs/)
 ARRAY_SETTINGS_FILE=$BASE/local_array_settings.lua
 
+echo "Hostname: $(hostname)"
 echo "Base Directory: $BASE"
 
 #WORKLOAD=$BASE/../graphs/huge.bin
@@ -151,6 +153,13 @@ if [[ "$4" == "-d" ]]; then
     shift
 fi
 
+CRC=1
+if [[ "$4" == "-c" ]]; then
+	echo "Disabling CRC"
+    CRC=0
+    shift
+fi
+
 CHECK=1
 if [[ "$4" == "-n" ]]; then
     CHECK=0
@@ -239,7 +248,10 @@ SHL_STRIDE=4096
 echo "Generating Global settings file..."
 $BASE/scripts/generate_settings.py -D $SHL_DISTRIBUTION -R $SHL_REPLICATION -P $SHL_PARTITION \
                                    -H $SHL_HUGEPAGE     -T $SHL_TRIM        -S $SHL_STATIC \
-                                   -W $SHL_STRIDE       -A $SHL_DMACOPY     -o $SETTINGS_FILE
+                                   -W $SHL_STRIDE       -A $SHL_DMACOPY     -C $CRC \
+								   -o $SETTINGS_FILE
+
+cat $SETTINGS_FILE
 
 if [[ $CONCAT_SETTINGS -eq 1 ]]; then
     if [[ -f $ARRAY_SETTINGS_FILE ]]; then

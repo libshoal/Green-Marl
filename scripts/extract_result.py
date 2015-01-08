@@ -158,12 +158,12 @@ class CRCChecker(LineChecker):
         if not self.ARRNAME in validate[self.program]:
             return
 
-        l = re.match('^CRC shl__%s ([0-9xa-fA-F]*)' % validate[self.program][self.ARRNAME], line)
+        l = re.match('^CRC shl__%s ([0-9xa-fA-Fn\.]*)' % validate[self.program][self.ARRNAME], line)
         if l:
             print 'Found CRC output', line, l.group(1)
             correct_output = validate[self.program][self.workload][self.KEY]
             self.checked = True
-            self.correct &= correct_output == l.group(1)
+            self.correct &= (correct_output == l.group(1) or l.group(1) == "n.a.")
 
 # --------------------------------------------------
 
@@ -378,6 +378,10 @@ while 1:
     l = re.match('running time=([0-9.]*)', line)
     if l:
         total = float(l.group(1))
+    # Extract CRC time
+    l = re.match('t_crc: ([0-9.]*)', line)
+    if l:
+        t_crc = float(l.group(1))
 
     # check result output
     # --------------------------------------------------
@@ -391,11 +395,12 @@ while 1:
     for checker in checkers:
         checker.check_line(line)
 
-if total and copy and computation:
+if total and copy and computation and t_crc:
     print 'copy:     %10.5f' % copy
     print 'comp:     %10.5f' % computation
     print 'total:    %10.5f' % (copy + computation)
-    print 'gmtotal:    %10.5f' % total    
+    print 'gmtotal:    %10.5f' % total
+    print 'crc:    %10.5f' % t_crc
 
 for checker in checkers:
     checker.summarize()
