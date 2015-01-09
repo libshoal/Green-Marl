@@ -22,6 +22,7 @@ class bcolors:
 
 total=None
 copy=None
+alloc=None
 
 lines = 0
 
@@ -352,6 +353,7 @@ if use_file_input :
         exit (1);
 
 copy = 0.0
+alloc = 0.0
 computation=0.0
 
 while 1:
@@ -376,7 +378,7 @@ while 1:
     # --------------------------------------------------
     l = re.match('([a-zA-Z_]*): allocate ([ ]*)([0-9.]*)', line)
     if l:
-        copy += float(l.group(3))
+        alloc += float(l.group(3))
     l = re.match('SOAL_Computation ([ ]*)([0-9.]*)', line)
     if l:
         computation += float(l.group(2))
@@ -401,12 +403,13 @@ while 1:
     for checker in checkers:
         checker.check_line(line)
 
-if total and copy and computation and t_crc:
+if total and copy and computation and t_crc and alloc:
     print 'copy:     %10.5f' % copy
+    print 'alloc:    %10.5f' % alloc
     print 'comp:     %10.5f' % computation
     print 'total:    %10.5f' % (copy + computation)
-    print 'gmtotal:    %10.5f' % total
-    print 'crc:    %10.5f' % t_crc
+    print 'gmtotal:  %10.5f' % total
+    print 'crc:      %10.5f' % t_crc
 
 for checker in checkers:
     checker.summarize()
