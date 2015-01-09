@@ -362,13 +362,19 @@ while 1:
     if not line: break
     print '[OUT]', line.rstrip()
     lines += 1
-    # Extract time for copy
-#    l = re.match('SHOAL_Copyin ([ ]*)([0-9.]*)', line)
-#    if l:
-#        copy += float(l.group(2))
-#        print 'MATCHER: ', l.group(2)
-#    l = re.match('SHOAL_Copyback ([ ]*)([0-9.]*)', line)
+    # Copy
+    # --------------------------------------------------
     l = re.match('([a-zA-Z_]*): copy_from ([ ]*)([0-9.]*)', line)
+    if l:
+        copy += float(l.group(3))
+    # Copy back
+    # --------------------------------------------------
+    l = re.match('SHOAL_Copyback ([ ]*)([0-9.]*)', line)
+    if l:
+        copy += float(l.group(2))
+    # Allocate
+    # --------------------------------------------------
+    l = re.match('([a-zA-Z_]*): allocate ([ ]*)([0-9.]*)', line)
     if l:
         copy += float(l.group(3))
     l = re.match('SOAL_Computation ([ ]*)([0-9.]*)', line)
