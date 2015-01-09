@@ -23,6 +23,10 @@ NUM_RUNS=3
 RUN_ON_BARRELFISH=0
 BARRELFISH=
 if [[ "$1" == "-b" ]]; then
+	# --------------------------------------------------
+	# BARRELFISH
+	# --------------------------------------------------
+
     echo "Running on Barrelfish"
     RUN_ON_BARRELFISH=1
     BARRELFISH="-b"
@@ -30,6 +34,10 @@ if [[ "$1" == "-b" ]]; then
     OPTIONS=("" "-p" "-r" "-r -p" "-a" "-p -a" "-r -a " "-r -p -a")
     BARRELFISH_WORKLOAD="/nfs/soc-LiveJournal1.bin"
 else
+	# --------------------------------------------------
+	# LINUX
+	# --------------------------------------------------
+
     PROGRAMS="pagerank"
     BARRELFISH_WORKLOAD="null"
     OPTIONS=("" "-d" "-d -r" "-d -r -p" "-d -r -p -h" "-d -r -h")
@@ -59,8 +67,8 @@ else
 fi
 # --------------------------------------------------
 
-git describe >> $LOGFILES
-(cd shoal && git describe) >> $LOGFILES
+(echo -n '#' && git describe) >> $LOGFILES
+(echo -n '#' && cd shoal && git describe) >> $LOGFILES
 
 (
     # Programs
@@ -138,5 +146,5 @@ git describe >> $LOGFILES
 # Create archive from log file and cleanup
 TS=$(date +%F_%H-%M-%S)
 echo "Building log file run_all_${TS}.tgz and cleaning up .. "
-(cat $LOGFILES | awk '{ print $1 }' | xargs tar -czf "run_all_${TS}.tgz" $LOGFILES)  \
-    && (cat $LOGFILES | awk '{print $1 }' | xargs rm $LOGFILES)
+(cat $LOGFILES | grep -v '^#' | awk '{ print $1 }' | xargs tar -czf "run_all_${TS}.tgz" $LOGFILES)  \
+    && (cat $LOGFILES | grep -v '^#' | awk '{print $1 }' | xargs rm $LOGFILES)
