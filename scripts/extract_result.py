@@ -355,7 +355,10 @@ if use_file_input :
 copy = 0.0
 alloc = 0.0
 computation=0.0
+t_crc = 0
 
+# Walk line by line:
+# --------------------------------------------------
 while 1:
     if use_file_input :
         line = inFile.readline()
@@ -403,17 +406,18 @@ while 1:
     for checker in checkers:
         checker.check_line(line)
 
-if total and copy and computation and t_crc and alloc:
-    print 'copy:     %10.5f' % copy
-    print 'alloc:    %10.5f' % alloc
-    print 'comp:     %10.5f' % computation
-    print 'total:    %10.5f' % (copy + computation)
-    print 'gmtotal:  %10.5f' % total
-    print 'crc:      %10.5f' % t_crc
+# --------------------------------------------------
+# end walk line by line
+
+print 'copy:     %15.5f' % copy
+print 'alloc:    %15.5f' % alloc
+print 'comp:     %15.5f' % computation
+print 'total:    %15.5f' % (copy + computation)
+print 'gmtotal:  %15.5f' % total
+print 'crc:      %15.5f' % t_crc
 
 for checker in checkers:
     checker.summarize()
-
 
 if not verified:
     result_out = bcolors.WARNING + "could not verify result" + bcolors.ENDC
