@@ -17,14 +17,15 @@ function error() {
 }
 
 function usage() {
-    echo "Usage: $0 <options> {pagerank,hop_dist,triangle_counting} <num_threads> {ours,theirs} {huge,soc-LiveJournal1,twitter_rv,big} [-n] [-d] [-b]"
+    echo "Usage: $0 <options> {pagerank,hop_dist,triangle_counting} <num_threads> {ours,theirs} {huge,soc-LiveJournal1,twitter_rv,big} [-n] [-d] [-b] [-v] [-pcm]"
     echo ""
     echo "options: supported are: -h for hugepages, -d for distribution, -r for replication, -p for partitioning, -a for DMA copy"
     echo "-d: run in GDB"
 	echo "-v: run in valgrind"
 	echo "-c: disable CRC check"
     echo "-n: do NOT run sanity checks"
-    echo "-b for Barrelfish"
+    echo "-b: for Barrelfish"
+    echo "-pcm: Use Intel PCM to monitor memory controllers"
     echo <<EOF
 Options are:
 -h Huge page support
@@ -147,9 +148,16 @@ if [[ "$4" == "-d" ]]; then
 fi
 
 VALGRIND=0
-if [[ "$4" == "-d" ]]; then
+if [[ "$4" == "-v" ]]; then
 	echo "Enabling VALGRIND mode"
     VALGRIND=1
+    shift
+fi
+
+PCM=0
+if [[ "$4" == "-pcm" ]]; then
+	echo "Enabling PCM mode"
+    PCM=1
     shift
 fi
 
@@ -316,9 +324,29 @@ if [[ $DEBUG -eq 0 ]] && [[ $VALGRIND -eq 0 ]]; then
 
         exit 0
     else
+
+	# Start Intel PCM in background
+	if [[ $PCM -eq 1 ]]; then
+
+	    PCMEXEC=`which pcm-memory.x`
+
+	    if [[ ! $(which pcm-memory.x) ]]; then error "pcm-memory.x not found"; fi
+
+	    echo "Starting PCM (need root)"
+	    sudo $PCMEXEC 0.5 -csv=/tmp/pcm-memory-trace.cvs 2>/dev/null &
+	    PCM_PID=$!
+
+	    echo "PCM is running as $PCM_PID"
+	fi
+
         # Start benchmark
         GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
                  stdbuf -o0 -e0 -i0 ${INPUT} ${WORKLOAD} ${NUM} ${INPUTARGS} $@ | $CHECKS
+
+	# Stop Intel PCM
+	if [[ $PCM -eq 1 ]]; then
+	    sudo kill $PCM_PID
+	fi
 
         # remove the settings file
         rm -rf $SETTINGS_FILE
