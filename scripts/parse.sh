@@ -19,6 +19,7 @@ function usage() {
 IN=$1
 [[ -f $IN ]] || usage
 
+OUTDIR=~/papers/oracle/measurements/init/
 
 TMP=`mktemp -d`
 
@@ -205,14 +206,17 @@ do
 
     echo $FILE "-" $APP "-" $CONF "-" $NUM
 
-    F_COMP=~/papers/oracle/measurements/${WORKLOAD}_${MACHINE}_${APP}_${CONF}_comp
-    F_INIT=~/papers/oracle/measurements/${WORKLOAD}_${MACHINE}_${APP}_${CONF}_init
+    F_COMP=${OUTDIR}/${WORKLOAD}_${MACHINE}_${APP}_${CONF}_comp
+    F_INIT=${OUTDIR}/${WORKLOAD}_${MACHINE}_${APP}_${CONF}_copy
+    F_ALLOC=${OUTDIR}/${WORKLOAD}_${MACHINE}_${APP}_${CONF}_alloc
 
     check_file $F_COMP
     check_file $F_INIT
+    check_file $F_ALLOC
 
     echo "x y e" > $F_COMP
     echo "x y e" > $F_INIT
+    echo "x y e" > $F_ALLOC
 
 done < $OVERVIEW
 
@@ -235,19 +239,23 @@ do
 
     echo $FILE "-" $APP "-" $CONF "-" $NUM
 
-    F_COMP=~/papers/oracle/measurements/${WORKLOAD}_${MACHINE}_${APP}_${CONF}_comp
-    F_INIT=~/papers/oracle/measurements/${WORKLOAD}_${MACHINE}_${APP}_${CONF}_init
+    F_COMP=${OUTDIR}/${WORKLOAD}_${MACHINE}_${APP}_${CONF}_comp
+    F_INIT=${OUTDIR}/${WORKLOAD}_${MACHINE}_${APP}_${CONF}_copy
+    F_ALLOC=${OUTDIR}/${WORKLOAD}_${MACHINE}_${APP}_${CONF}_alloc
 
     check_file $F_COMP
     check_file $F_INIT
+    check_file $F_ALLOC
 
     check_measurement $TMP/$FILE
 
     T_COMP=$(cat $TMP/$FILE | awk '/^comp/ { print $2 }' | skstat.py)
     T_INIT=$(cat $TMP/$FILE | awk '/^copy/ { print $2 }' | skstat.py)
+    T_ALLOC=$(cat $TMP/$FILE | awk '/^alloc/ { print $2 }' | skstat.py)
 
     echo "$NUM $T_COMP" >> $F_COMP
     echo "$NUM $T_INIT" >> $F_INIT
+    echo "$NUM $T_ALLOC" >> $F_ALLOC
 
 done < $OVERVIEW
 

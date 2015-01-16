@@ -60,6 +60,8 @@ def parse_array_conf(line):
 
 
 
+MEASUREMENTS=["comp", "copy", "alloc", "total"]
+
 def parse_measurement_file(fname):
     event = None
     count = None
@@ -75,11 +77,12 @@ def parse_measurement_file(fname):
 
         # Performance
         # --------------------------------------------------
-        m = re.match('^comp:\s+(\d+)', line)
-        if m:
-            count = float(m.group(1))
-            print 'Found comp result: %f' % count
-            store(program, numcores, conf, 'comp', count)
+        for measurement in MEASUREMENTS:
+            m = re.match('^%s:\s+(\d+)' % measurement, line)
+            if m:
+                count = float(m.group(1))
+                print 'Found %s result: %f' % (measurement, count)
+                store(program, numcores, conf, measurement, count)
 
         # Barrelfish?
         # --------------------------------------------------
@@ -195,7 +198,10 @@ def main():
 
         for core in cores:
             datai = data[core]
-            print core, 'cores'
+            print ('%-30s' % ('%d cores' % core)),
+            for measurement in MEASUREMENTS:
+                print ('%10s %10s' % (measurement, 'stderr')),
+            print ''
 
             # Check all configurations from log file
             for (conf, _) in datai.items():
@@ -207,18 +213,22 @@ def main():
 
             for conf in confs_available:
 
-                if not conf in datai:
+                print ('%-30s' % (conf)),
+                for measurement in MEASUREMENTS:
+
                     mean = -1
                     stderr = 0
 
-                else:
-                    dataii = datai[conf]
-                    (dmean, dstderr, dmin, dmax, dmedian) = \
-                        statistics([ s for (x,s) in dataii if x == 'comp' ])
-                    mean = dmean
-                    stderr = dstderr
+                    if conf in datai:
+                        dataii = datai[conf]
+                        (dmean, dstderr, dmin, dmax, dmedian) = \
+                            statistics([ s for (x,s) in dataii if x == measurement ])
+                        mean = dmean
+                        stderr = dstderr
 
-                print '%-30s %10.3f %10.3f' % (conf, mean, stderr)
+                    print ('%10.3f %10.3f' % (mean, stderr)),
+
+                print ''
 
     # for event in events:
 
