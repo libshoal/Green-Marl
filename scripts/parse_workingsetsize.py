@@ -20,12 +20,14 @@ def parse_papi_file(fname):
 
     for line in fileinput.input(fname):
 
-        m = re.match('.*Total working set size: (\d+).*', line)
+        m = re.match('.*Total working set size: ([0-9.\-,]+).*', line)
         if m:
+            print line
             store(program, workload, m.group(1))
 
         m = re.match('^Workload is:.*\s([a-zA-Z0-9\.-]+)$', line)
         if m:
+            print line
             workload = m.group(1)
 
         # Program is: /home/skaestle/projects/gm//apps/output_cpp/bin/triangle_counting triangle_counting

@@ -172,9 +172,8 @@ def main():
 
     print values
 
-    confs = [ None, '-d', '-d -r', '-d -r -p', '-d -r -p -h', '-r -h', '-r', '-h' ]
+    confs = [ None, '-d', '-d -r', '-d -r -p', '-d -r -p -h', '-d -r -h', '-r -h', '-r', '-h'  ]
     confs_available = set()
-
 #    events = [ e for (e, _) in values.items()[0][1].items()[0][1]]
 
     replace = {

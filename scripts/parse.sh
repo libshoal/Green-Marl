@@ -29,7 +29,7 @@ OVERVIEW=$(find $TMP -name 'run_all-overview-*')
 # CONFIGURATION
 # --------------------
 WORKLOAD="determinedAutomatically"
-MACHINE="sgs-r815-03"
+MACHINE="determinedAutomatically"
 # --------------------------------------------------
 
 function read_entry() {
@@ -92,7 +92,7 @@ function check_measurement() {
     # We currently use only "copy" and "comp" in the results.
     # We need to make sure that we understand for all the additional costs how to account them for.
 
-    for title in "copy" "comp" "crc"; do
+    for title in "copy" "comp" "crc" "alloc"; do
 
 	# extract measurements ..
 	CHECK_NUMS=$(cat $CHECK_FILE | \
