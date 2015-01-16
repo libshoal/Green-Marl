@@ -14,6 +14,7 @@ Where mode is:
  -w : determine working-set size
  -c : array configuration
  -p : performance
+ -P : papi
 EOF
     exit 1
 }
@@ -39,6 +40,12 @@ while [[ -n "$1" ]]; do
 		"-p")
 			shift
 			MODE=PERFORMANCE
+			break
+			;;
+
+		"-P")
+			shift
+			MODE=PAPI
 			break
 			;;
 
@@ -84,15 +91,15 @@ function check_file() {
 
 function read_basic_info() {
 
-    FILE=$1
-    [[ -f $FILE ]] || error "Cannot read file in basic info"
+    BI_FILE=$1
+    [[ -f $BI_FILE ]] || error "Cannot read file in basic info"
 
     # Workload is: /some/path/twitter_rv.bin twitter_rv.bin
-    WORKLOAD=$(cat $FILE | awk '/^Workload/ { print $4 }' | head -n 1 | sed -e 's/.bin//')
+    WORKLOAD=$(cat $BI_FILE | awk '/^Workload/ { print $4 }' | head -n 1 | sed -e 's/.bin//')
     export WORKLOAD
 
     # Hostname: <name>
-    MACHINE=$(cat $FILE | awk '/^Hostname/ { print $2 }')
+    MACHINE=$(cat $BI_FILE | awk '/^Hostname/ { print $2 }')
     export MACHINE
 }
 
@@ -103,19 +110,22 @@ basicInfo=0
 TMPFILE=$(mktemp)
 
 # Find measurements
+# --------------------------------------------------
 while read line
 do
+    # Ignore lines starting with #
+    if (echo "$line" | grep '^#' ); then echo "Ignoring $line"; continue; fi
 
     FILE=$(read_entry "$line" 1)
     APP=$(read_entry "$line" 2)
     CONF=$(read_entry "$line" 3 | python -c "import re; import fileinput; print ''.join([ x for x in fileinput.input()[0] if re.match('\w', x)])")
     NUM=$(read_entry "$line" 4)
 
-    # if [[ basicInfo -eq 0 ]]; then
-	# 	echo "Reading basic info from [$TMP/$FILE]"
-	# 	read_basic_info $TMP/$FILE
-	# 	basicInfo=1
-    # fi
+    if [[ basicInfo -eq 0 ]]; then
+		echo "Reading basic info from [$TMP/$FILE]"
+		read_basic_info $TMP/$FILE
+		basicInfo=1
+    fi
 
     if [[ -z "$NUM" ]]; then
 	NUM=$CONF
@@ -127,7 +137,9 @@ do
 
 done < $OVERVIEW
 
+echo "Measurement files are:"
 cat $TMPFILE
+echo "END"
 
 case $MODE in
 	PAPI)
