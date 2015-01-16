@@ -59,11 +59,27 @@ function check_file() {
 #
 # --------------------------------------------------
 function calc() {
-    bc <<EOF
+
+	VAR=$@
+
+#   DEBUG
+#	echo -n "Executing [$VAR] .. {" >/dev/stderr
+
+	PROG=$(cat <<EOF
 scale=8
-$@
+$VAR
 quit
 EOF
+)
+
+    RES=$(echo "$PROG" | bc)
+
+	export BC_RC=$?
+
+#   DEBUG
+#	echo -n "} .. RC=$BC_RC RES=$RES" >/dev/stderr
+
+	echo $RES
 }
 
 # --------------------------------------------------
@@ -108,8 +124,21 @@ function check_measurement() {
 	RES=${CHECK_STAT_ARR[0]}
 	STDERR=${CHECK_STAT_ARR[1]}
 
-	# Make sure that stderr is less than 10% of measurement
-	if [[ $(calc "$STDERR/$RES<0.01") -eq 0 ]]; then echo -e $txtred "standard error too high" $txtrst; fi
+	# Check stderr
+	# --------------------------------------------------
+	FACT=$(calc "$STDERR/$RES")
+#   SK: I'd like to pass the RC of bc here, so that in case this fails, we can set FACT to sth >1.0
+#	echo "RC=$? FACT=$FACT BC_RC=$BC_RC"
+	MAXACCEPT="0.05"
+	RESULT=$(calc "$FACT<$MAXACCEPT")
+	if [[ $RESULT -eq 1 ]]; then
+		echo -e $txtgrn "standard error good" $txtrst " [$STDERR/$RES=$FACT, $MAXACCEPT, $RESULT]";
+	else
+		echo -e $txtred "standard error too high" $txtrst " [$STDERR/$RES=$FACT, $MAXACCEPT, $RESULT]";
+		echo "This is for [$title], measurements are:"
+		echo $CHECK_NUMS
+		echo "END"
+	fi
 
 	# Sum up measurements
 	SUM=$(calc "$SUM+$RES")
