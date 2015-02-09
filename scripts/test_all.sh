@@ -81,12 +81,19 @@ CORELIST="$(nproc) 1"
 			#     echo -n "  comp : "; cat $TMP | awk '/^comp:/ { print $2 }' | skstat.py
 			# fi
 		    done
+
+			if [[ $RC -ne 0 ]]; then
+				exit 1
+			fi
 		done
 	done
-)
+) || exit 1
 
 # Create archive from log file and cleanup
 TS=$(date +%F_%H-%M-%S)
 echo "Building log file test_all_${TS}.tgz and cleaning up .. "
 (cat $LOGFILES | awk '{ print $1 }' | xargs tar -czf "test_all_${TS}.tgz" $LOGFILES)  \
     && (cat $LOGFILES | awk '{print $1 }' | xargs rm $LOGFILES)
+
+
+exit 0

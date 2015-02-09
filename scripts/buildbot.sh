@@ -14,5 +14,5 @@ function usage() {
 #[[ -n "$1" ]] || usage
 
 git submodule init
-git submodule updates
+git submodule update
 scripts/test_all.sh
