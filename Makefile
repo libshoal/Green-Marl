@@ -170,3 +170,26 @@ sk_hd_gcc:
 sk_hd_ec_gcc:
 	$(MAKE) -C $(SHOAL)
 	cd apps/output_cpp/src; g++ $(FLAGS) $(INC) -I../generated -I../gm_graph/inc -I. -fopenmp -DDEFAULT_GM_TOP="\"$GMDIR\"" -std=gnu++0x -DAVRO ../generated/hop_dist_ec.cc hop_dist_main.cc $(OBJS) ../gm_graph/lib/libgmgraph.a -L../gm_graph/lib -lgmgraph $(LIB) -o ../bin/hop_dist
+
+# --------------------------------------------------
+# Compile from scratch. We need this for buildbot
+# --------------------------------------------------
+
+# Green Marl compiler
+# --------------------
+COMP_EXEC := bin/gm_comp
+
+$(COMP_EXEC):
+	make compiler
+
+# Green Marl runtime
+# --------------------
+GMRT_BASE := apps/output_cpp/gm_graph
+GMRT := $(GMRT_BASE)/lib/libgmgraph.a
+
+$(GMRT):
+	make -C $(GMRT_BASE)
+
+# Build everything
+# --------------------------------------------------
+sk_buildbot: $(COMP_EXEC) $(GMRT)

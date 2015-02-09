@@ -15,4 +15,5 @@ function usage() {
 
 git submodule init
 git submodule update
+make sk_buildbot
 scripts/test_all.sh
