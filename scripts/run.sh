@@ -38,7 +38,14 @@ EOF
 
 
 BASE=$(readlink -e $(dirname $0)/../)
-WORKLOAD_BASE=$(readlink -e $BASE/../graphs/)
+
+SHARED_GRAPH=/mnt/scratch/skaestle/graphs/
+if [[ -d $SHARED_GRAPH ]]; then
+	WORKLOAD_BASE=$SHARED_GRAPH
+else
+	WORKLOAD_BASE=$(readlink -e $BASE/../graphs/)
+fi
+
 ARRAY_SETTINGS_FILE=$BASE/local_array_settings.lua
 
 echo "Hostname: $(hostname)"
