@@ -20,9 +20,9 @@ class bcolors:
 # Time for copy: 228.052000
 # running time=3207.233000
 
-total=None
-copy=None
-alloc=None
+total= 0.0
+copy= 0.0
+alloc= 0.0
 
 lines = 0
 
