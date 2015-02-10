@@ -29,7 +29,9 @@ LOGFILES=$(mktemp /tmp/test_all-overview-XXXXXX)
 # --------------------------------------------------
 # Number of cores
 # --------------------------------------------------
-CORELIST="$(nproc) 1"
+if [[ -z "$CORELIST" ]]; then
+    CORELIST="$(nproc) 1"
+fi
 
 (
     # Programs

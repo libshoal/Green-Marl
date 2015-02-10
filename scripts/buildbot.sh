@@ -16,4 +16,6 @@ function usage() {
 git submodule init
 git submodule update
 make sk_buildbot
+
+export CORELIST="32 1"
 scripts/test_all.sh
