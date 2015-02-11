@@ -349,6 +349,8 @@ if [[ $DEBUG -eq 0 ]] && [[ $VALGRIND -eq 0 ]]; then
         # Start benchmark
         GOMP_CPU_AFFINITY="$AFF" SHL_CPU_AFFINITY="$AFF" \
                  stdbuf -o0 -e0 -i0 ${INPUT} ${WORKLOAD} ${NUM} ${INPUTARGS} $@ | $CHECKS
+        # bash is sooo fragile!
+        R=( "${PIPESTATUS[@]}" )
 
 	# Stop Intel PCM
 	if [[ $PCM -eq 1 ]]; then
@@ -357,9 +359,6 @@ if [[ $DEBUG -eq 0 ]] && [[ $VALGRIND -eq 0 ]]; then
 
         # remove the settings file
         rm -rf $SETTINGS_FILE
-
-        # bash is sooo fragile!
-        R=( "${PIPESTATUS[@]}" )
 
         GM_RC="${R[0]}"
         ER_RC="${R[1]}"
