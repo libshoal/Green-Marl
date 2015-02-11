@@ -16,6 +16,7 @@ function usage() {
 [[ -n "$1" ]] || usage
 
 ACTION=$1
+CORES=$(($(nproc)/2))
 
 BASE=$(readlink -e $(dirname $0))
 source $BASE/shared.sh
@@ -32,7 +33,19 @@ case "$ACTION" in
 		;;
 	"run")
 		echo "Running tests"
-		run_wrapper "-d" "32" "pagerank" "/dev/null" "soc-LiveJournal1"
+		run_wrapper "" $CORES "pagerank" "/dev/null" "soc-LiveJournal1"
+		;;
+	"run-d")
+		echo "Running tests"
+		run_wrapper "-d" $CORES "pagerank" "/dev/null" "soc-LiveJournal1"
+		;;
+	"run-r")
+		echo "Running tests"
+		run_wrapper "-r" $CORES "pagerank" "/dev/null" "soc-LiveJournal1"
+		;;
+	"run-h")
+		echo "Running tests"
+		run_wrapper "-h" $CORES "pagerank" "/dev/null" "soc-LiveJournal1"
 		;;
 	*)
 		echo "unknown action"
