@@ -39,6 +39,10 @@ case "$ACTION" in
 		echo "Running tests"
 		run_wrapper "-d" $CORES "pagerank" "/dev/null" "soc-LiveJournal1"
 		;;
+	"run-p")
+		echo "Running tests"
+		run_wrapper "-p" $CORES "pagerank" "/dev/null" "soc-LiveJournal1"
+		;;
 	"run-r")
 		echo "Running tests"
 		run_wrapper "-r" $CORES "pagerank" "/dev/null" "soc-LiveJournal1"
