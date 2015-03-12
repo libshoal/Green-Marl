@@ -13,6 +13,7 @@ $0 [-mode] <measurement-file>
 Where mode is:
  -w : determine working-set size
  -c : array configuration
+ -p : performance
 EOF
     exit 1
 }

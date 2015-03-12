@@ -13,6 +13,7 @@ from tools import statistics
 
 values = {}
 linux = True
+num_errors = 0
 
 def parse_measurement_file(fname):
     event = None
@@ -21,6 +22,7 @@ def parse_measurement_file(fname):
     program = None
     conf = None
     numcores = -1
+    last_array = None
 
     global linux
 
@@ -74,6 +76,32 @@ def parse_measurement_file(fname):
         if m:
             conf = m.group(1)
 
+
+        # Array size
+        # --------------------------------------------------
+        m = re.match('ERROR', line)
+        if m:
+            global num_errors
+            num_errors += 1
+            print 'ERROR in configuration, total:', num_errors
+
+        # Parse array
+        # --------------------------------------------------
+        m = re.match('Array\[\s+(\S+)\]+', line)
+        if m:
+            last_array = m.group(1).replace('shl__', '')
+
+        # Pagesize
+        # --------------------------------------------------
+        m = re.match('Allocating with pagesize (\d+)', line)
+        if m:
+            assert last_array # Line before should have been array configuration
+            huge = True if m.group(1) == '2097152' else False
+            large = True if m.group(1) == '1073741824' else False
+            assert huge or large or m.group(1) == '4096' # 4K, 2M or 1G page
+            print 'Found page size for array %20s L=%5s H=%5s size=%10s' % \
+                (last_array, str(large), str(huge), m.group(1))
+
 def store(program, cores, conf, event, count):
 
     global values
@@ -98,7 +126,9 @@ def main():
 
     print values
 
-    confs = [ None, '-d', '-d -r', '-d -r -p', '-d -r -p -h' ]
+    confs = [ None, '-d', '-d -r', '-d -r -p', '-d -r -p -h', '-r -h', '-r', '-h' ]
+    confs_available = set()
+
 #    events = [ e for (e, _) in values.items()[0][1].items()[0][1]]
 
     replace = {
@@ -124,9 +154,13 @@ def main():
 
             # Check all configurations from log file
             for (conf, _) in datai.items():
+                print 'Found configuration', conf
+                confs_available.add(conf)
                 assert conf in confs
 
-            for conf in confs:
+            print 'Following configurations are available', str(confs_available)
+
+            for conf in confs_available:
 
                 if not conf in datai:
                     mean = -1
