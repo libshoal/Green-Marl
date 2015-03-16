@@ -8,12 +8,57 @@ import tools
 import fileinput
 import argparse
 import re
+import string
 
 from tools import statistics
+
+class array_conf:
+    """
+    Store array configuration
+
+    """
+
+    def __init__(self, name=None, size=None):
+        """
+        Initialize class
+
+        """
+        self.name = name
+        self.size = int(size)
+
+
+    def get_printable_size(self):
+        """
+        Get size of array in human readable form
+
+        """
+        size = self.size
+        prefix = ''
+        for (s, l) in [(1024*1024*1024, 'GB'), (1024*1024, 'MB'), (1024, 'KB')]:
+            if (size>s):
+                size = float(size)/s
+                prefix = l
+
+        return '%10.2f %s' % (size, prefix)
+
 
 values = {}
 linux = True
 num_errors = 0
+
+def parse_array_conf(line):
+    # Parse array
+    # --------------------------------------------------
+    m = re.match('Array\[\s+(\S+)\]+.*size=\s*(\d+)', line)
+    if m:
+        name = m.group(1).replace('shl__', '')
+        size = int(m.group(2))
+        return array_conf(name, size)
+
+    # Default
+    return None
+
+
 
 def parse_measurement_file(fname):
     event = None
@@ -85,11 +130,11 @@ def parse_measurement_file(fname):
             num_errors += 1
             print 'ERROR in configuration, total:', num_errors
 
-        # Parse array
+        # Array conf
         # --------------------------------------------------
-        m = re.match('Array\[\s+(\S+)\]+', line)
-        if m:
-            last_array = m.group(1).replace('shl__', '')
+        r = parse_array_conf(line)
+        if r:
+            last_array = r
 
         # Pagesize
         # --------------------------------------------------
@@ -99,8 +144,9 @@ def parse_measurement_file(fname):
             huge = True if m.group(1) == '2097152' else False
             large = True if m.group(1) == '1073741824' else False
             assert huge or large or m.group(1) == '4096' # 4K, 2M or 1G page
-            print 'Found page size for array %20s L=%5s H=%5s size=%10s' % \
-                (last_array, str(large), str(huge), m.group(1))
+            print 'Found page size for array %20s size %10s L=%5s H=%5s size=%10s' % \
+                (last_array.name, last_array.get_printable_size(),
+                 str(large), str(huge), m.group(1))
 
 def store(program, cores, conf, event, count):
 
