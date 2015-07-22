@@ -93,24 +93,16 @@ ROOT := $(shell pwd)
 BASE := $(ROOT)/shoal/
 SHOAL := $(BASE)/shoal/
 
+include $(SHOAL)/common.mk
+
 INC := \
-	-I$(BASE)contrib/numactl-2.0.9 \
 	-I$(SHOAL)/inc \
-	-I$(BASE)contrib/papi-5.3.0/src \
-	-I$(BASE)contrib/pycrc
+	-I$(BASE)/contrib/pycrc/
 
 LIB := \
-	-L$(BASE)contrib/numactl-2.0.9 -lnuma \
-	-L$(BASE)contrib/papi-5.3.0/src -lpapi \
-	-L$(BASE)contrib/papi-5.3.0/src/libpfm4/lib -lpfm \
 	-L$(SHOAL) -lshl
 
 OBJS :=
-
-# LUA
-LUA := $(BASE)/contrib/lua-5.2.3/src/
-INC += -I$(LUA)
-LIB += $(LUA)/liblua.a -lm -ldl
 
 # Switch buildtype: supported are "debug" and "release"
 BUILDTYPE := release
