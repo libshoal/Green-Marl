@@ -1,6 +1,6 @@
 The original Green Marl README is stored in README.GM.md
 
-= How to run =
+# How to run
 
 1.  `git clone ssh://vcs-user@code.systems.ethz.ch:8006/diffusion/GM/green-marl.git gm -b standalone`
 2.  `git submodule init && git submodule update`
@@ -13,12 +13,12 @@ The original Green Marl README is stored in README.GM.md
 7.  Run ``scripts/run.sh pagerank `nproc` ours soc-LiveJournal1``
     - This requires the  graph to be in `../graphs` relative to the Green Marl directory. From within ETH, copy from `~/skaestle/projects/graphs` on any NFS mounted machine
 
-= 4M-pages =
+# 4M-pages
 
 Shoal supports 4M pages. See the shoal documentation on how to setup
 machines to use these.
 
-= Testing =
+# Testing
 
 We have scripts to test a wide variety of Green Marl programs with
 different configurations on Linux. The only thing we really do not
