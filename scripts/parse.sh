@@ -172,8 +172,8 @@ function read_basic_info() {
     export WORKLOAD
 
     # Hostname: <name>
-    # MACHINE=$(cat $FILE | awk '/^Hostname/ { print $2 }')
-    # export MACHINE
+    MACHINE=$(cat $FILE | awk '/^Hostname/ { print $2 }')
+    export MACHINE
 }
 
 echo "Overview file is $OVERVIEW"
